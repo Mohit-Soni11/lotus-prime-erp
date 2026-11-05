@@ -36,9 +36,9 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'Overflow at $width px');
 
       final money = tester.getTopLeft(find.text('Money Movement'));
-      final opening = tester.getTopLeft(find.text('Metal Position'));
-      expect(find.text('Opening Position'), findsNothing);
-      expect(find.text('Closing Position'), findsNothing);
+      final opening = tester.getTopLeft(find.text('Opening Position'));
+      expect(find.text('Closing Position'), findsOneWidget);
+      expect(find.text('Opening Balance'), findsNWidgets(2));
       expect(find.text('Opening Cash'), findsNothing);
       if (width >= 1350) {
         expect(opening.dx, greaterThan(money.dx));

@@ -8,6 +8,64 @@ import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/repositories/reports/day_book_document_repository.dart';
 
 void main() {
+  test('invoice explorer receives saved party, all metal lines and payment',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final date = DateTime(2026, 11, 4, 13);
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(name: 'Asha Patel', mobile: '9876543210'),
+        );
+    final billId = await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'REG-025',
+          customerId: drift.Value(customerId),
+          billDate: drift.Value(date),
+          finalAmount: const drift.Value(82000),
+          paidAmount: const drift.Value(72000),
+          dueAmount: const drift.Value(10000),
+        ));
+    for (final (metal, name, grams) in [
+      ('GOLD', 'Necklace', 24.5),
+      ('SILVER', 'Payal', 100.25),
+    ]) {
+      await db.into(db.billItems).insert(BillItemsCompanion.insert(
+            billId: billId,
+            itemName: name,
+            metalType: drift.Value(metal),
+            netWeight: drift.Value(grams),
+          ));
+    }
+
+    final document = (await DayBookDocumentRepository(db).fetch(date)).single;
+    expect(document.partyName, 'Asha Patel');
+    expect(document.mobile, '9876543210');
+    expect(document.items.map((item) => item.name), ['Necklace', 'Payal']);
+    expect(document.items.map((item) => item.netWeightGrams), [24.5, 100.25]);
+    expect(document.savedPaid, 72000);
+    expect(document.savedDue, 10000);
+
+    final withCollection = DayBookDocumentCollectionMapper.apply(
+        [
+          document,
+        ],
+        DayBookMoneyFlow(openingCash: 0, openingBank: 0, entries: [
+          DayBookMoneyEntry(
+            date: date,
+            amount: 30000,
+            incoming: true,
+            isCash: true,
+            category: 'SALE_PAYMENT',
+            paymentMode: 'CASH',
+            transactionId: 'TX-1',
+            referenceId: 'REG-025#CASH',
+            referenceType: 'BILL',
+          ),
+        ])).single;
+    expect(withCollection.collection, 30000);
+    expect(withCollection.items, hasLength(2));
+    expect(withCollection.savedPaid, 72000);
+  });
+
   test(
       'cancelled invoices do not count while returned invoices retain issue-day turnover',
       () async {
@@ -72,11 +130,27 @@ void main() {
       [date.millisecondsSinceEpoch],
     );
     await db.customStatement(
+      '''INSERT INTO purchase_voucher_items
+         (purchase_voucher_id, line_no, metal_type, item_description,
+          net_weight, created_at)
+         VALUES (1, 1, 'Gold', 'Old Necklace', 21.5, ?)''',
+      [date.millisecondsSinceEpoch],
+    );
+    await db.customStatement(
       '''INSERT INTO return_vouchers
          (voucher_no, operation_type, source_type, source_id, source_number,
           settlement_mode, return_value, refund_payable_amount, created_at)
          VALUES ('RET-1', 'RETURN', 'SALE', 1, 'TAX-1',
                  'REFUND', 20, 15, ?)''',
+      [date.millisecondsSinceEpoch],
+    );
+    await db.customStatement(
+      '''INSERT INTO return_voucher_lines
+         (return_voucher_id, source_type, source_id, source_number,
+          source_line_no, stock_disposition, metal_type, item_description,
+          received_net_weight, created_at)
+         VALUES (1, 'SALE', 1, 'TAX-1', 1, 'RESTOCK', 'Silver', 'Payal',
+                 50.25, ?)''',
       [date.millisecondsSinceEpoch],
     );
 
@@ -99,6 +173,22 @@ void main() {
                 (record) => record.kind == DayBookDocumentKind.returnVoucher)
             .outstanding,
         15);
+    expect(
+        documents
+            .singleWhere(
+                (record) => record.kind == DayBookDocumentKind.purchaseVoucher)
+            .items
+            .single
+            .netWeightGrams,
+        21.5);
+    expect(
+        documents
+            .singleWhere(
+                (record) => record.kind == DayBookDocumentKind.returnVoucher)
+            .items
+            .single
+            .netWeightGrams,
+        50.25);
   });
 
   test(

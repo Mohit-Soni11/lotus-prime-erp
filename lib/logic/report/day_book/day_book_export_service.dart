@@ -162,35 +162,78 @@ class DayBookExportService {
             pw.SizedBox(height: 14),
           ],
           _pdfSection(
-            'Physical Cash and Metal Position',
+            'Opening and Closing Position',
             const ['Metric', 'Value'],
             [
-              ['Opening Cash', _money(summary.openingCash)],
-              ['Cash In', _money(summary.cashReceived)],
-              ['Cash Out', _money(summary.cashPaid)],
-              ['Net Cash Flow', _signedMoney(summary.netCash)],
-              ['Closing Cash', _money(summary.closingCash)],
+              [
+                'Opening Balance',
+                _money(flow?.openingTotal ?? summary.openingCash)
+              ],
+              [
+                'Closing Balance',
+                _money(flow?.closingTotal ?? summary.closingCash)
+              ],
               [
                 'Opening Gold',
-                summary.metalPositionVerified
+                _metalAvailable(summary, gold: true)
                     ? _weight(summary.openingGoldGrams)
                     : 'Unverified'
               ],
               [
+                'Gold Sold to Customers Today',
+                summary.customerMetalSales == null
+                    ? 'Unverified'
+                    : _weight(summary.customerMetalSales!.goldGrams)
+              ],
+              if (summary.ownedStockPosition?.gold.isConsistent == true) ...[
+                [
+                  'Gold Inward Today',
+                  _weight(summary.ownedStockPosition!.gold.inwardGrams)
+                ],
+                [
+                  'Gold Owned Stock Out Today',
+                  _weight(summary.ownedStockPosition!.gold.soldGrams)
+                ],
+                [
+                  'Gold Other Out Today',
+                  _weight(summary.ownedStockPosition!.gold.otherOutGrams)
+                ],
+              ],
+              [
                 'Closing Gold',
-                summary.metalPositionVerified
+                _metalAvailable(summary, gold: true)
                     ? _weight(summary.closingGold)
                     : 'Unverified'
               ],
               [
                 'Opening Silver',
-                summary.metalPositionVerified
+                _metalAvailable(summary, gold: false)
                     ? _weight(summary.openingSilverGrams)
                     : 'Unverified'
               ],
               [
+                'Silver Sold to Customers Today',
+                summary.customerMetalSales == null
+                    ? 'Unverified'
+                    : _weight(summary.customerMetalSales!.silverGrams)
+              ],
+              if (summary.ownedStockPosition?.silver.isConsistent == true) ...[
+                [
+                  'Silver Inward Today',
+                  _weight(summary.ownedStockPosition!.silver.inwardGrams)
+                ],
+                [
+                  'Silver Owned Stock Out Today',
+                  _weight(summary.ownedStockPosition!.silver.soldGrams)
+                ],
+                [
+                  'Silver Other Out Today',
+                  _weight(summary.ownedStockPosition!.silver.otherOutGrams)
+                ],
+              ],
+              [
                 'Closing Silver',
-                summary.metalPositionVerified
+                _metalAvailable(summary, gold: false)
                     ? _weight(summary.closingSilver)
                     : 'Unverified'
               ],
@@ -435,18 +478,23 @@ class DayBookExportService {
     final rows = <List<String>>[
       ['Section', 'Metric', 'Value'],
       ['Report', 'Date', _date(summary.date)],
-      ['Opening Position', 'Cash', summary.openingCash.toStringAsFixed(2)],
+      [
+        'Opening Position',
+        'Balance',
+        (summary.moneyFlow?.openingTotal ?? summary.openingCash)
+            .toStringAsFixed(2)
+      ],
       [
         'Opening Position',
         'Gold (g)',
-        summary.metalPositionVerified
+        _metalAvailable(summary, gold: true)
             ? summary.openingGoldGrams.toStringAsFixed(3)
             : 'Unverified',
       ],
       [
         'Opening Position',
         'Silver (g)',
-        summary.metalPositionVerified
+        _metalAvailable(summary, gold: false)
             ? summary.openingSilverGrams.toStringAsFixed(3)
             : 'Unverified',
       ],
@@ -455,6 +503,18 @@ class DayBookExportService {
       ['Cash Movement', 'Net Cash', summary.netCash.toStringAsFixed(2)],
       ['Sales', 'GST Invoices', summary.totalGstBills.toString()],
       ['Sales', 'Regular Invoices', summary.totalNonGstBills.toString()],
+      [
+        'Sales',
+        'Gold Sold to Customers (g)',
+        summary.customerMetalSales?.goldGrams.toStringAsFixed(3) ??
+            'Unverified',
+      ],
+      [
+        'Sales',
+        'Silver Sold to Customers (g)',
+        summary.customerMetalSales?.silverGrams.toStringAsFixed(3) ??
+            'Unverified',
+      ],
       [
         'Sales',
         'GST Collected',
@@ -473,6 +533,33 @@ class DayBookExportService {
         summary.paymentBreakup.cheque.toStringAsFixed(2),
       ],
     ];
+
+    final owned = summary.ownedStockPosition;
+    if (owned != null) {
+      for (final (metal, position) in [
+        ('Gold', owned.gold),
+        ('Silver', owned.silver),
+      ]) {
+        if (!position.isConsistent) continue;
+        rows.addAll([
+          [
+            'Metal Movement',
+            '$metal Inward (g)',
+            position.inwardGrams.toStringAsFixed(3)
+          ],
+          [
+            'Metal Movement',
+            '$metal Owned Stock Out (g)',
+            position.soldGrams.toStringAsFixed(3)
+          ],
+          [
+            'Metal Movement',
+            '$metal Other Out (g)',
+            position.otherOutGrams.toStringAsFixed(3)
+          ],
+        ]);
+      }
+    }
 
     final flow = summary.moneyFlow;
     for (final document in summary.documents) {
@@ -614,18 +701,23 @@ class DayBookExportService {
     }
 
     rows.addAll([
-      ['Closing Position', 'Cash', summary.closingCash.toStringAsFixed(2)],
+      [
+        'Closing Position',
+        'Balance',
+        (summary.moneyFlow?.closingTotal ?? summary.closingCash)
+            .toStringAsFixed(2)
+      ],
       [
         'Closing Position',
         'Gold (g)',
-        summary.metalPositionVerified
+        _metalAvailable(summary, gold: true)
             ? summary.closingGold.toStringAsFixed(3)
             : 'Unverified'
       ],
       [
         'Closing Position',
         'Silver (g)',
-        summary.metalPositionVerified
+        _metalAvailable(summary, gold: false)
             ? summary.closingSilver.toStringAsFixed(3)
             : 'Unverified',
       ],
@@ -678,8 +770,11 @@ class DayBookExportService {
         decimalDigits: 2,
       ).format(value);
 
-  static String _signedMoney(double value) =>
-      '${value >= 0 ? '+' : '-'}${_money(value.abs())}';
+  static bool _metalAvailable(DayBookSummary summary, {required bool gold}) =>
+      (gold
+          ? summary.ownedStockPosition?.gold.isConsistent
+          : summary.ownedStockPosition?.silver.isConsistent) ??
+      summary.metalPositionVerified;
 
   static String _weight(double value) => '${value.toStringAsFixed(3)} g';
 }

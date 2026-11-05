@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_document.dart';
+import '../../models/reports/day_book/day_book_document_item.dart';
 
 class DayBookDocumentRepository {
   const DayBookDocumentRepository(this._db);
@@ -18,6 +19,20 @@ class DayBookDocumentRepository {
               bill.billDate.isBiggerOrEqualValue(start) &
               bill.billDate.isSmallerThanValue(end)))
         .get();
+    final billItems = bills.isEmpty
+        ? <BillItem>[]
+        : await (_db.select(_db.billItems)
+              ..where((item) => item.billId.isIn(bills.map((b) => b.id))))
+            .get();
+    final itemsByBill = <int, List<DayBookDocumentItem>>{};
+    for (final item in billItems) {
+      itemsByBill.putIfAbsent(item.billId, () => []).add(DayBookDocumentItem(
+            metal: item.metalType,
+            name: item.itemName,
+            netWeightGrams: item.netWeight,
+            quantity: item.quantity,
+          ));
+    }
     for (final bill in bills) {
       if (!const {'ACTIVE', 'PARTIALLY_RETURNED', 'RETURNED'}
           .contains(bill.status.toUpperCase())) {
@@ -37,6 +52,11 @@ class DayBookDocumentRepository {
         tax: bill.cgstAmount + bill.sgstAmount + bill.igstAmount,
         status: bill.status,
         customerId: bill.customerId,
+        partyName: bill.customerName,
+        mobile: bill.mobile,
+        items: List.unmodifiable(itemsByBill[bill.id] ?? const []),
+        savedPaid: bill.paidAmount,
+        savedDue: bill.dueAmount,
       ));
     }
 
@@ -68,6 +88,15 @@ class DayBookDocumentRepository {
         status: 'POSTED',
         customerId: order?.customerId,
         relatedEntityId: advance.orderId,
+        items: order == null
+            ? const []
+            : [
+                DayBookDocumentItem(
+                  metal: order.metalType,
+                  name: order.itemName,
+                  netWeightGrams: order.approxWeight,
+                ),
+              ],
       ));
     }
 
@@ -85,6 +114,14 @@ class DayBookDocumentRepository {
         amount: loan.loanAmount,
         status: loan.status,
         customerId: loan.customerId,
+        items: [
+          DayBookDocumentItem(
+            metal: loan.metalType,
+            name: loan.itemDescription,
+            netWeightGrams: loan.netWeight,
+            quantity: loan.itemCount,
+          ),
+        ],
       ));
     }
 
@@ -100,6 +137,8 @@ class DayBookDocumentRepository {
       outstandingColumn: 'balance_due',
       sourceTypeColumn: 'source_type',
       supplierIdColumn: 'supplier_id',
+      partyNameColumn: 'party_name',
+      mobileColumn: 'mobile',
     ));
     documents.addAll(await _rawDocuments(
       start,
@@ -111,7 +150,32 @@ class DayBookDocumentRepository {
       outstandingColumn: 'refund_payable_amount',
       sourceTypeColumn: 'source_type',
       originalSourceIdColumn: 'source_id',
+      partyNameColumn: 'customer_name',
+      mobileColumn: 'mobile',
     ));
+    final customerIds = documents
+        .where((document) => document.customerId != null)
+        .map((document) => document.customerId!)
+        .toSet();
+    if (customerIds.isNotEmpty) {
+      final customers = await (_db.select(_db.customers)
+            ..where((customer) => customer.id.isIn(customerIds)))
+          .get();
+      final byId = {for (final customer in customers) customer.id: customer};
+      for (var index = 0; index < documents.length; index++) {
+        final source = documents[index];
+        final customer = byId[source.customerId];
+        if (customer == null) continue;
+        documents[index] = source.withParty(
+          name: source.partyName?.trim().isNotEmpty == true
+              ? source.partyName
+              : customer.name,
+          phone: source.mobile?.trim().isNotEmpty == true
+              ? source.mobile
+              : customer.mobile,
+        );
+      }
+    }
     documents.sort((a, b) {
       final byDate = a.date.compareTo(b.date);
       return byDate == 0 ? a.number.compareTo(b.number) : byDate;
@@ -132,6 +196,8 @@ class DayBookDocumentRepository {
     String? sourceTypeColumn,
     String? supplierIdColumn,
     String? originalSourceIdColumn,
+    String? partyNameColumn,
+    String? mobileColumn,
   }) async {
     final rows = await _db.customSelect(
       '''SELECT id, $numberColumn AS number, $amountColumn AS amount,
@@ -141,6 +207,8 @@ class DayBookDocumentRepository {
                 customer_id, ${sourceTypeColumn ?? 'NULL'} AS source_type,
                 ${supplierIdColumn ?? 'NULL'} AS supplier_id,
                 ${originalSourceIdColumn ?? 'NULL'} AS original_source_id,
+                ${partyNameColumn ?? 'NULL'} AS party_name,
+                ${mobileColumn ?? 'NULL'} AS mobile,
                 ${kind == DayBookDocumentKind.returnVoucher ? 'operation_type' : 'NULL'} AS operation_type,
                 status, created_at
          FROM $table
@@ -153,6 +221,10 @@ class DayBookDocumentRepository {
         Variable.withInt(end.millisecondsSinceEpoch ~/ 1000),
       ],
     ).get();
+    final itemsByVoucher = await _rawItems(
+      kind,
+      rows.map((row) => row.read<int>('id')).toList(),
+    );
     return [
       for (final row in rows)
         DayBookDocument(
@@ -173,8 +245,47 @@ class DayBookDocumentRepository {
           supplierId: row.readNullable<int>('supplier_id'),
           sourceType: row.readNullable<String>('source_type'),
           originalSourceId: row.readNullable<int>('original_source_id'),
+          partyName: row.readNullable<String>('party_name'),
+          mobile: row.readNullable<String>('mobile'),
+          items: itemsByVoucher[row.read<int>('id')] ?? const [],
+          savedPaid: row.readNullable<double>('collection'),
+          savedDue: row.readNullable<double>('outstanding'),
         ),
     ];
+  }
+
+  Future<Map<int, List<DayBookDocumentItem>>> _rawItems(
+      DayBookDocumentKind kind, List<int> ids) async {
+    if (ids.isEmpty) return const {};
+    final isPurchase = kind == DayBookDocumentKind.purchaseVoucher;
+    if (!isPurchase && kind != DayBookDocumentKind.returnVoucher) {
+      return const {};
+    }
+    final table =
+        isPurchase ? 'purchase_voucher_items' : 'return_voucher_lines';
+    final owner = isPurchase ? 'purchase_voucher_id' : 'return_voucher_id';
+    final name = isPurchase ? 'item_description' : 'item_description';
+    final weight = isPurchase ? 'net_weight' : 'received_net_weight';
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final rows = await _db
+        .customSelect(
+          'SELECT $owner AS voucher_id, metal_type, $name AS item_name, '
+          '$weight AS net_weight, quantity FROM $table '
+          'WHERE $owner IN ($placeholders) ORDER BY $owner, id',
+          variables: ids.map(Variable.withInt).toList(),
+        )
+        .get();
+    final result = <int, List<DayBookDocumentItem>>{};
+    for (final row in rows) {
+      final id = row.read<int>('voucher_id');
+      result.putIfAbsent(id, () => []).add(DayBookDocumentItem(
+            metal: row.read<String>('metal_type'),
+            name: row.readNullable<String>('item_name') ?? 'Metal item',
+            netWeightGrams: row.read<double>('net_weight'),
+            quantity: row.read<int>('quantity'),
+          ));
+    }
+    return result.map((id, items) => MapEntry(id, List.unmodifiable(items)));
   }
 
   DateTime _date(int timestamp) => DateTime.fromMillisecondsSinceEpoch(

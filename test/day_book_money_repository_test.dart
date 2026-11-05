@@ -84,4 +84,62 @@ void main() {
     expect(flow.byMode(incoming: false), {'CASH': 20, 'NEFT': 40});
     expect(flow.entries.length, 6);
   });
+
+  test('UPI, card and bank transfer modes affect bank, not physical cash',
+      () async {
+    final date = DateTime(2026, 11, 4, 12);
+    final accountId = await db.into(db.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Current Account',
+            bankName: 'Bank',
+            accountNumber: 'DAY-BOOK-MODES',
+          ),
+        );
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'CASH-1',
+          txnDate: date,
+          type: 'INCOME',
+          category: 'SALE',
+          amount: const drift.Value(100),
+          paymentMode: const drift.Value('CASH'),
+        ));
+    for (final (index, mode)
+        in ['UPI', 'CARD', 'NEFT', 'RTGS', 'IMPS', 'CHEQUE'].indexed) {
+      await db
+          .into(db.cashTransactions)
+          .insert(CashTransactionsCompanion.insert(
+            txnId: 'SHADOW-$index',
+            txnDate: date,
+            type: 'INCOME',
+            category: 'SALE',
+            amount: const drift.Value(50),
+            paymentMode: drift.Value(mode),
+          ));
+      await db
+          .into(db.bankTransactions)
+          .insert(BankTransactionsCompanion.insert(
+            txnId: 'BANK-$index',
+            accountId: accountId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(50),
+            paymentMode: drift.Value(mode),
+          ));
+    }
+
+    final flow = await DayBookMoneyRepository(db).fetch(date, 0);
+    expect(flow.cashIn, 100);
+    expect(flow.bankIn, 300);
+    expect(flow.moneyIn, 400);
+    expect(flow.byMode(incoming: true), {
+      'CASH': 100,
+      'UPI': 50,
+      'CARD': 50,
+      'NEFT': 50,
+      'RTGS': 50,
+      'IMPS': 50,
+      'CHEQUE': 50,
+    });
+  });
 }

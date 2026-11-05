@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_activity_event.dart';
 import '../../models/reports/day_book/day_book_money_flow.dart';
+import '../../models/reports/day_book/day_book_document_item.dart';
 
 /// Reads dated business events; it never posts money or owned stock.
 class DayBookActivityRepository {
@@ -60,6 +61,7 @@ class DayBookActivityRepository {
         date: loan.releaseDate!,
         amount: settledToday[loan.id] ?? 0,
         customerId: loan.customerId,
+        items: [_loanItem(loan)],
       ));
     }
 
@@ -75,6 +77,7 @@ class DayBookActivityRepository {
           date: interestAt[loan.id]!,
           amount: interestToday[loan.id]!,
           customerId: loan.customerId,
+          items: [_loanItem(loan)],
         ));
       }
     }
@@ -110,6 +113,7 @@ class DayBookActivityRepository {
         date: item.recoveryDisposedAt!,
         amount: 0,
         customerId: loan.customerId,
+        items: [_loanItem(loan)],
       ));
     }
     if (moneyFlow != null) {
@@ -143,11 +147,43 @@ class DayBookActivityRepository {
             date: firstReceiptAt[due.key]!,
             amount: due.value,
             customerId: bill?.customerId,
+            partyName: bill?.customerName,
+            mobile: bill?.mobile,
           ));
         }
+      }
+    }
+    final customerIds = events
+        .where((event) => event.customerId != null)
+        .map((event) => event.customerId!)
+        .toSet();
+    if (customerIds.isNotEmpty) {
+      final customers = await (_db.select(_db.customers)
+            ..where((customer) => customer.id.isIn(customerIds)))
+          .get();
+      final byId = {for (final customer in customers) customer.id: customer};
+      for (var index = 0; index < events.length; index++) {
+        final event = events[index];
+        final customer = byId[event.customerId];
+        if (customer == null) continue;
+        events[index] = event.withParty(
+          name: event.partyName?.trim().isNotEmpty == true
+              ? event.partyName
+              : customer.name,
+          phone: event.mobile?.trim().isNotEmpty == true
+              ? event.mobile
+              : customer.mobile,
+        );
       }
     }
     events.sort((a, b) => a.date.compareTo(b.date));
     return List.unmodifiable(events);
   }
+
+  DayBookDocumentItem _loanItem(GirviLoan loan) => DayBookDocumentItem(
+        metal: loan.metalType,
+        name: loan.itemDescription,
+        netWeightGrams: loan.netWeight,
+        quantity: loan.itemCount,
+      );
 }

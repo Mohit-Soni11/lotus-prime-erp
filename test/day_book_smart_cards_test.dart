@@ -2,9 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_smart_summary.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_activity_card.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_card_presentation.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_smart_cards.dart';
 
 void main() {
+  test('sales and receipts share green; dues is yellow; outflows are red', () {
+    final cards =
+        DayBookSmartSummary.fromDay(DayBookSummary(date: DateTime(2026, 11, 4)))
+            .cards;
+    final colors = cards
+        .map((card) => DayBookCardPresentation.fromCard(card).accent)
+        .toList();
+    expect(colors[0], colors[1]);
+    expect(colors[1], colors[2]);
+    expect(colors[3], isNot(colors[2]));
+    expect(colors[3], isNot(colors[4]));
+    expect(colors.sublist(4).toSet(), hasLength(1));
+  });
+
   testWidgets('empty day keeps all cards accessible at narrow width',
       (tester) async {
     tester.view.physicalSize = const Size(320, 900);
@@ -81,35 +98,60 @@ void main() {
 
     for (final title in [
       'Total Sales',
-      'Girvi Given',
       'Advance Received',
+      "Today's Receipts",
+      "Today's Dues",
+      'Girvi Given',
       'Return & Cancellation',
       'Customer Metal Purchase',
-      "Today's Dues",
-      "Today's Receipts",
       'Expenses',
     ]) {
       expect(find.text(title), findsOneWidget);
     }
     for (final amount in [
-      '₹4,75,000',
+      '₹3,11,000',
       '₹1,50,000',
       '₹60,000',
       '₹22,000',
       '₹2,00,000',
-      '₹15,000',
-      '₹5,55,000',
+      '₹27,000',
+      '₹3,79,000',
       '₹17,500',
     ]) {
       expect(find.text(amount), findsOneWidget);
     }
     expect(find.textContaining('DEMO PREVIEW'), findsOneWidget);
     expect(find.text('REAL-1'), findsNothing);
+    final firstRow = [
+      'Total Sales',
+      'Advance Received',
+      "Today's Receipts",
+      "Today's Dues",
+    ]
+        .map((title) => tester.getTopLeft(find.ancestor(
+            of: find.text(title), matching: find.byType(DayBookActivityCard))))
+        .toList();
+    final secondRow = [
+      'Girvi Given',
+      'Return & Cancellation',
+      'Customer Metal Purchase',
+      'Expenses',
+    ]
+        .map((title) => tester.getTopLeft(find.ancestor(
+            of: find.text(title), matching: find.byType(DayBookActivityCard))))
+        .toList();
+    expect(firstRow.map((point) => point.dy).toSet(), hasLength(1));
+    expect(secondRow.map((point) => point.dy).toSet(), hasLength(1));
+    expect(secondRow.first.dy, greaterThan(firstRow.first.dy));
+    expect(firstRow.map((point) => point.dx).toList(),
+        orderedEquals([...firstRow.map((point) => point.dx)]..sort()));
+    expect(secondRow.map((point) => point.dx).toList(),
+        orderedEquals([...secondRow.map((point) => point.dx)]..sort()));
     await tester.tap(find.text('Total Sales'));
     await tester.pumpAndSettle();
     expect(find.text('Regular invoices'), findsOneWidget);
     expect(find.text('GST invoices'), findsOneWidget);
-    expect(find.text('INV-025'), findsOneWidget);
+    expect(find.text('REG-025'), findsOneWidget);
     expect(find.text('REAL-1'), findsNothing);
     expect(tester.takeException(), isNull);
   });

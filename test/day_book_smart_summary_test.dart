@@ -34,7 +34,16 @@ void main() {
 
   test('all eight cards remain available when there is no activity', () {
     final result = DayBookSmartSummary.fromDay(DayBookSummary(date: date));
-    expect(result.cards.map((row) => row.type), DayBookCardType.values);
+    expect(result.cards.map((row) => row.type), [
+      DayBookCardType.sales,
+      DayBookCardType.advanceReceived,
+      DayBookCardType.receipts,
+      DayBookCardType.dues,
+      DayBookCardType.girviGiven,
+      DayBookCardType.returnAndCancellation,
+      DayBookCardType.customerMetalPurchase,
+      DayBookCardType.expenses,
+    ]);
     expect(result.cards.every((row) => row.amount == 0), isTrue);
   });
 

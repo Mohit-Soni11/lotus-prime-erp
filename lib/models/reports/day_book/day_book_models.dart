@@ -3,6 +3,8 @@ import 'day_book_custody_position.dart';
 import 'day_book_document.dart';
 import 'day_book_activity_event.dart';
 import 'day_book_expense_record.dart';
+import 'day_book_owned_stock_position.dart';
+import 'day_book_customer_metal_sales.dart';
 import 'day_book_stock_movement.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -378,6 +380,8 @@ class DayBookSummary {
   final List<DayBookDocument> documents;
   final List<DayBookActivityEvent> activityEvents;
   final List<DayBookExpenseRecord> expenseRecords;
+  final DayBookOwnedStockPosition? ownedStockPosition;
+  final DayBookCustomerMetalSales? customerMetalSales;
   final bool metalPositionVerified;
 
   // Opening balances (from ShopProfile or previous day closing)
@@ -407,6 +411,8 @@ class DayBookSummary {
     this.documents = const [],
     this.activityEvents = const [],
     this.expenseRecords = const [],
+    this.ownedStockPosition,
+    this.customerMetalSales,
     this.metalPositionVerified = false,
     this.openingCash = 0,
     this.openingGoldGrams = 0,
@@ -428,8 +434,12 @@ class DayBookSummary {
   double get closingCash => openingCash + netCash;
 
   MetalWeight get netMetal => metalIn.total - metalOut.total;
-  double get closingGold => openingGoldGrams + netMetal.totalGold;
-  double get closingSilver => openingSilverGrams + netMetal.totalSilver;
+  double get closingGold =>
+      ownedStockPosition?.gold.closingGrams ??
+      openingGoldGrams + netMetal.totalGold;
+  double get closingSilver =>
+      ownedStockPosition?.silver.closingGrams ??
+      openingSilverGrams + netMetal.totalSilver;
 
   double get totalGstCollected => cashIn.gstSales.gstCollected;
   int get totalGstBills => cashIn.gstSales.billCount;

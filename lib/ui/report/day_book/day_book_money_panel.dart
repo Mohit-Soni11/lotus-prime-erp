@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../models/reports/day_book/day_book_money_flow.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_transaction_register.dart';
+import 'day_book_money_summary.dart';
 
 final _currency = NumberFormat.currency(locale: 'en_IN', symbol: 'INR ');
 
@@ -23,13 +24,8 @@ class DayBookMoneyPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Money Movement', style: DayBookStyles.pageTitle),
-          const SizedBox(height: 4),
-          Text(
-            'Posted cash and bank movements for the selected day. Internal transfers are shown separately.',
-            style: DayBookStyles.sectionSubtitle,
-          ),
-          const SizedBox(height: 16),
+          DayBookMoneySummary(flow: flow),
+          const SizedBox(height: 10),
           _ResponsivePair(
             first: _PositionCard(
               title: 'Physical Cash',
@@ -53,13 +49,6 @@ class DayBookMoneyPanel extends StatelessWidget {
             'Bank position follows recorded entries; cheque clearing may occur later.',
             style: DayBookStyles.label,
           ),
-          if (flow.internalIn != 0 || flow.internalOut != 0) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Internal transfers: in ${_currency.format(flow.internalIn)} · out ${_currency.format(flow.internalOut)}',
-              style: DayBookStyles.label,
-            ),
-          ],
           if ((flow.internalIn - flow.internalOut).abs() > 0.005) ...[
             const SizedBox(height: 6),
             Text(
@@ -78,39 +67,51 @@ class DayBookMoneyPanel extends StatelessWidget {
               ),
             ),
           ],
-          if (sourceIn.isNotEmpty || sourceOut.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            if (sourceIn.isNotEmpty && sourceOut.isNotEmpty)
-              _ResponsivePair(
-                first: _BreakdownCard(
-                    title: 'Money In by Source', values: sourceIn),
-                second: _BreakdownCard(
-                    title: 'Money Out by Source', values: sourceOut),
-              )
-            else
-              _BreakdownCard(
-                title: sourceIn.isNotEmpty
-                    ? 'Money In by Source'
-                    : 'Money Out by Source',
-                values: sourceIn.isNotEmpty ? sourceIn : sourceOut,
-              ),
-          ],
-          if (modeIn.isNotEmpty || modeOut.isNotEmpty) ...[
+          if (sourceIn.isNotEmpty ||
+              sourceOut.isNotEmpty ||
+              modeIn.isNotEmpty ||
+              modeOut.isNotEmpty) ...[
             const SizedBox(height: 12),
-            if (modeIn.isNotEmpty && modeOut.isNotEmpty)
-              _ResponsivePair(
-                first:
-                    _BreakdownCard(title: 'Money In by Mode', values: modeIn),
-                second:
-                    _BreakdownCard(title: 'Money Out by Mode', values: modeOut),
-              )
-            else
-              _BreakdownCard(
-                title: modeIn.isNotEmpty
-                    ? 'Money In by Mode'
-                    : 'Money Out by Mode',
-                values: modeIn.isNotEmpty ? modeIn : modeOut,
-              ),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text('Source & Payment Mode Detail',
+                  style: DayBookStyles.sectionTitle),
+              children: [
+                if (sourceIn.isNotEmpty || sourceOut.isNotEmpty) ...[
+                  if (sourceIn.isNotEmpty && sourceOut.isNotEmpty)
+                    _ResponsivePair(
+                      first: _BreakdownCard(
+                          title: 'Money In by Source', values: sourceIn),
+                      second: _BreakdownCard(
+                          title: 'Money Out by Source', values: sourceOut),
+                    )
+                  else
+                    _BreakdownCard(
+                      title: sourceIn.isNotEmpty
+                          ? 'Money In by Source'
+                          : 'Money Out by Source',
+                      values: sourceIn.isNotEmpty ? sourceIn : sourceOut,
+                    ),
+                ],
+                if (modeIn.isNotEmpty || modeOut.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  if (modeIn.isNotEmpty && modeOut.isNotEmpty)
+                    _ResponsivePair(
+                      first: _BreakdownCard(
+                          title: 'Money In by Mode', values: modeIn),
+                      second: _BreakdownCard(
+                          title: 'Money Out by Mode', values: modeOut),
+                    )
+                  else
+                    _BreakdownCard(
+                      title: modeIn.isNotEmpty
+                          ? 'Money In by Mode'
+                          : 'Money Out by Mode',
+                      values: modeIn.isNotEmpty ? modeIn : modeOut,
+                    ),
+                ],
+              ],
+            ),
           ],
           if (flow.byBankAccount(incoming: true).isNotEmpty ||
               flow.byBankAccount(incoming: false).isNotEmpty) ...[

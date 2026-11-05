@@ -6,12 +6,12 @@ import 'day_book_money_flow.dart';
 
 enum DayBookCardType {
   sales('Total Sales'),
-  girviGiven('Girvi Given'),
   advanceReceived('Advance Received'),
+  receipts("Today's Receipts"),
+  dues("Today's Dues"),
+  girviGiven('Girvi Given'),
   returnAndCancellation('Return & Cancellation'),
   customerMetalPurchase('Customer Metal Purchase'),
-  dues("Today's Dues"),
-  receipts("Today's Receipts"),
   expenses('Expenses');
 
   const DayBookCardType(this.label);
@@ -106,13 +106,22 @@ class DayBookSmartSummary {
         DayBookSmartGroup('Regular invoices', documents: regular),
         DayBookSmartGroup('GST invoices', documents: gst),
       ]),
-      DayBookSmartCard(DayBookCardType.girviGiven, [
-        DayBookSmartGroup('Loans given',
-            documents: docs(DayBookDocumentKind.girviTicket)),
-      ]),
       DayBookSmartCard(DayBookCardType.advanceReceived, [
         DayBookSmartGroup('Advance receipts',
             documents: docs(DayBookDocumentKind.advanceReceipt)),
+      ]),
+      DayBookSmartCard(DayBookCardType.receipts, [
+        DayBookSmartGroup('Posted money in',
+            moneyEntries: receipts,
+            sourceDocuments: documents,
+            sourceEvents: summary.activityEvents),
+      ]),
+      DayBookSmartCard(DayBookCardType.dues, [
+        DayBookSmartGroup('Invoices with new dues', documents: invoiceDues),
+      ]),
+      DayBookSmartCard(DayBookCardType.girviGiven, [
+        DayBookSmartGroup('Loans given',
+            documents: docs(DayBookDocumentKind.girviTicket)),
       ]),
       DayBookSmartCard(DayBookCardType.returnAndCancellation, [
         DayBookSmartGroup('Sales returns',
@@ -123,15 +132,6 @@ class DayBookSmartSummary {
       DayBookSmartCard(DayBookCardType.customerMetalPurchase, [
         DayBookSmartGroup('Customer metal purchases',
             documents: customerPurchases),
-      ]),
-      DayBookSmartCard(DayBookCardType.dues, [
-        DayBookSmartGroup('Invoices with new dues', documents: invoiceDues),
-      ]),
-      DayBookSmartCard(DayBookCardType.receipts, [
-        DayBookSmartGroup('Posted money in',
-            moneyEntries: receipts,
-            sourceDocuments: documents,
-            sourceEvents: summary.activityEvents),
       ]),
       DayBookSmartCard(DayBookCardType.expenses, [
         DayBookSmartGroup('Expense entries', expenses: summary.expenseRecords),

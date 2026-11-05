@@ -23,6 +23,8 @@ void main() {
     ));
 
     expect(find.text('Physical Cash'), findsOneWidget);
+    expect(find.text('Opening Balance'), findsOneWidget);
+    expect(find.text('Closing Balance'), findsOneWidget);
     expect(find.text('Opening Money'), findsNothing);
     expect(find.text('Closing Money'), findsNothing);
     expect(find.text('Money In by Source'), findsNothing);
@@ -69,6 +71,11 @@ void main() {
       expect(find.text('Money Movement'), findsOneWidget);
       expect(find.text('Physical Cash'), findsOneWidget);
       expect(find.text('Bank Accounts'), findsOneWidget);
+      expect(find.text('Opening Balance'), findsOneWidget);
+      expect(find.text('Closing Balance'), findsOneWidget);
+      await tester.ensureVisible(find.text('Source & Payment Mode Detail'));
+      await tester.tap(find.text('Source & Payment Mode Detail'));
+      await tester.pumpAndSettle();
       expect(find.text('Money In by Source'), findsOneWidget);
       expect(tester.takeException(), isNull);
 

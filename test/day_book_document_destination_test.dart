@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_activity_event.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_expense_record.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_document_destination.dart';
 
 void main() {
@@ -109,5 +110,20 @@ void main() {
         dayBookReceiptDestination(
             receipt('DUE_COLLECTION', 'UNKNOWN'), const [], [due]),
         isNull);
+  });
+
+  test('expense source link carries selected date and saved reference', () {
+    expect(
+      dayBookExpenseDestination(
+        const DayBookExpenseRecord(
+          reference: 'EXP-101',
+          category: 'Shop Rent',
+          amount: 12000,
+          paymentMode: 'BANK',
+        ),
+        DateTime(2026, 11, 4),
+      ),
+      '/app/finance/expense?date=2026-11-04&reference=EXP-101',
+    );
   });
 }

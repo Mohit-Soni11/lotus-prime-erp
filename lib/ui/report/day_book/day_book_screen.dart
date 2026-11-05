@@ -179,33 +179,12 @@ class _DayBookScreenState extends State<DayBookScreen> {
         ),
         const SizedBox(height: 12),
       ],
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final stack = constraints.maxWidth < 860;
-          final sales =
-              DayBookDocumentSummaryPanel(documents: summary.documents);
-          final payments = PaymentMixPanel(summary: summary);
-
-          if (stack) {
-            return Column(
-              children: [
-                sales,
-                const SizedBox(height: 12),
-                payments,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 6, child: sales),
-              const SizedBox(width: 12),
-              Expanded(flex: 5, child: payments),
-            ],
-          );
-        },
+      DayBookDocumentSummaryPanel(
+        summary: summary,
+        showDemoPreview: true,
       ),
+      const SizedBox(height: 12),
+      PaymentMixPanel(summary: summary),
       const SizedBox(height: 12),
       if (summary.moneyFlow case final flow?) ...[
         DayBookExpensePanel(flow: flow),

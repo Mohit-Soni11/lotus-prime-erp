@@ -23,7 +23,12 @@ import '../../../repositories/finance/expense_repository.dart';
 import '../../../core/logging/app_logger.dart';
 
 class ExpenseController extends ChangeNotifier {
-  ExpenseController() {
+  ExpenseController({DateTime? initialDate, String? initialReference}) {
+    if (initialDate != null) _activeDate = initialDate;
+    if (initialReference?.trim().isNotEmpty == true) {
+      searchCtrl.text = initialReference!.trim();
+      _searchQuery = searchCtrl.text;
+    }
     _init();
   }
 

@@ -28,22 +28,7 @@ class DayBookDocumentCollectionMapper {
       if (collection == null) {
         return document;
       }
-      return DayBookDocument(
-        kind: document.kind,
-        sourceId: document.sourceId,
-        number: document.number,
-        date: document.date,
-        amount: document.amount,
-        status: document.status,
-        tax: document.tax,
-        collection: collection,
-        outstanding: document.outstanding,
-        customerId: document.customerId,
-        sourceType: document.sourceType,
-        originalSourceId: document.originalSourceId,
-        relatedEntityId: document.relatedEntityId,
-        supplierId: document.supplierId,
-      );
+      return document.withCollection(collection);
     }));
   }
 }

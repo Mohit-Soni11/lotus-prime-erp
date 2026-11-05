@@ -1,3 +1,5 @@
+import 'day_book_document_item.dart';
+
 enum DayBookActivityKind {
   girviRelease,
   girviInterest,
@@ -13,6 +15,9 @@ class DayBookActivityEvent {
     required this.date,
     required this.amount,
     required this.customerId,
+    this.partyName,
+    this.mobile,
+    this.items = const [],
   });
 
   final DayBookActivityKind kind;
@@ -21,4 +26,20 @@ class DayBookActivityEvent {
   final DateTime date;
   final double amount;
   final int? customerId;
+  final String? partyName;
+  final String? mobile;
+  final List<DayBookDocumentItem> items;
+
+  DayBookActivityEvent withParty({String? name, String? phone}) =>
+      DayBookActivityEvent(
+        kind: kind,
+        sourceId: sourceId,
+        number: number,
+        date: date,
+        amount: amount,
+        customerId: customerId,
+        partyName: name ?? partyName,
+        mobile: phone ?? mobile,
+        items: items,
+      );
 }

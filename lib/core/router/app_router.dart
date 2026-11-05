@@ -646,6 +646,9 @@ GoRouter createAppRouter() {
             path: RoutePaths.financeExpense,
             builder: (context, state) => ExpenseScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
+              initialDate:
+                  DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
+              initialReference: state.uri.queryParameters['reference'],
             ),
           ),
           GoRoute(

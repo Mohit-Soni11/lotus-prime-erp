@@ -1,3 +1,5 @@
+import 'day_book_document_item.dart';
+
 enum DayBookDocumentKind {
   regularInvoice('Regular Invoice'),
   gstInvoice('GST Invoice'),
@@ -27,6 +29,11 @@ class DayBookDocument {
     this.originalSourceId,
     this.relatedEntityId,
     this.supplierId,
+    this.partyName,
+    this.mobile,
+    this.items = const [],
+    this.savedPaid,
+    this.savedDue,
   });
 
   final DayBookDocumentKind kind;
@@ -43,6 +50,57 @@ class DayBookDocument {
   final int? originalSourceId;
   final int? relatedEntityId;
   final int? supplierId;
+  final String? partyName;
+  final String? mobile;
+  final List<DayBookDocumentItem> items;
+
+  /// Current saved invoice/voucher payment snapshot, separate from today's collection.
+  final double? savedPaid;
+  final double? savedDue;
+
+  DayBookDocument withCollection(double value) => DayBookDocument(
+        kind: kind,
+        sourceId: sourceId,
+        number: number,
+        date: date,
+        amount: amount,
+        status: status,
+        tax: tax,
+        collection: value,
+        outstanding: outstanding,
+        customerId: customerId,
+        sourceType: sourceType,
+        originalSourceId: originalSourceId,
+        relatedEntityId: relatedEntityId,
+        supplierId: supplierId,
+        partyName: partyName,
+        mobile: mobile,
+        items: items,
+        savedPaid: savedPaid,
+        savedDue: savedDue,
+      );
+
+  DayBookDocument withParty({String? name, String? phone}) => DayBookDocument(
+        kind: kind,
+        sourceId: sourceId,
+        number: number,
+        date: date,
+        amount: amount,
+        status: status,
+        tax: tax,
+        collection: collection,
+        outstanding: outstanding,
+        customerId: customerId,
+        sourceType: sourceType,
+        originalSourceId: originalSourceId,
+        relatedEntityId: relatedEntityId,
+        supplierId: supplierId,
+        partyName: name ?? partyName,
+        mobile: phone ?? mobile,
+        items: items,
+        savedPaid: savedPaid,
+        savedDue: savedDue,
+      );
 
   bool get isVoided =>
       status.toUpperCase() == 'VOID' || status.toUpperCase() == 'VOIDED';

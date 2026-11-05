@@ -1,98 +1,219 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-import '../../../models/reports/day_book/day_book_document.dart';
+import '../../../models/reports/day_book/day_book_demo_preview.dart';
+import '../../../models/reports/day_book/day_book_document_explorer.dart';
+import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
+import 'day_book_document_explorer_card.dart';
+import 'day_book_document_explorer_summary.dart';
 
-class DayBookDocumentSummaryPanel extends StatelessWidget {
-  const DayBookDocumentSummaryPanel({super.key, required this.documents});
+class DayBookDocumentSummaryPanel extends StatefulWidget {
+  const DayBookDocumentSummaryPanel({
+    super.key,
+    required this.summary,
+    this.showDemoPreview = false,
+  });
 
-  final List<DayBookDocument> documents;
+  final DayBookSummary summary;
+  final bool showDemoPreview;
+
+  @override
+  State<DayBookDocumentSummaryPanel> createState() =>
+      _DayBookDocumentSummaryPanelState();
+}
+
+class _DayBookDocumentSummaryPanelState
+    extends State<DayBookDocumentSummaryPanel> {
+  DayBookExplorerTab _selected = DayBookExplorerTab.sales;
+  int _visibleCount = 20;
+
+  void _select(DayBookExplorerTab tab) {
+    setState(() {
+      _selected = tab;
+      _visibleCount = 20;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final active = documents.where((document) => !document.isVoided).toList();
-    final voidCount = documents.length - active.length;
-    final currency = NumberFormat.currency(locale: 'en_IN', symbol: 'INR ');
+    final summary = widget.showDemoPreview
+        ? DayBookDemoPreview.forDate(widget.summary.date)
+        : widget.summary;
+    final explorer = DayBookDocumentExplorer(summary);
+    final entries = explorer.entriesFor(_selected);
+    final visible = entries.take(_visibleCount).toList();
     return Container(
       decoration: DayBookStyles.panel(),
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        title:
-            Text('Source Document Summary', style: DayBookStyles.sectionTitle),
-        subtitle: Text(
-          'Invoices, advances, Girvi loans, purchases and returns stay in their own categories.',
-          style: DayBookStyles.sectionSubtitle,
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: 840,
-              child: Column(children: [
-                _row('Source', 'Count', 'Face Value', 'Saved Tax',
-                    'Posted Collection', 'Saved Outstanding',
-                    header: true),
-                const Divider(height: 1),
-                for (final kind in DayBookDocumentKind.values)
-                  _summaryRow(kind, active, currency),
-              ]),
+      padding: const EdgeInsets.all(14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          const Icon(Icons.description_outlined,
+              color: DayBookColors.goldMetal, size: 25),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Source Document Summary',
+                    style: DayBookStyles.sectionTitle),
+                Text(
+                    'Drill down by document type to view invoices, amounts and payment details.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: DayBookStyles.sectionSubtitle),
+              ],
             ),
           ),
-          if (voidCount > 0)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text('$voidCount voided documents excluded from totals.',
+          if (widget.showDemoPreview)
+            Tooltip(
+              message: 'Sample records for design review. Links are disabled.',
+              child: Text('DEMO PREVIEW',
+                  style: DayBookStyles.labelStrong.copyWith(
+                    color: DayBookColors.warning,
+                    fontSize: 11,
+                  )),
+            ),
+        ]),
+        const SizedBox(height: 13),
+        _ExplorerTabs(selected: _selected, onSelected: _select),
+        const SizedBox(height: 10),
+        DayBookDocumentExplorerSummary(tab: _selected, entries: entries),
+        const SizedBox(height: 11),
+        if (entries.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 30),
+            child: Center(
+              child: Text(
+                  'No ${_selected.label.toLowerCase()} records for this day.',
                   style: DayBookStyles.label),
             ),
-          const SizedBox(height: 6),
+          )
+        else
+          LayoutBuilder(builder: (context, constraints) {
+            const gap = 10.0;
+            final width = constraints.maxWidth;
+            final columns = width >= 1080
+                ? 5
+                : width >= 850
+                    ? 4
+                    : width >= 650
+                        ? 3
+                        : width >= 430
+                            ? 2
+                            : 1;
+            final cardWidth = (width - gap * (columns - 1)) / columns;
+            return Wrap(spacing: gap, runSpacing: gap, children: [
+              for (final entry in visible)
+                SizedBox(
+                  width: cardWidth,
+                  child: DayBookDocumentExplorerCard(
+                    entry: entry,
+                    summary: summary,
+                    isDemo: widget.showDemoPreview,
+                  ),
+                ),
+            ]);
+          }),
+        if (entries.length > visible.length) ...[
+          const SizedBox(height: 10),
           Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'A dash means the source has no reliable value for that field. Advance receipts and Girvi principal are not sales turnover.',
-              style: DayBookStyles.label,
+            alignment: Alignment.center,
+            child: TextButton.icon(
+              onPressed: () => setState(() => _visibleCount += 20),
+              icon: const Icon(Icons.expand_more_rounded),
+              label: Text(
+                  'Show more · ${entries.length - visible.length} remaining'),
             ),
           ),
         ],
+      ]),
+    );
+  }
+}
+
+class _ExplorerTabs extends StatelessWidget {
+  const _ExplorerTabs({required this.selected, required this.onSelected});
+
+  final DayBookExplorerTab selected;
+  final ValueChanged<DayBookExplorerTab> onSelected;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final inline = constraints.maxWidth >= 1050;
+          final tabs = Row(children: [
+            for (final tab in DayBookExplorerTab.values)
+              inline
+                  ? Expanded(child: _tab(tab))
+                  : SizedBox(width: 145, child: _tab(tab)),
+          ]);
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: Container(
+              height: 37,
+              decoration: BoxDecoration(
+                border: Border.all(color: DayBookColors.bodyBorder),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: inline
+                  ? tabs
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: tabs,
+                    ),
+            ),
+          );
+        },
+      );
+
+  Widget _tab(DayBookExplorerTab tab) {
+    final active = selected == tab;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: ValueKey('document-tab-${tab.name}'),
+        onTap: () => onSelected(tab),
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 5),
+          decoration: BoxDecoration(
+            gradient: active
+                ? const LinearGradient(colors: [
+                    Color(0xFFB77C0B),
+                    Color(0xFFD9A72F),
+                  ])
+                : null,
+            border: const Border(
+              right: BorderSide(color: DayBookColors.bodyBorder),
+            ),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(_icon(tab),
+                size: 17,
+                color: active ? Colors.white : DayBookColors.goldMetal),
+            const SizedBox(width: 6),
+            Flexible(
+                child: Text(tab.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DayBookStyles.labelStrong.copyWith(
+                        color:
+                            active ? Colors.white : DayBookColors.textPrimary,
+                        fontSize: 11.5))),
+          ]),
+        ),
       ),
     );
   }
 
-  Widget _summaryRow(DayBookDocumentKind kind, List<DayBookDocument> documents,
-      NumberFormat currency) {
-    final rows = documents.where((document) => document.kind == kind).toList();
-    double? totalOf(double? Function(DayBookDocument) value) {
-      if (rows.isEmpty) return null;
-      if (rows.any((row) => value(row) == null)) return null;
-      return rows.fold<double>(0, (sum, row) => sum + value(row)!);
-    }
-
-    String money(double? value) => value == null ? '—' : currency.format(value);
-    return _row(
-      kind.label,
-      '${rows.length}',
-      money(rows.fold<double>(0, (sum, row) => sum + row.amount)),
-      money(totalOf((row) => row.tax)),
-      money(totalOf((row) => row.collection)),
-      money(totalOf((row) => row.outstanding)),
-    );
-  }
-
-  Widget _row(String source, String count, String amount, String tax,
-      String collection, String outstanding,
-      {bool header = false}) {
-    final style = header ? DayBookStyles.labelStrong : DayBookStyles.label;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: Row(children: [
-        SizedBox(width: 175, child: Text(source, style: style)),
-        SizedBox(width: 55, child: Text(count, style: style)),
-        SizedBox(width: 145, child: Text(amount, style: style)),
-        SizedBox(width: 135, child: Text(tax, style: style)),
-        SizedBox(width: 160, child: Text(collection, style: style)),
-        Expanded(child: Text(outstanding, style: style)),
-      ]),
-    );
-  }
+  IconData _icon(DayBookExplorerTab tab) => switch (tab) {
+        DayBookExplorerTab.sales => Icons.shopping_bag_outlined,
+        DayBookExplorerTab.gstSales => Icons.percent_rounded,
+        DayBookExplorerTab.girvi => Icons.balance_outlined,
+        DayBookExplorerTab.advance => Icons.layers_outlined,
+        DayBookExplorerTab.returns => Icons.keyboard_return_rounded,
+        DayBookExplorerTab.purchase => Icons.inventory_2_outlined,
+        DayBookExplorerTab.expenses => Icons.receipt_long_outlined,
+        DayBookExplorerTab.otherPayments => Icons.credit_card_outlined,
+      };
 }

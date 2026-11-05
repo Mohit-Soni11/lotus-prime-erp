@@ -37,8 +37,15 @@ import 'expense_entry_dialog.dart';
 
 class ExpenseScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final DateTime? initialDate;
+  final String? initialReference;
 
-  const ExpenseScreen({super.key, this.onBack});
+  const ExpenseScreen({
+    super.key,
+    this.onBack,
+    this.initialDate,
+    this.initialReference,
+  });
 
   @override
   State<ExpenseScreen> createState() => _ExpenseScreenState();
@@ -50,7 +57,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   @override
   void initState() {
     super.initState();
-    _ctrl = ExpenseController();
+    _ctrl = ExpenseController(
+      initialDate: widget.initialDate,
+      initialReference: widget.initialReference,
+    );
   }
 
   @override

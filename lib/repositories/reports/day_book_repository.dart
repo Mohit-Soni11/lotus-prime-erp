@@ -11,6 +11,8 @@ import 'day_book_custody_repository.dart';
 import 'day_book_document_repository.dart';
 import 'day_book_activity_repository.dart';
 import 'day_book_expense_repository.dart';
+import 'day_book_owned_stock_repository.dart';
+import 'day_book_customer_metal_sales_repository.dart';
 import '../../models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -59,6 +61,10 @@ class DayBookRepository {
             await DayBookMoneyRepository(_db).fetch(date, openingCash);
         final stockMovements =
             await DayBookStockMovementRepository(_db).fetch(date);
+        final ownedStockPosition =
+            await DayBookOwnedStockRepository(_db).fetch(date, stockMovements);
+        final customerMetalSales =
+            await DayBookCustomerMetalSalesRepository(_db).fetch(date);
         final documents = DayBookDocumentCollectionMapper.apply(
           await DayBookDocumentRepository(_db).fetch(date),
           moneyFlow,
@@ -104,11 +110,15 @@ class DayBookRepository {
           date: date,
           moneyFlow: moneyFlow,
           stockMovements: stockMovements,
+          ownedStockPosition: ownedStockPosition,
+          customerMetalSales: customerMetalSales,
           documents: documents,
           activityEvents: activityEvents,
           expenseRecords: expenseRecords,
           custodyPosition: custodyPosition,
           openingCash: openingCash,
+          openingGoldGrams: ownedStockPosition.gold.openingGrams,
+          openingSilverGrams: ownedStockPosition.silver.openingGrams,
           cashIn: cashIn,
           cashOut: cashOut,
           metalIn: metalIn,

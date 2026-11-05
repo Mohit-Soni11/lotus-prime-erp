@@ -2,6 +2,17 @@ import '../../../constants/app_routes.dart';
 import '../../../models/reports/day_book/day_book_activity_event.dart';
 import '../../../models/reports/day_book/day_book_document.dart';
 import '../../../models/reports/day_book/day_book_money_flow.dart';
+import '../../../models/reports/day_book/day_book_expense_record.dart';
+
+String dayBookExpenseDestination(DayBookExpenseRecord record, DateTime date) {
+  final day = '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+  return Uri(path: RoutePaths.financeExpense, queryParameters: {
+    'date': day,
+    'reference': record.reference,
+  }).toString();
+}
 
 String? dayBookDocumentDestination(DayBookDocument document) {
   final id = document.customerId;

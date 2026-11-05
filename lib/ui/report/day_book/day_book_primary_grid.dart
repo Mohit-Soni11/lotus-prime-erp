@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
-import 'day_book_metal_position_panel.dart';
+import 'day_book_position_panels.dart';
 import 'day_book_money_panel.dart';
 
 class DayBookPrimaryGrid extends StatelessWidget {
@@ -12,7 +12,7 @@ class DayBookPrimaryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final position = DayBookMetalPositionPanel(summary: summary);
+          final position = DayBookPositionPanels(summary: summary);
           final flow = summary.moneyFlow;
           if (flow == null) return position;
 

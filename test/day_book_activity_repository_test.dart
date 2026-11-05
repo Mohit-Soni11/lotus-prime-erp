@@ -75,6 +75,12 @@ void main() {
     expect(events.singleWhere((event) => event.sourceId == meltId).kind,
         DayBookActivityKind.girviMelted);
     expect(events.singleWhere((event) => event.sourceId == meltId).amount, 0);
+    final release = events.singleWhere((event) =>
+        event.sourceId == releaseId &&
+        event.kind == DayBookActivityKind.girviRelease);
+    expect(release.partyName, 'Customer');
+    expect(release.mobile, '9000000777');
+    expect(release.items.single.name, 'Ring');
     expect(await DayBookActivityRepository(db).fetch(prior), isEmpty);
   });
 
@@ -113,5 +119,6 @@ void main() {
     expect(events.single.kind, DayBookActivityKind.dueCollection);
     expect(events.single.amount, 500);
     expect(events.single.sourceId, billId);
+    expect(events.single.partyName, 'Due Customer');
   });
 }
