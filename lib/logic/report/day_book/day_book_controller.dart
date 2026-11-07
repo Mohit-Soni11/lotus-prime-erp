@@ -16,6 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
+import '../../../models/reports/day_book/day_book_balance_verification.dart';
+import '../../../models/finance/cash_book/cash_book_enums.dart';
+import '../../../repositories/finance/cash_book_repository.dart';
+import '../../../repositories/reports/day_book_balance_verification_repository.dart';
 import '../../../repositories/reports/day_book_repository.dart';
 import '../../../database/db/app_database.dart';
 import '../../../features/finance/ledger/data/finance_day_closure_repository.dart';
@@ -28,6 +32,9 @@ class DayBookController extends ChangeNotifier {
   }
 
   final DayBookRepository _repo = DayBookRepository();
+  final CashBookRepository _cashEntries = CashBookRepository();
+  final DayBookBalanceVerificationRepository _balanceVerifications =
+      DayBookBalanceVerificationRepository(AppDatabase());
   final FinanceDayClosureRepository _closures =
       FinanceDayClosureRepository(AppDatabase());
   final DayBookCloseAuthorization _closeAuthorization =
@@ -63,6 +70,8 @@ class DayBookController extends ChangeNotifier {
   DayBookSummary? get summary => _summary;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  DayBookBalanceVerification? _balanceVerification;
+  DayBookBalanceVerification? get balanceVerification => _balanceVerification;
 
   // ── Section Expand/Collapse ───────────────────────────────────────────────
   bool cashInExpanded = true;
@@ -156,41 +165,79 @@ class DayBookController extends ChangeNotifier {
       final locked = await _closures.isClosed(requestedDate);
       if (_disposed || generation != _loadGeneration) return;
 
-      _summary = DayBookSummary(
-        date: data.date,
-        moneyFlow: data.moneyFlow,
-        stockMovements: data.stockMovements,
-        ownedStockPosition: data.ownedStockPosition,
-        customerMetalSales: data.customerMetalSales,
-        documents: data.documents,
-        activityEvents: data.activityEvents,
-        expenseRecords: data.expenseRecords,
-        custodyPosition: data.custodyPosition,
-        metalPositionVerified: data.metalPositionVerified,
-        openingCash: data.openingCash,
-        openingGoldGrams: data.openingGoldGrams,
-        openingSilverGrams: data.openingSilverGrams,
-        cashIn: data.cashIn,
-        cashOut: data.cashOut,
-        metalIn: data.metalIn,
-        metalOut: data.metalOut,
-        paymentBreakup: data.paymentBreakup,
-        anomalies: data.anomalies,
-        prediction: data.prediction,
-        isDayLocked: locked,
-      );
+      final balanceVerification =
+          await _balanceVerifications.fetch(requestedDate);
+      if (_disposed || generation != _loadGeneration) return;
+
+      _summary = data.withDayLocked(locked);
+      _balanceVerification = balanceVerification;
 
       _errorMessage = null;
     } catch (e) {
       if (_disposed || generation != _loadGeneration) return;
       _errorMessage = e.toString();
       _summary = null;
+      _balanceVerification = null;
     } finally {
       if (!_disposed && generation == _loadGeneration) {
         _isLoading = false;
         notifyListeners();
       }
     }
+  }
+
+  Future<bool> addManualCashIncome({
+    required double amount,
+    required String category,
+    required String description,
+    String? customLabel,
+    String? partyName,
+  }) async {
+    final now = DateTime.now();
+    final saved = await _cashEntries.saveExtraCashIncome(
+      categoryDbValue: category,
+      amount: amount,
+      txnDate: DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        now.hour,
+        now.minute,
+        now.second,
+      ),
+      description: description,
+      customLabel: customLabel,
+      partyName: partyName,
+    );
+    if (saved) await loadData(silent: true);
+    return saved;
+  }
+
+  Future<DayBookBalanceVerification> verifyBalance({
+    required double actualCash,
+    required double actualBank,
+    ExpenseCategory? cashExpenseCategory,
+    String? cashReason,
+    String? bankReason,
+  }) async {
+    final flow = _summary?.moneyFlow;
+    if (flow == null) throw StateError('Recorded balance is unavailable.');
+    final actorId = await _closeAuthorization.authorizedActorId(
+      action: 'verify the opening balance',
+    );
+    final result = await _balanceVerifications.verify(
+      date: _selectedDate,
+      expectedCash: flow.openingCash,
+      actualCash: actualCash,
+      expectedBank: flow.openingBank,
+      actualBank: actualBank,
+      cashExpenseCategory: cashExpenseCategory,
+      cashReason: cashReason,
+      bankReason: bankReason,
+      verifiedBy: actorId,
+    );
+    await loadData(silent: true);
+    return result;
   }
 
   // ==========================================================================
@@ -298,29 +345,7 @@ class DayBookController extends ChangeNotifier {
     if (_summary == null) return;
     final updated = List<AnomalyAlert>.from(_summary!.anomalies)
       ..removeAt(index);
-    _summary = DayBookSummary(
-      date: _summary!.date,
-      moneyFlow: _summary!.moneyFlow,
-      stockMovements: _summary!.stockMovements,
-      ownedStockPosition: _summary!.ownedStockPosition,
-      customerMetalSales: _summary!.customerMetalSales,
-      documents: _summary!.documents,
-      activityEvents: _summary!.activityEvents,
-      expenseRecords: _summary!.expenseRecords,
-      custodyPosition: _summary!.custodyPosition,
-      metalPositionVerified: _summary!.metalPositionVerified,
-      openingCash: _summary!.openingCash,
-      openingGoldGrams: _summary!.openingGoldGrams,
-      openingSilverGrams: _summary!.openingSilverGrams,
-      cashIn: _summary!.cashIn,
-      cashOut: _summary!.cashOut,
-      metalIn: _summary!.metalIn,
-      metalOut: _summary!.metalOut,
-      paymentBreakup: _summary!.paymentBreakup,
-      anomalies: updated,
-      prediction: _summary!.prediction,
-      isDayLocked: _summary!.isDayLocked,
-    );
+    _summary = _summary!.copyWith(anomalies: updated);
     notifyListeners();
   }
 
@@ -357,6 +382,11 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   Future<bool> closeDay() async {
     closeError = null;
+    if (_balanceVerification == null) {
+      closeError =
+          'Verify today’s opening cash and bank in Set Balance before closing the day.';
+      return false;
+    }
     if (!isMetalPositionVerified) {
       closeError =
           'Owned metal opening and closing are not verified. Day closing is unavailable until stock reconciliation is complete.';

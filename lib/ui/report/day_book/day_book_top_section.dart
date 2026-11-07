@@ -36,7 +36,7 @@ class DayBookTopSection extends StatelessWidget {
             onSharePdf: onSharePdf,
           ),
           const SizedBox(height: 14),
-          DayBookOverviewPanel(summary: summary, showDemoPreview: true),
+          DayBookOverviewPanel(summary: summary),
         ],
       );
 }

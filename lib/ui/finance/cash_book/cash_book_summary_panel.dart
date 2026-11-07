@@ -7,24 +7,13 @@ class CashBookSummaryPanel extends StatelessWidget {
   const CashBookSummaryPanel({
     super.key,
     required this.summary,
-    required this.onEditOpeningBalance,
   });
 
   final CashBookSummaryModel summary;
-  final VoidCallback onEditOpeningBalance;
 
   @override
   Widget build(BuildContext context) {
     final cards = [
-      _Metric(
-        CashBookStrings.openingBalance,
-        summary.openingBalanceStr,
-        'Cash at the start of this period',
-        CashBookIcons.openingBalance,
-        CashBookColors.brandGold,
-        CashBookColors.brandGoldLight,
-        onEditOpeningBalance,
-      ),
       _Metric(
         CashBookStrings.totalIncome,
         summary.totalIncomeStr,
@@ -32,7 +21,6 @@ class CashBookSummaryPanel extends StatelessWidget {
         CashBookIcons.income,
         CashBookColors.incomeChip,
         CashBookColors.incomeBg,
-        null,
       ),
       _Metric(
         CashBookStrings.totalExpense,
@@ -41,7 +29,6 @@ class CashBookSummaryPanel extends StatelessWidget {
         CashBookIcons.expense,
         CashBookColors.expenseChip,
         CashBookColors.expenseBg,
-        null,
       ),
       _Metric(
         CashBookStrings.closingBalance,
@@ -56,7 +43,6 @@ class CashBookSummaryPanel extends StatelessWidget {
         summary.closingBalance >= 0
             ? CashBookColors.incomeBg
             : CashBookColors.expenseBg,
-        null,
       ),
     ];
 
@@ -66,7 +52,7 @@ class CashBookSummaryPanel extends StatelessWidget {
             ? 1
             : constraints.maxWidth < 1000
                 ? 2
-                : 4;
+                : 3;
         const gap = 12.0;
         final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
         return Wrap(
@@ -93,7 +79,6 @@ class _Metric {
     this.icon,
     this.accent,
     this.background,
-    this.onEdit,
   );
 
   final String label;
@@ -102,7 +87,6 @@ class _Metric {
   final IconData icon;
   final Color accent;
   final Color background;
-  final VoidCallback? onEdit;
 }
 
 class _MetricCard extends StatelessWidget {
@@ -176,16 +160,6 @@ class _MetricCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (metric.onEdit != null)
-                IconButton(
-                  onPressed: metric.onEdit,
-                  tooltip: CashBookStrings.editOpeningBalance,
-                  icon: const Icon(CashBookIcons.edit, size: 17),
-                  color: CashBookColors.textDark,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints.tightFor(width: 28, height: 28),
-                ),
             ],
           ),
           const SizedBox(height: 3),

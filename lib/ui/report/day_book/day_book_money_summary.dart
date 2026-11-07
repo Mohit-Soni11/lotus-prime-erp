@@ -5,9 +5,14 @@ import '../../../models/reports/day_book/day_book_money_flow.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 
 class DayBookMoneySummary extends StatelessWidget {
-  const DayBookMoneySummary({super.key, required this.flow});
+  const DayBookMoneySummary({
+    super.key,
+    required this.flow,
+    this.onAddCashIncome,
+  });
 
   final DayBookMoneyFlow flow;
+  final VoidCallback? onAddCashIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +47,29 @@ class DayBookMoneySummary extends StatelessWidget {
           DayBookColors.warningBorder),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        const Icon(DayBookIcons.netMovement,
-            size: 24, color: DayBookColors.goldMetal),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text('Money Movement',
-                style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
-      ]),
+      LayoutBuilder(builder: (context, constraints) {
+        final compact = constraints.maxWidth < 500;
+        return Row(children: [
+          const Icon(DayBookIcons.netMovement,
+              size: 24, color: DayBookColors.goldMetal),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text('Money Movement',
+                  style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
+          if (onAddCashIncome != null)
+            compact
+                ? IconButton(
+                    tooltip: 'Add Cash Income',
+                    onPressed: onAddCashIncome,
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: onAddCashIncome,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Cash Income'),
+                  ),
+        ]);
+      }),
       const SizedBox(height: 13),
       LayoutBuilder(builder: (context, constraints) {
         final columns = constraints.maxWidth >= 900

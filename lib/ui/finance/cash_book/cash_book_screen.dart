@@ -6,10 +6,8 @@ import '../../../logic/finance/cash_book/cash_book_history_controller.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../theme/finance/cash_book/cash_book_theme.dart';
 import '../../shared/system_status_badge.dart';
-import 'cash_book_add_entry_button.dart';
 import 'cash_book_app_bar.dart';
 import 'cash_book_body.dart';
-import 'cash_book_entry_dialog.dart';
 
 class CashBookScreen extends StatefulWidget {
   const CashBookScreen({super.key, required this.onBack});
@@ -38,14 +36,6 @@ class _CashBookScreenState extends State<CashBookScreen> {
     _ctrl.dispose();
     _history.dispose();
     super.dispose();
-  }
-
-  void _showAddEntryDialog() {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
-      builder: (_) => CashBookEntryDialog(ctrl: _ctrl),
-    );
   }
 
   void _goHome() {
@@ -128,10 +118,6 @@ class _CashBookScreenState extends State<CashBookScreen> {
             history: _history,
           ),
         ),
-        floatingActionButton: CashBookAddEntryButton(
-          onPressed: _showAddEntryDialog,
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
     );
   }

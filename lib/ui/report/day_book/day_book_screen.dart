@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../constants/app_routes.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
+import 'day_book_cash_income_dialog.dart';
+import 'day_book_balance_dialog.dart';
 import 'day_book_top_section.dart';
 import 'day_book_document_summary_panel.dart';
 import 'day_book_eod_dialog.dart';
@@ -50,6 +54,37 @@ class _DayBookScreenState extends State<DayBookScreen> {
     );
   }
 
+  Future<void> _addCashIncome() async {
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierColor: DayBookColors.overlay,
+      builder: (_) => DayBookCashIncomeDialog(
+        date: _ctrl.selectedDate,
+        onSave: _ctrl.addManualCashIncome,
+      ),
+    );
+    if (saved == true) _showSuccess('Cash income saved in Day Book.');
+  }
+
+  Future<void> _setBalance() async {
+    final flow = _ctrl.summary?.moneyFlow;
+    if (flow == null) return;
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierColor: DayBookColors.overlay,
+      builder: (_) => DayBookBalanceDialog(
+        date: _ctrl.selectedDate,
+        expectedCash: flow.openingCash,
+        expectedBank: flow.openingBank,
+        bankAccountConfigured: flow.bankAccountCount != 0,
+        existing: _ctrl.balanceVerification,
+        onSave: _ctrl.verifyBalance,
+        onOpenBankBook: () => context.go(AppRoutes.bankBookRoute),
+      ),
+    );
+    if (saved == true) _showSuccess('Daily balance verification saved.');
+  }
+
   Future<void> _previewPdf() async {
     final summary = _ctrl.summary;
     if (summary == null) return;
@@ -92,6 +127,15 @@ class _DayBookScreenState extends State<DayBookScreen> {
     AppFeedback.show(
       context,
       type: AppFeedbackType.info,
+      message: message,
+    );
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
       message: message,
     );
   }
@@ -153,7 +197,17 @@ class _DayBookScreenState extends State<DayBookScreen> {
               onSharePdf: _exporting ? null : _sharePdf,
             ),
             const SizedBox(height: 16),
-            DayBookPrimaryGrid(summary: summary),
+            DayBookPrimaryGrid(
+              summary: summary,
+              onAddCashIncome: summary.isDayLocked ? null : _addCashIncome,
+              showBalanceAction:
+                  _ctrl.isToday || _ctrl.balanceVerification != null,
+              balanceSaved: _ctrl.balanceVerification != null,
+              onSetBalance: (_ctrl.isToday && !summary.isDayLocked) ||
+                      _ctrl.balanceVerification != null
+                  ? _setBalance
+                  : null,
+            ),
             const SizedBox(height: 16),
             if (summary.anomalies.isNotEmpty) ...[
               _Reveal(
@@ -180,19 +234,16 @@ class _DayBookScreenState extends State<DayBookScreen> {
       ],
       DayBookDocumentSummaryPanel(
         summary: summary,
-        showDemoPreview: true,
       ),
       const SizedBox(height: 12),
       DayBookReceiptsRegisterPanel(
         summary: summary,
-        showDemoPreview: true,
       ),
       const SizedBox(height: 12),
       _Reveal(
         delay: 180,
         child: DayBookStockAddedPanel(
           summary: summary,
-          showDemoPreview: true,
         ),
       ),
     ];

@@ -2,9 +2,7 @@
 // FILE        : cash_book_controller.dart
 // MODULE      : Accounts / Cash Book
 // LAYER       : Logic / Controller
-// DESCRIPTION : Master ChangeNotifier controller for Cash Book screen.
-//               v2 — customLabelCtrl added for 'Other' category support.
-//               Zero-lag state management — UI uses ListenableBuilder only.
+// DESCRIPTION : Cash ledger state, date navigation, and transaction review.
 // =============================================================================
 
 import 'dart:async';
@@ -48,26 +46,6 @@ class CashBookController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // ── Entry Form ────────────────────────────────────────────────────────────
-  final TextEditingController amountCtrl = TextEditingController();
-  final TextEditingController descriptionCtrl = TextEditingController();
-  final TextEditingController partyNameCtrl = TextEditingController();
-  final TextEditingController customLabelCtrl = TextEditingController(); // ✅ v2
-
-  String _entryCategory = IncomeCategory.miscIncome.dbValue;
-  DateTime _entryDate = DateTime.now();
-  bool _isSaving = false;
-  String? _entryError;
-
-  String get entryCategory => _entryCategory;
-  DateTime get entryDate => _entryDate;
-  bool get isSaving => _isSaving;
-  String? get entryError => _entryError;
-
-  /// Whether the currently selected category requires a custom label
-  bool get entryNeedsCustomLabel =>
-      IncomeCategory.fromDb(_entryCategory).requiresCustomLabel;
-
   // ── Stream ────────────────────────────────────────────────────────────────
   StreamSubscription<List<CashTransactionModel>>? _watchSub;
   int _watchGeneration = 0;
@@ -77,13 +55,8 @@ class CashBookController extends ChangeNotifier {
   // ==========================================================================
 
   void _init() {
-    // ✅ BUG FIX: customLabelCtrl changes must trigger ListenableBuilder
-    // so the Save button reactively enables/disables as user types
-    customLabelCtrl.addListener(_notify);
     _startWatch();
   }
-
-  void _notify() => notifyListeners();
 
   // ==========================================================================
   // LIVE WATCH
@@ -128,26 +101,6 @@ class CashBookController extends ChangeNotifier {
         notifyListeners();
       },
     );
-  }
-
-  // ==========================================================================
-  // SUMMARY
-  // ==========================================================================
-
-  Future<void> _refreshSummary() async {
-    final range = _dateRange;
-    final monthRange = _monthRange;
-    _summary = await _repository.computeSummary(
-      from: range.start,
-      to: range.end,
-    );
-    _monthSummary = await _repository.computeSummary(
-      from: monthRange.start,
-      to: monthRange.end,
-    );
-    _computeRunningBalances();
-    _isLoading = false;
-    _errorMessage = null;
   }
 
   // ==========================================================================
@@ -265,105 +218,9 @@ class CashBookController extends ChangeNotifier {
     _startWatch();
   }
 
-  // ==========================================================================
-  // PUBLIC API — Entry Form
-  // ==========================================================================
-
-  void setEntryCategory(String categoryDbValue) {
-    _entryCategory = categoryDbValue;
-    customLabelCtrl.clear(); // Reset custom label on category change
-    notifyListeners();
-  }
-
-  void setEntryDate(DateTime date) {
-    _entryDate = date;
-    notifyListeners();
-  }
-
-  void resetEntryForm() {
-    amountCtrl.clear();
-    descriptionCtrl.clear();
-    partyNameCtrl.clear();
-    customLabelCtrl.clear();
-    _entryCategory = IncomeCategory.miscIncome.dbValue;
-    _entryDate = DateTime.now();
-    _entryError = null;
-    notifyListeners();
-  }
-
-  Future<bool> saveEntry() async {
-    if (_isSaving) return false;
-    final amountText = amountCtrl.text.trim();
-    final amount = double.tryParse(amountText);
-    if (amount == null || !amount.isFinite || amount <= 0) {
-      _entryError = 'Enter an amount greater than zero.';
-      notifyListeners();
-      return false;
-    }
-
-    // Validate: if 'Other' selected, customLabel must not be empty
-    if (entryNeedsCustomLabel && customLabelCtrl.text.trim().isEmpty) {
-      _entryError = 'Enter a category name.';
-      notifyListeners();
-      return false;
-    }
-    if (descriptionCtrl.text.trim().isEmpty) {
-      _entryError = 'Enter the reason for cash received.';
-      notifyListeners();
-      return false;
-    }
-
-    _isSaving = true;
-    _entryError = null;
-    notifyListeners();
-
-    final success = await _repository.saveExtraCashIncome(
-      categoryDbValue: _entryCategory,
-      amount: amount,
-      txnDate: _entryDate,
-      customLabel: entryNeedsCustomLabel ? customLabelCtrl.text.trim() : null,
-      description: descriptionCtrl.text.trim().isEmpty
-          ? null
-          : descriptionCtrl.text.trim(),
-      partyName:
-          partyNameCtrl.text.trim().isEmpty ? null : partyNameCtrl.text.trim(),
-    );
-
-    _isSaving = false;
-    if (success) {
-      resetEntryForm();
-    } else {
-      _entryError =
-          'Cash income could not be saved. Check whether this date is closed.';
-    }
-    notifyListeners();
-    return success;
-  }
-
   Future<bool> voidTransaction(int id, String reason) async {
     return _repository.voidTransaction(id, reason);
   }
-
-  Future<bool> updateOpeningBalance(double amount) async {
-    final success = await _repository.updateOpeningBalance(amount);
-    if (success) await _refreshSummary();
-    notifyListeners();
-    return success;
-  }
-
-  // ==========================================================================
-  // DISPLAY HELPERS
-  // ==========================================================================
-
-  List<String> get availableCategories {
-    return [
-      IncomeCategory.miscIncome.dbValue,
-      IncomeCategory.otherIncome.dbValue
-    ];
-  }
-
-  String categoryLabel(String dbValue) =>
-      IncomeCategory.fromDb(dbValue).displayLabel;
 
   // ==========================================================================
   // PRIVATE HELPERS
@@ -393,11 +250,6 @@ class CashBookController extends ChangeNotifier {
   void dispose() {
     _watchGeneration++;
     _watchSub?.cancel();
-    customLabelCtrl.removeListener(_notify); // ✅ BUG FIX: cleanup listener
-    amountCtrl.dispose();
-    descriptionCtrl.dispose();
-    partyNameCtrl.dispose();
-    customLabelCtrl.dispose();
     super.dispose();
   }
 }

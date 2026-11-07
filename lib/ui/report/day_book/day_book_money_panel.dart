@@ -9,9 +9,14 @@ final _currency =
     NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
 class DayBookMoneyPanel extends StatelessWidget {
-  const DayBookMoneyPanel({super.key, required this.flow});
+  const DayBookMoneyPanel({
+    super.key,
+    required this.flow,
+    this.onAddCashIncome,
+  });
 
   final DayBookMoneyFlow flow;
+  final VoidCallback? onAddCashIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,10 @@ class DayBookMoneyPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          DayBookMoneySummary(flow: flow),
+          DayBookMoneySummary(
+            flow: flow,
+            onAddCashIncome: onAddCashIncome,
+          ),
           const SizedBox(height: 10),
           _ResponsivePair(
             first: _PositionCard(
@@ -45,6 +53,15 @@ class DayBookMoneyPanel extends StatelessWidget {
               closing: flow.closingBank,
             ),
           ),
+          if (flow.bankAccountCount == 0) ...[
+            const SizedBox(height: 9),
+            Text(
+              'No bank account is configured. Add one in Bank Book to include its opening balance.',
+              style: DayBookStyles.labelStrong.copyWith(
+                color: DayBookColors.warning,
+              ),
+            ),
+          ],
           if ((flow.internalIn - flow.internalOut).abs() > 0.005) ...[
             const SizedBox(height: 10),
             Text(

@@ -10,7 +10,6 @@ import 'package:lotus_erp/models/finance/cash_book/cash_book_summary_model.dart'
 import 'package:lotus_erp/models/finance/cash_book/cash_transaction_model.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_period_repository.dart';
-import 'package:lotus_erp/ui/finance/cash_book/cash_book_add_entry_button.dart';
 import 'package:lotus_erp/ui/finance/cash_book/cash_book_app_bar.dart';
 import 'package:lotus_erp/ui/finance/cash_book/cash_book_body.dart';
 import 'package:lotus_erp/ui/shared/system_status_badge.dart';
@@ -90,7 +89,6 @@ void main() {
     final history = CashBookHistoryController(repository: _HistoryFixture(db));
     var backTaps = 0;
     var homeTaps = 0;
-    var addTaps = 0;
     var exportTaps = 0;
     addTearDown(() async {
       ctrl.dispose();
@@ -130,15 +128,12 @@ void main() {
                   ctrl.isLoading ? SystemStatus.loading : SystemStatus.online,
             ),
             body: CashBookBody(ctrl: ctrl, history: history),
-            floatingActionButton: CashBookAddEntryButton(
-              onPressed: () => addTaps++,
-            ),
           ),
         ),
       ));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('ACCOUNT BOOK'), findsOneWidget);
-      expect(find.text('Opening Balance'), findsOneWidget);
+      expect(find.text('Opening Balance'), findsNothing);
       expect(find.text('Cash Ledger Date'), findsOneWidget);
       expect(find.text('No cash transactions this month'), findsOneWidget);
       expect(find.textContaining('Cash Activity'), findsOneWidget);
@@ -147,12 +142,7 @@ void main() {
       expect(find.text('Monthly'), findsOneWidget);
       expect(find.text('Yearly'), findsOneWidget);
       expect(find.text('Sync Bills'), findsNothing);
-      expect(find.text('Add Cash Income'), findsWidgets);
-      final addButton = find.byType(CashBookAddEntryButton);
-      final buttonPosition = tester.getCenter(addButton);
-      expect(buttonPosition.dx, greaterThan(size.width / 2));
-      expect(buttonPosition.dy, greaterThan(size.height / 2));
-      await tester.tap(addButton);
+      expect(find.text('Add Cash Income'), findsNothing);
       final exportMenu = tester.widget<PopupMenuButton<String>>(
         find.byType(PopupMenuButton<String>),
       );
@@ -183,7 +173,6 @@ void main() {
       await tester.pump();
       expect(history.view, CashBookHistoryView.daily);
     }
-    expect(addTaps, 3);
     expect(exportTaps, 3);
     expect(backTaps, 3);
     expect(homeTaps, 3);
@@ -196,11 +185,6 @@ void main() {
 
     ctrl.setFilter(CashBookFilter.all);
     await tester.pump();
-    await tester.tap(find.byTooltip('Edit Opening Balance'));
-    await tester.pump();
-    await tester.enterText(find.byType(TextFormField), '-5');
-    await tester.tap(find.text('Save'));
-    await tester.pump();
-    expect(find.text('Enter a valid amount of zero or more.'), findsOneWidget);
+    expect(find.byTooltip('Edit Opening Balance'), findsNothing);
   });
 }

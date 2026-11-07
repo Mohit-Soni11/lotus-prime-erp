@@ -7,9 +7,18 @@ import 'day_book_metal_sales_panel.dart';
 import 'day_book_metal_visual.dart';
 
 class DayBookPositionPanels extends StatelessWidget {
-  const DayBookPositionPanels({super.key, required this.summary});
+  const DayBookPositionPanels({
+    super.key,
+    required this.summary,
+    this.onSetBalance,
+    this.showBalanceAction = false,
+    this.balanceSaved = false,
+  });
 
   final DayBookSummary summary;
+  final VoidCallback? onSetBalance;
+  final bool showBalanceAction;
+  final bool balanceSaved;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +33,9 @@ class DayBookPositionPanels extends StatelessWidget {
         title: 'Opening Position',
         icon: Icons.inventory_2_outlined,
         date: summary.date,
+        onAction: onSetBalance,
+        actionLabel: balanceSaved ? 'View Balance' : 'Set Balance',
+        showAction: showBalanceAction,
         tiles: [
           _PositionTile(
               label: 'Opening Balance',
@@ -115,12 +127,18 @@ class _PositionSection extends StatelessWidget {
     required this.icon,
     required this.tiles,
     this.date,
+    this.onAction,
+    this.actionLabel,
+    this.showAction = false,
   });
 
   final String title;
   final IconData icon;
   final List<_PositionTile> tiles;
   final DateTime? date;
+  final VoidCallback? onAction;
+  final String? actionLabel;
+  final bool showAction;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -135,9 +153,24 @@ class _PositionSection extends StatelessWidget {
               child: Text(title,
                   style: DayBookStyles.sectionTitle.copyWith(fontSize: 18)),
             ),
-            if (date != null)
+            if (date != null && !showAction)
               Text(DateFormat('d MMM yyyy').format(date!),
                   style: DayBookStyles.labelStrong),
+            if (showAction)
+              Tooltip(
+                message: onAction == null
+                    ? 'Balance verification is available for today before day closing.'
+                    : 'Compare recorded cash and bank with actual balances',
+                child: OutlinedButton.icon(
+                  onPressed: onAction,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: Text(actionLabel ?? 'Set Balance'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
           ]),
           const SizedBox(height: 11),
           LayoutBuilder(builder: (context, constraints) {

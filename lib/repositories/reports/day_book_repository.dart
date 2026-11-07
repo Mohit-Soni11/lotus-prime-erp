@@ -37,7 +37,7 @@ class DayBookRepository {
           _fetchNonGstBills(start, end), // 1: NonGstBillSummary
           _fetchIncomeByCategory(start, end), // 2: Map<String, double>
           _fetchExpenseByCategory(start, end), // 3: Map<String, double>
-          _fetchOpeningCash(start), // 4: double
+          DayBookMoneyRepository(_db).fetchOpeningCash(start), // 4: double
           _fetchPaymentBreakup(start, end), // 5: PaymentBreakup
           _fetchDueCollectionReceipts(start, end), // 6: double
         ]);
@@ -289,24 +289,6 @@ class DayBookRepository {
   }
 
   // Opening cash includes prior posted cash-only transactions.
-  Future<double> _fetchOpeningCash(DateTime date) async {
-    try {
-      final profile = await (_db.select(_db.shopProfiles)).getSingleOrNull();
-      final prior = await _db.customSelect(
-        '''SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount
-            WHEN type = 'EXPENSE' THEN -amount ELSE 0 END), 0) AS movement
-           FROM cash_transactions
-           WHERE is_voided = 0 AND payment_mode = 'CASH' AND txn_date < ?''',
-        variables: [Variable.withDateTime(date)],
-      ).getSingle();
-      return (profile?.openingCashBalance ?? 0.0) +
-          prior.read<double>('movement');
-    } catch (e) {
-      AppLogger.debug('❌ _fetchOpeningCash: $e');
-      rethrow;
-    }
-  }
-
   // ==========================================================================
   // 11. PAYMENT MODE BREAKUP
   // CashTransactions WHERE type='INCOME' AND isVoided=false
@@ -569,7 +551,12 @@ class DayBookRepository {
             _db.shopProfiles,
             _db.girviLoans,
             _db.girviPayments,
+            _db.girviLoanItems,
+            _db.salesOrders,
+            _db.orderAdvances,
+            _db.customers,
             _db.stockMovements,
+            _db.stockItems,
           },
         )
         .watch()

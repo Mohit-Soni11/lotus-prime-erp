@@ -73,7 +73,7 @@ void main() {
       ]) {
         expect(find.text(title), findsOneWidget);
       }
-      expect(find.textContaining('DEMO PREVIEW'), findsOneWidget);
+      expect(find.textContaining('DEMO PREVIEW'), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.ensureVisible(find.text('Reconcile Cash'));

@@ -48,10 +48,12 @@ class DayBookMoneyFlow {
     required this.openingCash,
     required this.openingBank,
     required List<DayBookMoneyEntry> entries,
+    this.bankAccountCount,
   }) : entries = List.unmodifiable(entries);
 
   final double openingCash;
   final double openingBank;
+  final int? bankAccountCount;
   final List<DayBookMoneyEntry> entries;
 
   double _sum(bool Function(DayBookMoneyEntry) include) => entries

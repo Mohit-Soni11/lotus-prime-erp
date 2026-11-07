@@ -8,6 +8,7 @@ import '../../../models/reports/day_book/day_book_smart_summary.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_card_presentation.dart';
 import 'day_book_document_destination.dart';
+import 'day_book_form_visuals.dart';
 import 'day_book_smart_format.dart';
 
 class DayBookSmartDetailsDialog extends StatelessWidget {
@@ -23,7 +24,8 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final display = DayBookCardPresentation.fromCard(card);
-    return Dialog(
+    return DayBookFormVisuals.themed(
+        child: Dialog(
       backgroundColor: DayBookColors.bodyPanel,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -79,7 +81,7 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
           ),
         ]),
       ),
-    );
+    ));
   }
 }
 

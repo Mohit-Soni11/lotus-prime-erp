@@ -9,7 +9,6 @@ import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_summary_model.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_transaction_model.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
-import 'package:lotus_erp/ui/finance/cash_book/cash_book_entry_dialog.dart';
 import 'package:lotus_erp/ui/finance/cash_book/cash_book_date_selector.dart';
 
 class _LedgerFixture extends CashBookRepository {
@@ -83,31 +82,6 @@ void main() {
     expect(repo.lastFrom, DateTime(2024, 3, 1));
     expect(repo.lastTo, DateTime(2024, 3, 31, 23, 59, 59));
     expect(find.text('12/03/2024'), findsOneWidget);
-  });
-
-  testWidgets('manual Cash Book entry only offers extra income',
-      (tester) async {
-    final db = AppDatabase.forTesting(NativeDatabase.memory());
-    final controller = CashBookController(repository: _LedgerFixture(db));
-    addTearDown(() async {
-      controller.dispose();
-      await db.close();
-    });
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: CashBookEntryDialog(ctrl: controller)),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.text('Add Extra Cash Income'), findsOneWidget);
-    expect(find.text('Expense'), findsNothing);
-    expect(controller.availableCategories, [
-      IncomeCategory.miscIncome.dbValue,
-      IncomeCategory.otherIncome.dbValue
-    ]);
-    expect(controller.entryCategory, IncomeCategory.miscIncome.dbValue);
-    controller.amountCtrl.text = '200';
-    expect(await controller.saveEntry(), isFalse);
-    await tester.pump();
-    expect(find.text('Enter the reason for cash received.'), findsOneWidget);
   });
 
   test('repository refuses manual sales and keeps automatic expenses visible',

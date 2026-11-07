@@ -10,6 +10,7 @@ import '../../config/env_config.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_schema.dart';
+import 'package:lotus_erp/features/finance/ledger/data/day_book_balance_verification_schema.dart';
 import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_trade_in_items.dart';
@@ -118,6 +119,12 @@ class AppDatabase extends _$AppDatabase {
       for (final statement in financeDayClosureSchemaSql.skip(4)) {
         await customStatement(statement);
       }
+    }
+  }
+
+  Future<void> _ensureDayBookBalanceVerificationSchema() async {
+    for (final statement in dayBookBalanceVerificationSchemaSql) {
+      await customStatement(statement);
     }
   }
 
@@ -1131,6 +1138,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesMetalSettlementSchema();
           await _ensureFinanceDayClosureSchema();
+          await _ensureDayBookBalanceVerificationSchema();
           await _ensureDayBookPuritySnapshotSchema();
           await _ensureDayBookClosedSourceGuards();
         },
@@ -2092,6 +2100,7 @@ class AppDatabase extends _$AppDatabase {
             await _ensureStockItemUnitSchema();
             await migratePurchaseOriginsAndCustomerIntake(this);
           }
+          if (from < 74) await _ensureDayBookBalanceVerificationSchema();
           await _ensureReturnReversalSchemaInternal();
           if (from < 71) await _ensureDayBookClosedSourceGuards();
         },

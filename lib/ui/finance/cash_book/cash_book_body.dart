@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../logic/finance/cash_book/cash_book_controller.dart';
 import '../../../logic/finance/cash_book/cash_book_history_controller.dart';
 import 'cash_book_breakdown_panel.dart';
-import 'cash_book_opening_balance_dialog.dart';
 import 'cash_book_period_overview.dart';
 import 'cash_book_date_selector.dart';
 import 'cash_book_summary_panel.dart';
@@ -33,11 +32,7 @@ class CashBookBody extends StatelessWidget {
           onDateSelected: history.showDaily,
         );
         final viewCards = CashBookViewCards(controller: history);
-        final summary = CashBookSummaryPanel(
-          summary: ctrl.summary,
-          onEditOpeningBalance: () =>
-              showCashBookOpeningBalanceDialog(context, ctrl),
-        );
+        final summary = CashBookSummaryPanel(summary: ctrl.summary);
         final transactions = CashBookTransactionList(ctrl: ctrl);
 
         if (desktop) {

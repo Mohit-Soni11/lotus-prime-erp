@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
+import 'day_book_form_visuals.dart';
+import 'day_book_eod_bank_verification.dart';
 
 class DayBookEodDialog extends StatefulWidget {
   const DayBookEodDialog({super.key, required this.ctrl});
@@ -20,7 +22,8 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+    return DayBookFormVisuals.themed(
+        child: Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(20),
       child: Container(
@@ -56,6 +59,20 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                         _DenominationTable(ctrl: widget.ctrl),
                         const SizedBox(height: 20),
                         _ReconciliationSummary(ctrl: widget.ctrl),
+                        if (widget.ctrl.balanceVerification == null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            'Set Balance is required for today’s opening cash and bank before day closing.',
+                            style: DayBookStyles.labelStrong.copyWith(
+                              color: DayBookColors.warning,
+                            ),
+                          ),
+                        ] else ...[
+                          const SizedBox(height: 12),
+                          DayBookEodBankVerification(
+                            verification: widget.ctrl.balanceVerification!,
+                          ),
+                        ],
                         if (!widget.ctrl.isMetalPositionVerified) ...[
                           const SizedBox(height: 12),
                           Text(
@@ -88,7 +105,7 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
           },
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _closeDay() async {
@@ -563,6 +580,7 @@ class _DialogActions extends StatelessWidget {
     );
     final closeButton = FilledButton.icon(
       onPressed: ctrl.isCashMatched &&
+              ctrl.balanceVerification != null &&
               ctrl.isMetalPositionVerified &&
               ctrl.isCustodyPositionVerified &&
               !isClosing

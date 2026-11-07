@@ -430,6 +430,34 @@ class DayBookSummary {
     this.isDayLocked = false,
   });
 
+  DayBookSummary copyWith({bool? isDayLocked, List<AnomalyAlert>? anomalies}) =>
+      DayBookSummary(
+        date: date,
+        moneyFlow: moneyFlow,
+        stockMovements: stockMovements,
+        stockAddedBatches: stockAddedBatches,
+        custodyPosition: custodyPosition,
+        documents: documents,
+        activityEvents: activityEvents,
+        expenseRecords: expenseRecords,
+        ownedStockPosition: ownedStockPosition,
+        customerMetalSales: customerMetalSales,
+        metalPositionVerified: metalPositionVerified,
+        openingCash: openingCash,
+        openingGoldGrams: openingGoldGrams,
+        openingSilverGrams: openingSilverGrams,
+        cashIn: cashIn,
+        cashOut: cashOut,
+        metalIn: metalIn,
+        metalOut: metalOut,
+        paymentBreakup: paymentBreakup,
+        anomalies: anomalies ?? this.anomalies,
+        prediction: prediction,
+        isDayLocked: isDayLocked ?? this.isDayLocked,
+      );
+
+  DayBookSummary withDayLocked(bool locked) => copyWith(isDayLocked: locked);
+
   // ── Computed ──────────────────────────────────────────────────────────────
   double get cashReceived => moneyFlow?.cashIn ?? cashIn.total;
   double get cashPaid => moneyFlow?.cashOut ?? cashOut.total;

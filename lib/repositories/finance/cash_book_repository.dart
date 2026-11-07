@@ -390,24 +390,53 @@ class CashBookRepository {
   // 8. UPDATE OPENING BALANCE
   // ==========================================================================
 
+  Future<({bool canSet, double amount})> fetchInitialCashSetup() async {
+    final shop =
+        await (_db.select(_db.shopProfiles)..limit(1)).getSingleOrNull();
+    return (
+      canSet: shop != null && !await _hasFinancialActivity(),
+      amount: shop?.openingCashBalance ?? 0,
+    );
+  }
+
   Future<bool> updateOpeningBalance(double amount) async {
     if (!amount.isFinite || amount < 0) return false;
     try {
-      final postedCount = await _db.cashTransactions.count().getSingle();
-      if (postedCount > 0) return false;
-      final shop =
-          await (_db.select(_db.shopProfiles)..limit(1)).getSingleOrNull();
-      if (shop == null) return false;
-
-      await (_db.update(_db.shopProfiles)..where((t) => t.id.equals(shop.id)))
-          .write(ShopProfilesCompanion(
-        openingCashBalance: Value(amount),
-      ));
-      return true;
+      return await _db.transaction(() async {
+        if (await _hasFinancialActivity()) return false;
+        final shop =
+            await (_db.select(_db.shopProfiles)..limit(1)).getSingleOrNull();
+        if (shop == null) return false;
+        final changed = await (_db.update(_db.shopProfiles)
+              ..where((t) => t.id.equals(shop.id)))
+            .write(ShopProfilesCompanion(
+          openingCashBalance: Value(amount),
+        ));
+        return changed == 1;
+      });
     } catch (e) {
       AppLogger.debug('❌ CashBookRepository.updateOpeningBalance: $e');
       return false;
     }
+  }
+
+  Future<bool> _hasFinancialActivity() async {
+    if (await _db.cashTransactions.count().getSingle() > 0 ||
+        await _db.bankTransactions.count().getSingle() > 0) {
+      return true;
+    }
+    final closureTable = await _db
+        .customSelect(
+          "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'finance_day_closures'",
+        )
+        .getSingleOrNull();
+    if (closureTable == null) return false;
+    final closure = await _db
+        .customSelect(
+          'SELECT 1 FROM finance_day_closures LIMIT 1',
+        )
+        .getSingleOrNull();
+    return closure != null;
   }
 
   // ==========================================================================

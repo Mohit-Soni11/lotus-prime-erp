@@ -15,6 +15,19 @@ class DayBookMoneyRepository {
     'TRANSFER_OUT',
   };
 
+  Future<double> fetchOpeningCash(DateTime date) async {
+    final profile = await _db.select(_db.shopProfiles).getSingleOrNull();
+    final prior = await _db.customSelect(
+      '''SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount
+          WHEN type = 'EXPENSE' THEN -amount ELSE 0 END), 0) AS movement
+         FROM cash_transactions
+         WHERE is_voided = 0 AND payment_mode = 'CASH' AND txn_date < ?''',
+      variables: [Variable.withDateTime(date)],
+      readsFrom: {_db.cashTransactions},
+    ).getSingle();
+    return (profile?.openingCashBalance ?? 0) + prior.read<double>('movement');
+  }
+
   Future<DayBookMoneyFlow> fetch(DateTime date, double openingCash) async {
     final start = DateTime(date.year, date.month, date.day);
     final end = DateTime(date.year, date.month, date.day + 1);
@@ -24,7 +37,9 @@ class DayBookMoneyRepository {
       for (final account in accounts) account.id: account.accountName
     };
     final openingAccounts = accounts
-        .where((account) => !account.activeSince.isAfter(start))
+        .where((account) => !DateTime(account.activeSince.year,
+                account.activeSince.month, account.activeSince.day)
+            .isAfter(start))
         .fold(0.0, (double total, account) => total + account.openingBalance);
 
     final priorBankMovement = await _db.customSelect(
@@ -90,6 +105,7 @@ class DayBookMoneyRepository {
       openingCash: openingCash,
       openingBank: openingAccounts + priorBankMovement.read<double>('movement'),
       entries: entries,
+      bankAccountCount: accounts.length,
     );
   }
 }

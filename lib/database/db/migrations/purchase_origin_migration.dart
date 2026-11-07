@@ -37,26 +37,38 @@ Future<void> migratePurchaseOriginsAndCustomerIntake(
         SELECT id FROM purchase_vouchers WHERE UPPER(source_type) = 'CUSTOMER'
       )
   ''', [StockStatus.processing.label]);
-  await database.customStatement('''
-    UPDATE stock_movements
-    SET movement_type = 'CUSTOMER_METAL_IN'
-    WHERE movement_type = 'IN'
-      AND UPPER(source_type) = 'PURCHASE'
-      AND EXISTS (
-        SELECT 1 FROM purchase_vouchers customer_voucher
-        WHERE CAST(customer_voucher.id AS TEXT) = stock_movements.source_id
-          AND UPPER(customer_voucher.source_type) = 'CUSTOMER'
-      )
-  ''');
-  await database.customStatement('''
-    UPDATE stock_items
-    SET status = ?, updated_at = COALESCE(updated_at, created_at)
-    WHERE LOWER(status) = 'available'
-      AND id IN (
-        SELECT u.stock_item_id
-        FROM stock_item_units u
-        JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
-        WHERE UPPER(pv.source_type) = 'CUSTOMER'
-      )
-  ''', [StockStatus.processing.label]);
+  if (await _hasTable(database, 'stock_movements')) {
+    await database.customStatement('''
+      UPDATE stock_movements
+      SET movement_type = 'CUSTOMER_METAL_IN'
+      WHERE movement_type = 'IN'
+        AND UPPER(source_type) = 'PURCHASE'
+        AND EXISTS (
+          SELECT 1 FROM purchase_vouchers customer_voucher
+          WHERE CAST(customer_voucher.id AS TEXT) = stock_movements.source_id
+            AND UPPER(customer_voucher.source_type) = 'CUSTOMER'
+        )
+    ''');
+  }
+  if (await _hasTable(database, 'stock_items')) {
+    await database.customStatement('''
+      UPDATE stock_items
+      SET status = ?, updated_at = COALESCE(updated_at, created_at)
+      WHERE LOWER(status) = 'available'
+        AND id IN (
+          SELECT u.stock_item_id
+          FROM stock_item_units u
+          JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+          WHERE UPPER(pv.source_type) = 'CUSTOMER'
+        )
+    ''', [StockStatus.processing.label]);
+  }
+}
+
+Future<bool> _hasTable(GeneratedDatabase database, String tableName) async {
+  final row = await database.customSelect(
+    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+    variables: [Variable.withString(tableName)],
+  ).getSingleOrNull();
+  return row != null;
 }
