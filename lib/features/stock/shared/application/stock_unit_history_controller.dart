@@ -15,8 +15,10 @@ class StockUnitHistoryController {
     final rows = await _db.customSelect(
       '''
       SELECT
-        'IN' AS movement_type,
-        'Stock Added' AS title,
+        CASE WHEN UPPER(pv.source_type) = 'CUSTOMER'
+          THEN 'CUSTOMER_METAL_IN' ELSE 'IN' END AS movement_type,
+        CASE WHEN UPPER(pv.source_type) = 'CUSTOMER'
+          THEN 'Customer Metal Intake' ELSE 'Stock Added' END AS title,
         COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Stock Intake') AS source_number,
         COALESCE(NULLIF(TRIM(u.supplier_name), ''), pv.party_name, '') AS party_name,
         1 AS quantity_delta,
@@ -24,7 +26,9 @@ class StockUnitHistoryController {
         COALESCE(u.net_weight, 0.0) AS net_weight_delta,
         COALESCE(u.actual_fine_weight, 0.0) AS fine_weight_delta,
         u.created_at AS occurred_at,
-        'Purchase intake recorded in inventory' AS note
+        CASE WHEN UPPER(pv.source_type) = 'CUSTOMER'
+          THEN 'Customer metal recorded for processing'
+          ELSE 'Stock intake recorded in inventory' END AS note
       FROM stock_item_units u
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
       WHERE u.id = ?

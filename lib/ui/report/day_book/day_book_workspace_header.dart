@@ -90,7 +90,7 @@ class _WorkspaceHeading extends StatelessWidget {
         children: [
           Container(
             width: 4,
-            height: 39,
+            height: 32,
             decoration: const BoxDecoration(
               color: DayBookColors.brandGold,
               borderRadius: BorderRadius.only(
@@ -101,33 +101,11 @@ class _WorkspaceHeading extends StatelessWidget {
           ),
           const SizedBox(width: 13),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Day Book',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.pageTitle.copyWith(
-                    fontSize: 23,
-                    height: 1.04,
-                    fontWeight: FontWeight.w800,
-                    color: DayBookColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Daily business register for the selected date.',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.label.copyWith(
-                    fontSize: 12.5,
-                    height: 1.12,
-                    color: DayBookColors.textSecondary,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Day Book',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DayBookStyles.pageTitle,
             ),
           ),
         ],

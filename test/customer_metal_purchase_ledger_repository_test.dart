@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -224,6 +224,15 @@ void main() {
     expect(activeSummary.entryCount, 0);
     expect(activeSummary.grossWeight, 0);
     expect(activeSummary.amount, 0);
+    final returnedUnits = await database.customSelect(
+      'SELECT status FROM stock_item_units WHERE purchase_voucher_id = ?',
+      variables: [Variable.withInt(returned.sourceDocumentId)],
+    ).get();
+    expect(returnedUnits, isNotEmpty);
+    expect(
+        returnedUnits
+            .every((unit) => unit.read<String>('status') == 'Returned'),
+        isTrue);
   });
 
   test('moves selected customer metal entries into melting batch', () async {
@@ -263,6 +272,13 @@ void main() {
     expect(transferred.transferredToMeltingAt, isNotNull);
     expect(activeSummary.entryCount, 0);
     expect(activeSummary.fineWeight, 0);
+    final meltedUnits = await database.customSelect(
+      'SELECT status FROM stock_item_units WHERE purchase_voucher_id = ?',
+      variables: [Variable.withInt(transferred.sourceDocumentId)],
+    ).get();
+    expect(meltedUnits, isNotEmpty);
+    expect(meltedUnits.every((unit) => unit.read<String>('status') == 'Melted'),
+        isTrue);
   });
 }
 

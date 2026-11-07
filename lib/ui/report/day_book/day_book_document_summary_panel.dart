@@ -51,18 +51,8 @@ class _DayBookDocumentSummaryPanelState
               color: DayBookColors.goldMetal, size: 25),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Source Document Summary',
-                    style: DayBookStyles.sectionTitle),
-                Text(
-                    'Drill down by document type to view invoices, amounts and payment details.',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: DayBookStyles.sectionSubtitle),
-              ],
-            ),
+            child: Text('Source Documents',
+                style: DayBookStyles.sectionTitle.copyWith(fontSize: 18)),
           ),
           if (widget.showDemoPreview)
             Tooltip(
@@ -70,7 +60,7 @@ class _DayBookDocumentSummaryPanelState
               child: Text('DEMO PREVIEW',
                   style: DayBookStyles.labelStrong.copyWith(
                     color: DayBookColors.warning,
-                    fontSize: 11,
+                    fontSize: 13,
                   )),
             ),
         ]),
@@ -92,9 +82,9 @@ class _DayBookDocumentSummaryPanelState
           LayoutBuilder(builder: (context, constraints) {
             const gap = 10.0;
             final width = constraints.maxWidth;
-            final columns = width >= 1080
+            final columns = width >= 1180
                 ? 5
-                : width >= 850
+                : width >= 1050
                     ? 4
                     : width >= 650
                         ? 3
@@ -199,7 +189,7 @@ class _ExplorerTabs extends StatelessWidget {
                     style: DayBookStyles.labelStrong.copyWith(
                         color:
                             active ? Colors.white : DayBookColors.textPrimary,
-                        fontSize: 11.5))),
+                        fontSize: 13))),
           ]),
         ),
       ),

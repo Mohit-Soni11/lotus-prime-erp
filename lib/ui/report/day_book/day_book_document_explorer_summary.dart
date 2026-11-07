@@ -24,7 +24,7 @@ class DayBookDocumentExplorerSummary extends StatelessWidget {
       final width = inline ? constraints.maxWidth : metrics.length * 180.0;
       final strip = Container(
         width: width,
-        height: 58,
+        height: 68,
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [
             Color(0xFFFFFCF6),
@@ -70,9 +70,8 @@ class DayBookDocumentExplorerSummary extends StatelessWidget {
             ? 'Total Invoices'
             : 'Total Records',
         '$count',
-        Icons.description_outlined);
-    final rangeMetric =
-        _Metric('Invoice Range', range, Icons.description_outlined);
+        Icons.receipt_long_outlined);
+    final rangeMetric = _Metric('Invoice Range', range, Icons.tag_rounded);
     return switch (tab) {
       DayBookExplorerTab.sales || DayBookExplorerTab.gstSales => [
           countMetric,
@@ -174,12 +173,12 @@ class _MetricTile extends StatelessWidget {
               Text(metric.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.label.copyWith(fontSize: 11)),
+                  style: DayBookStyles.label.copyWith(fontSize: 13)),
               Text(metric.value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DayBookStyles.labelStrong
-                      .copyWith(fontSize: 15, fontWeight: FontWeight.w800)),
+                      .copyWith(fontSize: 16, fontWeight: FontWeight.w800)),
             ],
           )),
         ]),

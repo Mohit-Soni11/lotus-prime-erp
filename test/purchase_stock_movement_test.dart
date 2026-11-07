@@ -5,6 +5,10 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
+import 'package:lotus_erp/models/purchase/purchase_voucher_origin.dart';
+import 'package:lotus_erp/repositories/reports/day_book_stock_added_repository.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_activity_controller.dart';
 
 void main() {
   late AppDatabase database;
@@ -97,6 +101,70 @@ void main() {
     expect(movements.single.grossWeightDelta, 10);
     expect(movements.single.netWeightDelta, 10);
     expect(movements.single.fineWeightDelta, 9.16);
+  });
+
+  test(
+      'customer metal remains processing and is excluded from Add Stock batches',
+      () async {
+    final customer = await repository.savePurchase(_goldDraft(
+      voucherNo: 'CUS-2026-0001',
+      source: PurchaseSource.fromCustomer,
+    ));
+    final supplier = await repository.savePurchase(_goldDraft(
+      voucherNo: 'GS-05NOV2026-B001',
+      origin: PurchaseVoucherOrigin.addStock,
+    ));
+    expect(customer, isNotNull);
+    expect(supplier, isNotNull);
+    await expectLater(
+      database.customStatement(
+        'UPDATE purchase_vouchers SET entry_origin = ? WHERE id = ?',
+        ['SUPPLIER_PURCHASE', supplier!.voucherId],
+      ),
+      throwsA(isA<Exception>()),
+    );
+    final customerMovements = await database.customSelect(
+      'SELECT movement_type FROM stock_movements WHERE source_id = ?',
+      variables: [Variable.withString('${customer!.voucherId}')],
+    ).get();
+    expect(customerMovements, isNotEmpty);
+    expect(
+        customerMovements.every(
+            (row) => row.read<String>('movement_type') == 'CUSTOMER_METAL_IN'),
+        isTrue);
+    final activity = StockActivityController(database);
+    await activity.load();
+    expect(activity.summary.stockAdded, 2);
+    expect(activity.records.any((record) =>
+        record.businessTitle == 'Customer Metal Intake'), isTrue);
+
+    final customerUnits = await database.customSelect(
+      'SELECT stock_item_id, status FROM stock_item_units WHERE purchase_voucher_id = ?',
+      variables: [Variable.withInt(customer!.voucherId)],
+    ).get();
+    expect(customerUnits, isNotEmpty);
+    expect(
+        customerUnits.every((row) =>
+            row.read<String>('status') == StockStatus.processing.label),
+        isTrue);
+    final customerStockId = customerUnits.first.read<int>('stock_item_id');
+    final customerItem = (await database.select(database.stockItems).get())
+        .singleWhere((item) => item.id == customerStockId);
+    expect(customerItem.status, StockStatus.processing.label);
+
+    await StockLotSaleReconciliationService(database).reconcile();
+    final after = await database.customSelect(
+      'SELECT status FROM stock_item_units WHERE purchase_voucher_id = ?',
+      variables: [Variable.withInt(customer.voucherId)],
+    ).get();
+    expect(
+        after.every((row) =>
+            row.read<String>('status') == StockStatus.processing.label),
+        isTrue);
+
+    final batches =
+        await DayBookStockAddedRepository(database).fetch(DateTime.now());
+    expect(batches.map((batch) => batch.batchCode), ['GS-05NOV2026-B001']);
   });
 
   test('savePurchase records HUID units and rejects duplicate HUID later',
@@ -310,11 +378,14 @@ PurchaseVoucherDraft _goldDraft({
   required String voucherNo,
   int quantity = 2,
   List<String> huids = const [],
+  PurchaseSource source = PurchaseSource.fromSupplier,
+  PurchaseVoucherOrigin? origin,
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
     voucherNo: voucherNo,
-    source: PurchaseSource.fromSupplier,
+    source: source,
+    entryOrigin: origin,
     taxType: PurchaseTaxType.normal,
     discountType: PurchaseDiscountType.flatAmount,
     discountValue: 0,

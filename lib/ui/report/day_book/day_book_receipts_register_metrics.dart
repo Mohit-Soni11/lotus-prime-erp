@@ -21,7 +21,7 @@ class DayBookReceiptsRegisterMetrics extends StatelessWidget {
       final inline = constraints.maxWidth >= 720;
       final strip = Container(
         width: inline ? constraints.maxWidth : 760,
-        height: 57,
+        height: 70,
         decoration: BoxDecoration(
           color: const Color(0xFFFCF9F4),
           border: Border.all(color: DayBookColors.bodyBorder),
@@ -121,7 +121,7 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13),
         child: Row(children: [
-          Icon(metric.icon, size: 21, color: DayBookColors.goldMetal),
+          Icon(metric.icon, size: 23, color: DayBookColors.goldMetal),
           const SizedBox(width: 9),
           Expanded(
               child: Column(
@@ -131,12 +131,12 @@ class _MetricTile extends StatelessWidget {
               Text(metric.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.label.copyWith(fontSize: 10.5)),
+                  style: DayBookStyles.label.copyWith(fontSize: 13)),
               Text(metric.value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DayBookStyles.labelStrong.copyWith(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: metric.valueColor)),
             ],

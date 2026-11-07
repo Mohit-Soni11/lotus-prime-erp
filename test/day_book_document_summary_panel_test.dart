@@ -41,7 +41,7 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Source Document Summary'), findsOneWidget);
+    expect(find.text('Source Documents'), findsOneWidget);
     expect(find.text('DEMO PREVIEW'), findsOneWidget);
     expect(find.text('REG-025'), findsOneWidget);
     expect(find.text('Mr. Ramesh Shah'), findsOneWidget);

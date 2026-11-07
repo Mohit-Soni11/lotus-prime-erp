@@ -10,6 +10,7 @@ import 'package:lotus_erp/features/stock/shared/application/stock_batch_posting_
 import 'package:lotus_erp/features/stock/shared/application/supplier_bill_attachment_service.dart';
 import 'package:lotus_erp/features/stock/shared/application/supplier_ledger_loader.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
+import 'package:lotus_erp/models/purchase/purchase_voucher_origin.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
@@ -490,6 +491,7 @@ class GoldStockController extends AddStockController {
           ? null
           : supplierInvoiceNumberCtrl.text.trim(),
       source: PurchaseSource.fromSupplier,
+      entryOrigin: PurchaseVoucherOrigin.addStock,
       taxType: gstEnabled ? PurchaseTaxType.gst : PurchaseTaxType.normal,
       discountType: PurchaseDiscountType.flatAmount,
       discountValue: snapshot.cashDiscountAmount,
@@ -606,6 +608,11 @@ class GoldStockController extends AddStockController {
               rate: snapshot.ratePerGram > 0
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
+              makingTotal: row.labourAmount(
+                    metalAmount: row.netWeight * row.purchaseRate,
+                    fallbackTouch: selectedPurityBasePercent,
+                  ) *
+                  row.quantity,
               lineAmount: row.totalCostValue,
               subCategory: row.subCategoryLabel.trim().isEmpty
                   ? row.subCategory.label

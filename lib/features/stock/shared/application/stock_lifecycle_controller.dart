@@ -30,7 +30,7 @@ class StockLifecycleController {
 
   List<StockLifecycleAction> actionsFor(StockSearchResult item) {
     final status = item.status.trim().toLowerCase();
-    if (status == 'sold') return const [];
+    if (status == 'sold' || status == 'processing') return const [];
     if (status == 'reserved') {
       return const [
         StockLifecycleAction(
@@ -133,6 +133,9 @@ class StockLifecycleController {
     }
     if (item.isSold) {
       throw StateError('Sold stock can only be changed through sale return.');
+    }
+    if (item.status.trim().toLowerCase() == 'processing') {
+      throw StateError('Customer metal requires a processing workflow.');
     }
     await StockLifecycleSchema.ensure(_db);
     final now = DateTime.now();

@@ -22,8 +22,7 @@ class DayBookPositionPanels extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _PositionSection(
         title: 'Opening Position',
-        subtitle: 'Cash, bank and owned metal at the start of day.',
-        icon: Icons.layers_outlined,
+        icon: Icons.inventory_2_outlined,
         date: summary.date,
         tiles: [
           _PositionTile(
@@ -63,8 +62,7 @@ class DayBookPositionPanels extends StatelessWidget {
       const SizedBox(height: 10),
       _PositionSection(
         title: 'Closing Position',
-        subtitle: 'Balance and owned metal after posted movements.',
-        icon: Icons.flag_outlined,
+        icon: Icons.assessment_outlined,
         tiles: [
           _PositionTile(
               label: 'Closing Balance',
@@ -114,14 +112,12 @@ class _PositionTile {
 class _PositionSection extends StatelessWidget {
   const _PositionSection({
     required this.title,
-    required this.subtitle,
     required this.icon,
     required this.tiles,
     this.date,
   });
 
   final String title;
-  final String subtitle;
   final IconData icon;
   final List<_PositionTile> tiles;
   final DateTime? date;
@@ -136,19 +132,12 @@ class _PositionSection extends StatelessWidget {
             _IconBadge(icon: icon, color: DayBookColors.brandGold),
             const SizedBox(width: 9),
             Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: DayBookStyles.sectionTitle),
-                    Text(subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: DayBookStyles.label.copyWith(fontSize: 11)),
-                  ]),
+              child: Text(title,
+                  style: DayBookStyles.sectionTitle.copyWith(fontSize: 18)),
             ),
             if (date != null)
               Text(DateFormat('d MMM yyyy').format(date!),
-                  style: DayBookStyles.labelStrong.copyWith(fontSize: 11)),
+                  style: DayBookStyles.labelStrong),
           ]),
           const SizedBox(height: 11),
           LayoutBuilder(builder: (context, constraints) {
@@ -194,23 +183,23 @@ class _PositionValueTile extends StatelessWidget {
                 child: Text(tile.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: DayBookStyles.labelStrong.copyWith(fontSize: 11))),
+                    style: DayBookStyles.labelStrong.copyWith(fontSize: 13))),
           ]),
           const SizedBox(height: 6),
           SizedBox(
             width: double.infinity,
-            height: 21,
+            height: 26,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(tile.value,
-                  style: DayBookStyles.valueLarge.copyWith(fontSize: 18)),
+                  style: DayBookStyles.valueLarge.copyWith(fontSize: 20)),
             ),
           ),
           Text(tile.hint,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: DayBookStyles.label.copyWith(fontSize: 10)),
+              style: DayBookStyles.label.copyWith(fontSize: 13)),
         ]),
       );
 }

@@ -45,6 +45,7 @@ import 'migrations/girvi_retired_notice_cleanup.dart';
 import 'migrations/sales_metal_settlement_schema.dart';
 import 'migrations/database_migration_backup.dart';
 import 'migrations/day_book_closed_source_guards.dart';
+import 'migrations/purchase_origin_migration.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -2085,6 +2086,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 70) await _ensureFinanceDayClosureSchema();
           if (from < 71) await _ensureDayBookPuritySnapshotSchema();
+          if (from < 72) await _ensurePurchaseVoucherSchema();
+          if (from < 73) {
+            await _ensurePurchaseVoucherSchema();
+            await _ensureStockItemUnitSchema();
+            await migratePurchaseOriginsAndCustomerIntake(this);
+          }
           await _ensureReturnReversalSchemaInternal();
           if (from < 71) await _ensureDayBookClosedSourceGuards();
         },
@@ -2351,6 +2358,20 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(_createPurchaseVouchersTableSql);
     await customStatement(_createPurchaseVoucherItemsTableSql);
     await _addColumnIfMissing(
+      tableName: 'purchase_vouchers',
+      columnName: 'entry_origin',
+      declaration: "TEXT NOT NULL DEFAULT 'LEGACY'",
+    );
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS purchase_voucher_origin_immutable
+      BEFORE UPDATE OF entry_origin ON purchase_vouchers
+      WHEN OLD.entry_origin <> 'LEGACY'
+        AND NEW.entry_origin <> OLD.entry_origin
+      BEGIN
+        SELECT RAISE(ABORT, 'Purchase voucher origin cannot be changed');
+      END
+    ''');
+    await _addColumnIfMissing(
       tableName: 'purchase_voucher_items',
       columnName: 'wastage_percent',
       declaration: 'REAL NOT NULL DEFAULT 0.0',
@@ -2364,6 +2385,11 @@ class AppDatabase extends _$AppDatabase {
       tableName: 'purchase_voucher_items',
       columnName: 'valuation_fine_weight',
       declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'purchase_voucher_items',
+      columnName: 'making_total',
+      declaration: 'REAL',
     );
     for (final statement in _purchaseVoucherIndexSql) {
       await customStatement(statement);
@@ -3117,6 +3143,7 @@ const String _createPurchaseVouchersTableSql = '''
     "sequence_no" INTEGER NOT NULL,
     "supplier_invoice_no" TEXT,
     "source_type" TEXT NOT NULL,
+    "entry_origin" TEXT NOT NULL DEFAULT 'LEGACY',
     "customer_id" INTEGER,
     "supplier_id" INTEGER,
     "party_name" TEXT NOT NULL,
@@ -3179,6 +3206,7 @@ const String _createPurchaseVoucherItemsTableSql = '''
     "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
     "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
     "rate" REAL NOT NULL DEFAULT 0.0,
+    "making_total" REAL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "line_amount" REAL NOT NULL DEFAULT 0.0,
     "created_at" INTEGER NOT NULL,

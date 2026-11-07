@@ -5,7 +5,8 @@ import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_transaction_register.dart';
 import 'day_book_money_summary.dart';
 
-final _currency = NumberFormat.currency(locale: 'en_IN', symbol: 'INR ');
+final _currency =
+    NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
 
 class DayBookMoneyPanel extends StatelessWidget {
   const DayBookMoneyPanel({super.key, required this.flow});
@@ -44,13 +45,8 @@ class DayBookMoneyPanel extends StatelessWidget {
               closing: flow.closingBank,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Bank position follows recorded entries; cheque clearing may occur later.',
-            style: DayBookStyles.label,
-          ),
           if ((flow.internalIn - flow.internalOut).abs() > 0.005) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
             Text(
               'Internal transfers are not balanced. Check the matching cash or bank entry.',
               style: DayBookStyles.labelStrong.copyWith(
@@ -74,7 +70,7 @@ class DayBookMoneyPanel extends StatelessWidget {
             const SizedBox(height: 12),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text('Source & Payment Mode Detail',
+              title: Text('Source & Mode Breakdown',
                   style: DayBookStyles.sectionTitle),
               children: [
                 if (sourceIn.isNotEmpty || sourceOut.isNotEmpty) ...[
@@ -118,8 +114,7 @@ class DayBookMoneyPanel extends StatelessWidget {
             const SizedBox(height: 12),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text('Bank Account & Reconciliation Detail',
-                  style: DayBookStyles.sectionTitle),
+              title: Text('Bank Details', style: DayBookStyles.sectionTitle),
               children: [
                 _ResponsivePair(
                   first: _BreakdownCard(
@@ -201,9 +196,10 @@ class _PositionCard extends StatelessWidget {
           borderColor: DayBookColors.bodyBorder,
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(children: [
-              Icon(icon, size: 18, color: DayBookColors.brandGold),
+              Icon(icon, size: 21, color: DayBookColors.brandGold),
               const SizedBox(width: 8),
               Text(title, style: DayBookStyles.sectionTitle),
             ]),
@@ -226,15 +222,20 @@ class _AmountLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: 5),
         child: Row(children: [
-          Text(label,
-              style: strong ? DayBookStyles.labelStrong : DayBookStyles.label),
-          const Spacer(),
-          Flexible(
+          Expanded(
+            child: Text(label,
+                style:
+                    strong ? DayBookStyles.labelStrong : DayBookStyles.label),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
               _currency.format(amount),
-              style: strong ? DayBookStyles.value : DayBookStyles.labelStrong,
+              textAlign: TextAlign.right,
+              style: (strong ? DayBookStyles.value : DayBookStyles.labelStrong)
+                  .copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

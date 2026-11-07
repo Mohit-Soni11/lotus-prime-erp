@@ -55,6 +55,11 @@ final class StockLotSaleReconciliationService {
       WHERE LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
         AND TRIM(COALESCE(u.huid, '')) = ''
         AND pvi.id IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM purchase_vouchers customer_voucher
+          WHERE customer_voucher.id = u.purchase_voucher_id
+            AND UPPER(customer_voucher.source_type) = 'CUSTOMER'
+        )
       ''',
     ).get();
 

@@ -27,7 +27,7 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          const minWidth = 1000.0;
+          const minWidth = 1160.0;
           final table = SizedBox(
             width: constraints.maxWidth >= minWidth
                 ? constraints.maxWidth
@@ -176,7 +176,7 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
         ? const [14, 14, 21, 15, 13, 14, 3]
         : const [14, 16, 14, 10, 14, 14, 13, 3];
     return Container(
-      height: header ? 34 : 37,
+      height: header ? 43 : 46,
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: DayBookColors.bodyBorder)),
       ),
@@ -186,17 +186,24 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
             flex: flexes[index],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: _cell(cells[index], header: header),
+              child: _cell(cells[index],
+                  header: header, numeric: _isAmountColumn(index)),
             ),
           ),
       ]),
     );
   }
 
-  Widget _cell(_Cell cell, {required bool header}) {
+  bool _isAmountColumn(int index) => switch (tab) {
+        DayBookRegisterTab.due => index >= 4 && index <= 6,
+        DayBookRegisterTab.received => index == 4 || index == 5,
+        DayBookRegisterTab.expense => index == 4,
+      };
+
+  Widget _cell(_Cell cell, {required bool header, required bool numeric}) {
     final style = DayBookStyles.labelStrong.copyWith(
-      fontSize: header ? 10.5 : 10.5,
-      fontWeight: header || cell.bold ? FontWeight.w700 : FontWeight.w500,
+      fontSize: 13,
+      fontWeight: header || cell.bold ? FontWeight.w800 : FontWeight.w600,
       color: cell.color ?? DayBookColors.textPrimary,
     );
     if (cell.badge && !header) {
@@ -216,9 +223,12 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
       );
     }
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: numeric ? Alignment.centerRight : Alignment.centerLeft,
       child: Text(cell.text,
-          maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: numeric ? TextAlign.right : TextAlign.left,
+          style: style),
     );
   }
 

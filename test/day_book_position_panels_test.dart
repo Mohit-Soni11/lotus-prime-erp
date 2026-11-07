@@ -82,8 +82,8 @@ void main() {
     expect(find.text('₹4,17,000'), findsOneWidget);
     expect(find.text('1.200 kg'), findsOneWidget);
     expect(find.text('1.120 kg'), findsOneWidget);
-    expect(find.text('Gold Sold Today'), findsOneWidget);
-    expect(find.text('Silver Sold Today'), findsOneWidget);
+    expect(find.text('Gold Sold'), findsOneWidget);
+    expect(find.text('Silver Sold'), findsOneWidget);
     expect(find.text('95.000 g'), findsOneWidget);
     expect(find.text('12.000 g'), findsOneWidget);
     expect(find.text('2 invoices · Owned stock out 100.000 g'), findsOneWidget);

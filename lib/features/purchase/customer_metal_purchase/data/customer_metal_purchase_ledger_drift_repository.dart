@@ -5,6 +5,7 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entit
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_voucher_detail.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repositories/customer_metal_purchase_ledger_repository.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import 'customer_metal_stock_disposition.dart';
 
 class DriftCustomerMetalPurchaseLedgerRepository
     implements CustomerMetalPurchaseLedgerRepository {
@@ -166,8 +167,9 @@ class DriftCustomerMetalPurchaseLedgerRepository
     await _ensureReturnTable();
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    await _db.customStatement(
-      '''
+    await _db.transaction(() async {
+      await _db.customStatement(
+        '''
       INSERT OR IGNORE INTO customer_metal_purchase_returns (
         source,
         source_entry_id,
@@ -182,20 +184,22 @@ class DriftCustomerMetalPurchaseLedgerRepository
         created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
-      [
-        entry.source,
-        entry.id,
-        entry.referenceNo,
-        entry.metalType,
-        entry.customerName,
-        entry.grossWeight,
-        entry.fineWeight,
-        entry.amount,
-        'Customer item returned',
-        now,
-        now,
-      ],
-    );
+        [
+          entry.source,
+          entry.id,
+          entry.referenceNo,
+          entry.metalType,
+          entry.customerName,
+          entry.grossWeight,
+          entry.fineWeight,
+          entry.amount,
+          'Customer item returned',
+          now,
+          now,
+        ],
+      );
+      await CustomerMetalStockDisposition(_db).markReturned(entry);
+    });
   }
 
   @override
@@ -290,6 +294,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
             nowMs,
           ],
         );
+        await CustomerMetalStockDisposition(_db).markMelted(entry, batchNo);
       }
     });
 

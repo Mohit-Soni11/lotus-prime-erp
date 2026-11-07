@@ -13,6 +13,7 @@ import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_
 import 'package:lotus_erp/helpers/search/fuzzy_search_helper.dart';
 import 'package:lotus_erp/models/setting/billing_setup/booking_advance_billing_model.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
+import 'package:lotus_erp/models/purchase/purchase_voucher_origin.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/booking_advance_billing_repo.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
@@ -406,6 +407,7 @@ class BookingAdvanceRepository {
         voucherNo: voucherNo,
         supplierInvoiceNo: bookingNo,
         source: PurchaseSource.fromCustomer,
+        entryOrigin: PurchaseVoucherOrigin.bookingAdvanceMetal,
         taxType: PurchaseTaxType.normal,
         discountType: PurchaseDiscountType.flatAmount,
         discountValue: 0,

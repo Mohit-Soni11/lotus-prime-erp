@@ -66,22 +66,24 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
                 isDemo: widget.isDemo,
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 112),
+              padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(children: [
                     Container(
-                      width: 34,
-                      height: 34,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: display.iconBackground,
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child:
-                          Icon(display.icon, size: 21, color: display.accent),
+                          Icon(display.icon, size: 23, color: display.accent),
                     ),
                     const SizedBox(width: 9),
                     Expanded(
@@ -93,9 +95,9 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DayBookStyles.labelStrong.copyWith(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: display.valueColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: DayBookColors.textPrimary,
                             ),
                           ),
                           Text(
@@ -103,7 +105,7 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DayBookStyles.valueLarge.copyWith(
-                              fontSize: 18,
+                              fontSize: 20,
                               height: 1.12,
                               color: DayBookColors.textPrimary,
                             ),
@@ -117,12 +119,11 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
                   const SizedBox(height: 8),
                   Text(
                     display.caption,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DayBookStyles.label.copyWith(
-                      fontSize: 10.7,
-                      height: 1.18,
-                      color: DayBookColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.25,
                     ),
                   ),
                 ],

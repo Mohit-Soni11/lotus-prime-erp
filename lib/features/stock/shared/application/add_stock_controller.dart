@@ -5,7 +5,7 @@ import 'package:lotus_erp/features/stock/shared/application/add_stock_models.dar
 import 'package:lotus_erp/features/stock/shared/application/add_stock_purity_utils.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_row_validator.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_save_guard.dart';
-import 'package:lotus_erp/features/stock/shared/application/add_stock_sku_generator.dart';
+import 'package:lotus_erp/features/stock/shared/data/repositories/direct_stock_intake_repository.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
@@ -943,76 +943,15 @@ class AddStockController extends ChangeNotifier {
         return true;
       }
 
-      int saved = 0;
-      for (int index = 0; index < rowsToSave.length; index++) {
-        final row = rowsToSave[index];
-
-        await _db.into(_db.stockItems).insert(
-              StockItemsCompanion.insert(
-                sku: AddStockSkuGenerator.generate(
-                  metal: _selectedMetal,
-                  index: index,
-                ),
-                itemName: row.itemName.trim(),
-                description: drift.Value(
-                  row.description.trim().isEmpty
-                      ? null
-                      : row.description.trim(),
-                ),
-                category: _selectedMetal.label,
-                subCategory: row.subCategoryLabel.trim().isEmpty
-                    ? row.subCategory.label
-                    : row.subCategoryLabel.trim(),
-                metalType: drift.Value(_selectedMetal.label),
-                purity: drift.Value(
-                  resolvedPurityStorageLabel(row).isEmpty
-                      ? null
-                      : resolvedPurityStorageLabel(row),
-                ),
-                grossWeight: drift.Value(row.grossWeight),
-                stoneWeight: drift.Value(row.stoneWeight),
-                netWeight: drift.Value(row.netWeight),
-                wastage: drift.Value(
-                  row.resolveTouch(selectedPurityBasePercent),
-                ),
-                stoneType: drift.Value(row.stoneType.label),
-                stoneCarats: drift.Value(row.stoneCarats),
-                stonePieces: drift.Value(row.stonePieces),
-                stoneValue: drift.Value(row.stoneValue),
-                purchaseRate: drift.Value(row.purchaseRate),
-                makingCharge: drift.Value(row.makingCharges),
-                makingChargeType: drift.Value(row.makingChargesType.label),
-                purchasePrice: drift.Value(row.resolvedCostPrice),
-                mrp: drift.Value(row.mrp),
-                hsnCode: drift.Value(
-                  row.hsnCode.trim().isEmpty
-                      ? defaultHsnCode
-                      : row.hsnCode.trim(),
-                ),
-                huid: drift.Value(
-                  row.huid.trim().isEmpty
-                      ? null
-                      : row.huid.trim().toUpperCase(),
-                ),
-                gstRate: drift.Value(row.gstRate),
-                quantity: drift.Value(row.quantity),
-                location: drift.Value(
-                  row.location.trim().isEmpty ? null : row.location.trim(),
-                ),
-                supplierId: drift.Value(row.supplierId),
-                supplierName: drift.Value(
-                  row.supplierName.trim().isEmpty
-                      ? null
-                      : row.supplierName.trim(),
-                ),
-                status: drift.Value(StockStatus.available.label),
-              ),
-            );
-        saved++;
-      }
-
+      final result = await DirectStockIntakeRepository(_db).save(
+        metal: _selectedMetal,
+        rows: rowsToSave,
+        purityLabel: resolvedPurityStorageLabel,
+        fallbackTouch: selectedPurityBasePercent,
+        defaultHsnCode: defaultHsnCode,
+      );
       _successMessage =
-          '$saved item${saved > 1 ? 's' : ''} saved to ${_selectedMetal.label} stock successfully!';
+          '${result.itemCount} item${result.itemCount == 1 ? '' : 's'} saved in batch ${result.batchCode}.';
       _isSaving = false;
       notifyListeners();
       return true;

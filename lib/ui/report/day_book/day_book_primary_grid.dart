@@ -17,7 +17,7 @@ class DayBookPrimaryGrid extends StatelessWidget {
           if (flow == null) return position;
 
           final movement = DayBookMoneyPanel(flow: flow);
-          if (constraints.maxWidth < 1350) {
+          if (constraints.maxWidth < 1550) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [movement, const SizedBox(height: 16), position],

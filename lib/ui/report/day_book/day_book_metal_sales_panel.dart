@@ -32,10 +32,10 @@ class DayBookMetalSalesPanel extends StatelessWidget {
                 size: 19, color: DayBookColors.goldMetal),
             const SizedBox(width: 7),
             Expanded(
-              child: Text("Today's Customer Sales Weight",
+              child: Text('Metal Sold Today',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.labelStrong),
+                  style: DayBookStyles.sectionTitle),
             ),
           ]),
           const SizedBox(height: 8),
@@ -43,14 +43,14 @@ class DayBookMetalSalesPanel extends StatelessWidget {
             final inline = constraints.maxWidth >= 440;
             final cards = [
               _SoldMetalCard(
-                title: 'Gold Sold Today',
+                title: 'Gold Sold',
                 metal: DayBookMetalVisualType.gold,
                 position: gold,
                 soldGrams: customerSales?.goldGrams,
                 invoiceCount: customerSales?.goldInvoices,
               ),
               _SoldMetalCard(
-                title: 'Silver Sold Today',
+                title: 'Silver Sold',
                 metal: DayBookMetalVisualType.silver,
                 position: silver,
                 soldGrams: customerSales?.silverGrams,
@@ -70,9 +70,6 @@ class DayBookMetalSalesPanel extends StatelessWidget {
               Expanded(child: cards.last),
             ]);
           }),
-          const SizedBox(height: 6),
-          Text('Invoice net weight · returns shown separately',
-              style: DayBookStyles.label.copyWith(fontSize: 10)),
         ]),
       );
 }
@@ -108,7 +105,7 @@ class _SoldMetalCard extends StatelessWidget {
               child: Text(title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.labelStrong.copyWith(fontSize: 11))),
+                  style: DayBookStyles.labelStrong)),
         ]),
         const SizedBox(height: 6),
         Text(available ? dayBookMetalWeight(soldGrams!) : '—',
@@ -122,7 +119,7 @@ class _SoldMetalCard extends StatelessWidget {
                 : 'Invoice weight unavailable',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: DayBookStyles.label.copyWith(fontSize: 10)),
+            style: DayBookStyles.label.copyWith(fontSize: 13)),
       ]),
     );
   }

@@ -130,20 +130,20 @@ class DayBookStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        color: DayBookColors.textSecondary,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: DayBookColors.textPrimary,
       );
 
   static TextStyle get label => GoogleFonts.inter(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: DayBookColors.textSecondary,
+        fontWeight: FontWeight.w600,
+        color: DayBookColors.textPrimary,
       );
 
   static TextStyle get labelStrong => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
         color: DayBookColors.textPrimary,
       );
 

@@ -92,23 +92,14 @@ class _DayBookReceiptsRegisterPanelState
           ),
           const SizedBox(width: 10),
           Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Receipts, Dues & Expenses',
-                  style: DayBookStyles.sectionTitle.copyWith(fontSize: 17)),
-              Text('Daily source records for cash movement and expenses.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.sectionSubtitle.copyWith(fontSize: 11)),
-            ],
-          )),
+              child: Text('Receipts, Dues & Expenses',
+                  style: DayBookStyles.sectionTitle.copyWith(fontSize: 18))),
           if (widget.showDemoPreview)
             Tooltip(
               message: 'Sample records for design review.',
               child: Text('DEMO PREVIEW',
                   style: DayBookStyles.labelStrong
-                      .copyWith(color: DayBookColors.warning, fontSize: 10)),
+                      .copyWith(color: DayBookColors.warning, fontSize: 13)),
             ),
           if (widget.showExpandAction)
             IconButton(
@@ -240,7 +231,7 @@ class _RegisterTabs extends StatelessWidget {
             const SizedBox(width: 7),
             Text('$label ($count)',
                 style: DayBookStyles.labelStrong.copyWith(
-                  fontSize: 11.5,
+                  fontSize: 13,
                   color: active ? Colors.white : DayBookColors.textPrimary,
                 )),
           ]),

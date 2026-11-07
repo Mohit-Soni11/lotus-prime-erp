@@ -59,7 +59,7 @@ void main() {
             tester.getBottomLeft(find.byType(DayBookWorkspaceHeader)).dy),
       );
       expect(find.text('Daily business register for the selected date.'),
-          findsOneWidget);
+          findsNothing);
       expect(find.byType(DayBookExportButton), findsOneWidget);
       for (final title in [
         'Total Sales',

@@ -73,8 +73,13 @@ void main() {
       expect(find.text('Bank Accounts'), findsOneWidget);
       expect(find.text('Opening Balance'), findsOneWidget);
       expect(find.text('Closing Balance'), findsOneWidget);
-      await tester.ensureVisible(find.text('Source & Payment Mode Detail'));
-      await tester.tap(find.text('Source & Payment Mode Detail'));
+      if (width == 1200) {
+        final bankOpening = tester.getTopRight(find.text('₹1,000.00')).dx;
+        final bankClosing = tester.getTopRight(find.text('₹1,500.00')).dx;
+        expect((bankOpening - bankClosing).abs(), lessThan(1));
+      }
+      await tester.ensureVisible(find.text('Source & Mode Breakdown'));
+      await tester.tap(find.text('Source & Mode Breakdown'));
       await tester.pumpAndSettle();
       expect(find.text('Money In by Source'), findsOneWidget);
       expect(tester.takeException(), isNull);

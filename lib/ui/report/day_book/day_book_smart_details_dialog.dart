@@ -60,8 +60,8 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text('DEMO PREVIEW · Sample records for layout review',
-                    style: DayBookStyles.labelStrong.copyWith(
-                        color: DayBookColors.warning, fontSize: 11.5)),
+                    style: DayBookStyles.labelStrong
+                        .copyWith(color: DayBookColors.warning, fontSize: 13)),
               ),
             ),
           const Divider(height: 1),
@@ -221,7 +221,7 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) => Text(
         '$label ${dayBookSmartMoney(value)}',
         style: DayBookStyles.labelStrong
-            .copyWith(color: DayBookColors.textPrimary, fontSize: 11.5),
+            .copyWith(color: DayBookColors.textPrimary, fontSize: 13),
       );
 }
 
@@ -296,7 +296,7 @@ class _DetailRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: DayBookStyles.label.copyWith(
-                              fontSize: 11,
+                              fontSize: 13,
                               color: DayBookColors.textSecondary)),
                   ],
                 ),

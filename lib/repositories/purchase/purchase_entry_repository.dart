@@ -5,6 +5,7 @@ import 'package:lotus_erp/features/finance/transactions/domain/services/finance_
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
+import '../../models/purchase/purchase_voucher_origin.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -72,6 +73,7 @@ class PurchaseVoucherItemDraft {
   final double wastageFineWeight;
   final double valuationFineWeight;
   final double rate;
+  final double? makingTotal;
   final double lineAmount;
   final String subCategory;
   final String? huid;
@@ -104,6 +106,7 @@ class PurchaseVoucherItemDraft {
     this.wastageFineWeight = 0.0,
     this.valuationFineWeight = 0.0,
     required this.rate,
+    this.makingTotal,
     required this.lineAmount,
     this.subCategory = 'Purchase Inward',
     this.huid,
@@ -128,6 +131,7 @@ class PurchaseVoucherDraft {
   final String voucherNo;
   final String? supplierInvoiceNo;
   final PurchaseSource source;
+  final PurchaseVoucherOrigin? entryOrigin;
   final PurchaseTaxType taxType;
   final PurchaseDiscountType discountType;
   final double discountValue;
@@ -162,6 +166,7 @@ class PurchaseVoucherDraft {
     required this.voucherNo,
     this.supplierInvoiceNo,
     required this.source,
+    this.entryOrigin,
     required this.taxType,
     required this.discountType,
     required this.discountValue,
@@ -342,6 +347,13 @@ class PurchaseEntryRepository {
         final now = DateTime.now();
         final createdAtMs = now.millisecondsSinceEpoch;
         final isSupplierPurchase = draft.source == PurchaseSource.fromSupplier;
+        final stockStatus = isSupplierPurchase
+            ? StockStatus.available.label
+            : StockStatus.processing.label;
+        final entryOrigin = draft.entryOrigin ??
+            (isSupplierPurchase
+                ? PurchaseVoucherOrigin.supplierPurchase
+                : PurchaseVoucherOrigin.customerMetalPurchase);
         final paymentStatus = _resolvePaymentStatus(
           draft.balanceDue,
           draft.totalPaid,
@@ -453,6 +465,10 @@ class PurchaseEntryRepository {
             .customSelect('SELECT last_insert_rowid() AS id')
             .getSingle();
         final voucherId = voucherRow.read<int>('id');
+        await _db.customStatement(
+          'UPDATE purchase_vouchers SET entry_origin = ? WHERE id = ?',
+          [entryOrigin.storageValue, voucherId],
+        );
 
         var stockEntryCount = 0;
         for (var index = 0; index < draft.items.length; index++) {
@@ -478,13 +494,14 @@ class PurchaseEntryRepository {
               wastage_fine_weight,
               valuation_fine_weight,
               rate,
+              making_total,
               quantity,
               quantity_mode,
               packet_count,
               pieces_per_packet,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -505,6 +522,7 @@ class PurchaseEntryRepository {
                   ? item.valuationFineWeight
                   : item.fineWeight + item.wastageFineWeight,
               item.rate,
+              item.makingTotal,
               item.quantity,
               item.quantityMode,
               item.packetCount,
@@ -576,7 +594,7 @@ class PurchaseEntryRepository {
                     isSupplierPurchase ? draft.party.name : null,
                   ),
                   quantity: drift.Value(item.quantity > 0 ? item.quantity : 1),
-                  status: drift.Value(StockStatus.available.label),
+                  status: drift.Value(stockStatus),
                   gstRate: drift.Value(item.gstRate),
                 ),
               );
@@ -615,6 +633,7 @@ class PurchaseEntryRepository {
             item: item,
             supplierId: isSupplierPurchase ? draft.party.supplierId : null,
             supplierName: isSupplierPurchase ? draft.party.name : null,
+            stockStatus: stockStatus,
             createdAtMs: createdAtMs,
           );
           final stockQuantity = item.quantity > 0 ? item.quantity : 1;
@@ -624,7 +643,7 @@ class PurchaseEntryRepository {
               : stockQuantity;
           await _insertStockMovement(
             stockItemId: stockItemId,
-            movementType: 'IN',
+            movementType: isSupplierPurchase ? 'IN' : 'CUSTOMER_METAL_IN',
             sourceType: 'PURCHASE',
             sourceId: voucherId.toString(),
             sourceLineNo: index + 1,
@@ -1313,6 +1332,7 @@ class PurchaseEntryRepository {
     required PurchaseVoucherItemDraft item,
     required int? supplierId,
     required String? supplierName,
+    required String stockStatus,
     required int createdAtMs,
   }) async {
     final quantity = item.quantity > 0 ? item.quantity : 1;
@@ -1329,6 +1349,7 @@ class PurchaseEntryRepository {
         item: item,
         supplierId: supplierId,
         supplierName: supplierName,
+        stockStatus: stockStatus,
         createdAtMs: createdAtMs,
       );
       return;
@@ -1441,7 +1462,7 @@ class PurchaseEntryRepository {
           unitCost,
           supplierId,
           supplierName,
-          StockStatus.available.label,
+          stockStatus,
           createdAtMs,
           createdAtMs,
         ],
@@ -1459,6 +1480,7 @@ class PurchaseEntryRepository {
     required PurchaseVoucherItemDraft item,
     required int? supplierId,
     required String? supplierName,
+    required String stockStatus,
     required int createdAtMs,
   }) async {
     final valuationFine = item.valuationFineWeight > 0
@@ -1525,7 +1547,7 @@ class PurchaseEntryRepository {
         item.lineAmount,
         supplierId,
         supplierName,
-        StockStatus.available.label,
+        stockStatus,
         createdAtMs,
         createdAtMs,
       ],

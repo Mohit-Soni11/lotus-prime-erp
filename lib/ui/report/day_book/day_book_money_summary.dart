@@ -36,29 +36,19 @@ class DayBookMoneySummary extends StatelessWidget {
       _SummaryMetric(
           'Closing Balance',
           flow.closingTotal,
-          DayBookIcons.closingBalance,
+          DayBookIcons.openingBalance,
           DayBookColors.warning,
           DayBookColors.warningSoft,
           DayBookColors.warningBorder),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(children: [
-        Container(
-            width: 4,
-            height: 34,
-            decoration: BoxDecoration(
-              color: DayBookColors.brandGold,
-              borderRadius: BorderRadius.circular(3),
-            )),
+        const Icon(DayBookIcons.netMovement,
+            size: 24, color: DayBookColors.goldMetal),
         const SizedBox(width: 10),
         Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Money Movement',
-              style: DayBookStyles.sectionTitle.copyWith(fontSize: 19)),
-          Text('Posted cash and bank movements for the selected day.',
-              style: DayBookStyles.sectionSubtitle.copyWith(fontSize: 11)),
-        ])),
+            child: Text('Money Movement',
+                style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
       ]),
       const SizedBox(height: 13),
       LayoutBuilder(builder: (context, constraints) {
@@ -97,7 +87,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
         decoration: DayBookStyles.softPanel(
           color: metric.background,
           borderColor: metric.border,
@@ -119,7 +109,7 @@ class _SummaryCard extends StatelessWidget {
               Text(metric.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.labelStrong.copyWith(fontSize: 10.5)),
+                  style: DayBookStyles.labelStrong),
               const SizedBox(height: 2),
               Text(
                   NumberFormat.currency(
@@ -127,7 +117,7 @@ class _SummaryCard extends StatelessWidget {
                       .format(metric.amount),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.valueLarge.copyWith(fontSize: 16)),
+                  style: DayBookStyles.valueLarge.copyWith(fontSize: 19)),
             ]),
           ),
         ]),

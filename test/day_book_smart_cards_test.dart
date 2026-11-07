@@ -30,7 +30,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: DayBookSmartCards(summary: DayBookSummary(date: DateTime(2026))),
+        body: SingleChildScrollView(
+          child:
+              DayBookSmartCards(summary: DayBookSummary(date: DateTime(2026))),
+        ),
       ),
     ));
     expect(find.text('Total Sales'), findsOneWidget);

@@ -111,4 +111,102 @@ void main() {
     expect(position.gold.isConsistent, isTrue);
     expect(position.silver.closingGrams, 1250);
   });
+
+  test('customer old-metal inward does not inflate saleable Day Book stock',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final day = DateTime(2026, 11, 4, 10);
+    await db.customStatement('''
+      INSERT INTO purchase_vouchers
+        (voucher_no, sequence_no, source_type, party_name, created_at)
+      VALUES ('CUSTOMER-OLD-1', 1, 'CUSTOMER', 'Customer', ?)
+    ''', [day.millisecondsSinceEpoch]);
+    final voucherId = (await db
+            .customSelect(
+              'SELECT last_insert_rowid() AS id',
+            )
+            .getSingle())
+        .read<int>('id');
+    final saleableId = await db.into(db.stockItems).insert(
+          StockItemsCompanion.insert(
+            sku: 'OWNED-GOLD',
+            itemName: 'Owned Gold',
+            category: 'Gold',
+            subCategory: 'Ring',
+          ),
+        );
+    await db.customStatement('''
+      INSERT INTO stock_item_units
+        (stock_item_id, unit_code, piece_no, metal_type, item_name,
+         net_weight, status, created_at)
+      VALUES (?, 'OWNED-GOLD-U1', 1, 'Gold', 'Owned Gold',
+              10, 'Available', ?)
+    ''', [saleableId, day.millisecondsSinceEpoch]);
+    final customerId = await db.into(db.stockItems).insert(
+          StockItemsCompanion.insert(
+            sku: 'CUSTOMER-OLD-GOLD',
+            itemName: 'Customer Old Gold',
+            category: 'Gold',
+            subCategory: 'Old Metal',
+            status: const drift.Value('Processing'),
+          ),
+        );
+    await db.customStatement('''
+      INSERT INTO stock_item_units
+        (stock_item_id, purchase_voucher_id, unit_code, piece_no,
+         metal_type, item_name, net_weight, status, created_at)
+      VALUES (?, ?, 'CUSTOMER-OLD-U1', 1, 'Gold', 'Old Gold',
+              5, 'Processing', ?)
+    ''', [customerId, voucherId, day.millisecondsSinceEpoch]);
+
+    final movements = <DayBookStockMovement>[
+      DayBookStockMovement(
+        id: 1,
+        occurredAt: day,
+        movementType: 'IN',
+        metal: 'Gold',
+        itemName: 'Owned Gold',
+        sourceType: 'PURCHASE',
+        sourceId: 'OTHER',
+        quantityDelta: 1,
+        grossWeightDelta: 10,
+        netWeightDelta: 10,
+        fineWeightDelta: 9,
+      ),
+      DayBookStockMovement(
+        id: 2,
+        occurredAt: day,
+        movementType: 'IN',
+        metal: 'Gold',
+        itemName: 'Old Gold',
+        sourceType: 'PURCHASE',
+        sourceId: '$voucherId',
+        quantityDelta: 1,
+        grossWeightDelta: 5,
+        netWeightDelta: 5,
+        fineWeightDelta: 4,
+      ),
+    ];
+    for (final movement in movements) {
+      await db.into(db.stockMovements).insert(StockMovementsCompanion.insert(
+            stockItemId: movement.id == 1 ? saleableId : customerId,
+            movementType: movement.movementType,
+            sourceType: movement.sourceType,
+            sourceId: movement.sourceId,
+            skuSnapshot: movement.itemName,
+            metalTypeSnapshot: movement.metal,
+            itemNameSnapshot: movement.itemName,
+            quantityDelta: movement.quantityDelta,
+            netWeightDelta: drift.Value(movement.netWeightDelta),
+            occurredAt: day,
+          ));
+    }
+
+    final position =
+        await DayBookOwnedStockRepository(db).fetch(day, movements);
+    expect(position.gold.openingGrams, 0);
+    expect(position.gold.inwardGrams, 10);
+    expect(position.gold.closingGrams, 10);
+  });
 }

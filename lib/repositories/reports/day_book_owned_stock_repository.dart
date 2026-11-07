@@ -15,7 +15,30 @@ class DayBookOwnedStockRepository {
     DateTime day,
     List<DayBookStockMovement> dayMovements,
   ) async {
+    final start = DateTime(day.year, day.month, day.day);
     final end = DateTime(day.year, day.month, day.day + 1);
+    final customerVoucherRows = await _db.customSelect('''
+      SELECT DISTINCT movement.source_id
+      FROM stock_movements movement
+      JOIN purchase_vouchers voucher
+        ON CAST(voucher.id AS TEXT) = movement.source_id
+      WHERE UPPER(movement.source_type) = 'PURCHASE'
+        AND UPPER(voucher.source_type) = 'CUSTOMER'
+        AND ((movement.occurred_at >= ? AND movement.occurred_at < ?)
+          OR (movement.occurred_at >= ? AND movement.occurred_at < ?))
+    ''', variables: [
+      Variable.withInt(start.millisecondsSinceEpoch),
+      Variable.withInt(end.millisecondsSinceEpoch),
+      Variable.withInt(start.millisecondsSinceEpoch ~/ 1000),
+      Variable.withInt(end.millisecondsSinceEpoch ~/ 1000),
+    ]).get();
+    final customerVoucherIds =
+        customerVoucherRows.map((row) => row.read<String>('source_id')).toSet();
+    final ownedMovements = dayMovements
+        .where((movement) =>
+            movement.sourceType.toUpperCase() != 'PURCHASE' ||
+            !customerVoucherIds.contains(movement.sourceId))
+        .toList();
     final unitRows = await _db.customSelect('''
       SELECT LOWER(TRIM(metal_type)) AS metal,
         COALESCE(SUM(CASE WHEN LOWER(status) = 'available'
@@ -52,6 +75,14 @@ class DayBookOwnedStockRepository {
       WHERE ((occurred_at >= ? AND occurred_at >= 100000000000)
           OR (occurred_at >= ? AND occurred_at < 100000000000))
         AND LOWER(TRIM(metal_type_snapshot)) IN ('gold', 'silver')
+        AND NOT (
+          UPPER(source_type) = 'PURCHASE'
+          AND EXISTS (
+            SELECT 1 FROM purchase_vouchers customer_voucher
+            WHERE CAST(customer_voucher.id AS TEXT) = stock_movements.source_id
+              AND UPPER(customer_voucher.source_type) = 'CUSTOMER'
+          )
+        )
       GROUP BY LOWER(TRIM(metal_type_snapshot))
     ''', variables: [
       Variable.withInt(end.millisecondsSinceEpoch),
@@ -70,7 +101,7 @@ class DayBookOwnedStockRepository {
           currentAvailableGrams:
               (unitValues[name] ?? 0) + (legacyValues[name] ?? 0),
           movementAfterDayGrams: after[name] ?? 0,
-          dayMovements: dayMovements,
+          dayMovements: ownedMovements,
         );
 
     return DayBookOwnedStockPosition(

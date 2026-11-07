@@ -50,7 +50,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DayBookStyles.labelStrong.copyWith(
-                        fontSize: 12.5,
+                        fontSize: 13,
                         color: DayBookColors.information,
                         decoration: TextDecoration.underline,
                       )),
@@ -68,7 +68,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: DayBookStyles.labelStrong.copyWith(
-                          color: DayBookColors.information, fontSize: 11.5)),
+                          color: DayBookColors.information, fontSize: 13)),
                 if (event.mobile?.isNotEmpty == true)
                   Text(event.mobile!, style: DayBookStyles.label),
                 for (final item in event.items.take(2)) _itemLine(item),
@@ -99,7 +99,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: DayBookStyles.labelStrong.copyWith(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: DayBookColors.information,
                 )),
           ),
@@ -113,18 +113,18 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
             child: Text(mobile!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: DayBookStyles.label.copyWith(fontSize: 11)),
+                style: DayBookStyles.label.copyWith(fontSize: 13)),
           ),
         ]),
       if (party == null && mobile == null)
         Text(document.kind.label,
-            style: DayBookStyles.label.copyWith(fontSize: 11)),
+            style: DayBookStyles.label.copyWith(fontSize: 13)),
       if (document.items.isNotEmpty) ...[
         const Divider(height: 14),
         for (final item in document.items.take(2)) _itemLine(item),
         if (document.items.length > 2)
           Text('+${document.items.length - 2} more items',
-              style: DayBookStyles.label.copyWith(fontSize: 10.5)),
+              style: DayBookStyles.label.copyWith(fontSize: 13)),
       ],
       const Divider(height: 14),
       _labelValue(isInvoice ? 'Invoice Value' : 'Value',
@@ -174,7 +174,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
         Text('+${document.items.length - 1} more items',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: DayBookStyles.label.copyWith(fontSize: 10)),
+            style: DayBookStyles.label.copyWith(fontSize: 13)),
       const SizedBox(height: 5),
       const Divider(height: 1, color: DayBookColors.bodyBorder),
       const SizedBox(height: 5),
@@ -201,7 +201,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
         Text('GST ${dayBookSmartMoney(document.tax!)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: DayBookStyles.label.copyWith(fontSize: 10)),
+            style: DayBookStyles.label.copyWith(fontSize: 13)),
       ],
     ]);
   }
@@ -217,7 +217,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DayBookStyles.labelStrong.copyWith(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: linkStyle
                           ? DayBookColors.information
                           : DayBookColors.textPrimary,
@@ -232,24 +232,24 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
           SizedBox(
               width: 58,
               child: Text(label,
-                  style: DayBookStyles.label.copyWith(fontSize: 10.5))),
+                  style: DayBookStyles.label.copyWith(fontSize: 13))),
           Expanded(
               child: Text(value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DayBookStyles.labelStrong.copyWith(fontSize: 10.5))),
+                  style: DayBookStyles.labelStrong.copyWith(fontSize: 13))),
         ]),
       );
 
   Widget _amountCell(String label, String value, Color color) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: DayBookStyles.label.copyWith(fontSize: 10)),
+          Text(label, style: DayBookStyles.label.copyWith(fontSize: 13)),
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: DayBookStyles.labelStrong.copyWith(
-                  fontSize: 11.5, fontWeight: FontWeight.w800, color: color)),
+                  fontSize: 13, fontWeight: FontWeight.w800, color: color)),
         ],
       );
 
@@ -266,11 +266,11 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
             child: Text('${item.metal} · ${item.name}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: DayBookStyles.label.copyWith(fontSize: 10.5)),
+                style: DayBookStyles.label.copyWith(fontSize: 13)),
           ),
           const SizedBox(width: 5),
           Text(dayBookMetalWeight(item.netWeightGrams),
-              style: DayBookStyles.labelStrong.copyWith(fontSize: 10.5)),
+              style: DayBookStyles.labelStrong.copyWith(fontSize: 13)),
         ]),
       );
 
@@ -282,7 +282,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
             child: Text(label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: DayBookStyles.label.copyWith(fontSize: 10.5)),
+                style: DayBookStyles.label.copyWith(fontSize: 13)),
           ),
           const SizedBox(width: 5),
           Flexible(
@@ -291,7 +291,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
                 style: DayBookStyles.labelStrong
-                    .copyWith(fontSize: 10.5, color: valueColor)),
+                    .copyWith(fontSize: 13, color: valueColor)),
           ),
         ]),
       );

@@ -10,7 +10,7 @@ import 'day_book_document_summary_panel.dart';
 import 'day_book_eod_dialog.dart';
 import 'day_book_receipts_register_panel.dart';
 import 'day_book_primary_grid.dart';
-import 'day_book_stock_movement_panel.dart';
+import 'day_book_stock_added_panel.dart';
 import 'day_book_sections.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -190,7 +190,10 @@ class _DayBookScreenState extends State<DayBookScreen> {
       const SizedBox(height: 12),
       _Reveal(
         delay: 180,
-        child: DayBookStockMovementPanel(movements: summary.stockMovements),
+        child: DayBookStockAddedPanel(
+          summary: summary,
+          showDemoPreview: true,
+        ),
       ),
     ];
   }

@@ -7,6 +7,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_models.dart';
 import 'day_book_money_repository.dart';
 import 'day_book_stock_movement_repository.dart';
+import 'day_book_stock_added_repository.dart';
 import 'day_book_custody_repository.dart';
 import 'day_book_document_repository.dart';
 import 'day_book_activity_repository.dart';
@@ -61,6 +62,8 @@ class DayBookRepository {
             await DayBookMoneyRepository(_db).fetch(date, openingCash);
         final stockMovements =
             await DayBookStockMovementRepository(_db).fetch(date);
+        final stockAddedBatches =
+            await DayBookStockAddedRepository(_db).fetch(date);
         final ownedStockPosition =
             await DayBookOwnedStockRepository(_db).fetch(date, stockMovements);
         final customerMetalSales =
@@ -110,6 +113,7 @@ class DayBookRepository {
           date: date,
           moneyFlow: moneyFlow,
           stockMovements: stockMovements,
+          stockAddedBatches: stockAddedBatches,
           ownedStockPosition: ownedStockPosition,
           customerMetalSales: customerMetalSales,
           documents: documents,

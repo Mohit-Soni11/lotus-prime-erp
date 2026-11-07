@@ -6,6 +6,7 @@ import 'day_book_expense_record.dart';
 import 'day_book_owned_stock_position.dart';
 import 'day_book_customer_metal_sales.dart';
 import 'day_book_stock_movement.dart';
+import 'day_book_stock_added_batch.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment Mode Breakup
@@ -376,6 +377,7 @@ class DayBookSummary {
   final DateTime date;
   final DayBookMoneyFlow? moneyFlow;
   final List<DayBookStockMovement> stockMovements;
+  final List<DayBookStockAddedBatch> stockAddedBatches;
   final DayBookCustodyPosition? custodyPosition;
   final List<DayBookDocument> documents;
   final List<DayBookActivityEvent> activityEvents;
@@ -407,6 +409,7 @@ class DayBookSummary {
     required this.date,
     this.moneyFlow,
     this.stockMovements = const [],
+    this.stockAddedBatches = const [],
     this.custodyPosition,
     this.documents = const [],
     this.activityEvents = const [],

@@ -134,6 +134,8 @@ enum StoneType {
 
 enum StockStatus {
   available('Available'),
+  processing('Processing'),
+  melted('Melted'),
   sold('Sold'),
   reserved('Reserved'),
   onHold('On Hold'),

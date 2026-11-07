@@ -223,6 +223,9 @@ class StockActivityRecord {
 
   String get businessTitle {
     if (isPurchase) return 'Stock Added';
+    if (movementType.toUpperCase() == 'CUSTOMER_METAL_IN') {
+      return 'Customer Metal Intake';
+    }
     if (isSale) return 'Sold Through POS';
     if (isRestore) return 'Sale Restored';
     return 'Stock Movement';

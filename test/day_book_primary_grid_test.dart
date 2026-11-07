@@ -40,7 +40,7 @@ void main() {
       expect(find.text('Closing Position'), findsOneWidget);
       expect(find.text('Opening Balance'), findsNWidgets(2));
       expect(find.text('Opening Cash'), findsNothing);
-      if (width >= 1350) {
+      if (width >= 1550) {
         expect(opening.dx, greaterThan(money.dx));
       } else {
         expect(opening.dy, greaterThan(money.dy));
