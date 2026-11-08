@@ -141,6 +141,7 @@ class BookingAdvanceController extends ChangeNotifier {
   double _cashInput = 0.0;
   double _upiInput = 0.0;
   double _cardInput = 0.0;
+  double _editingUnpostedCredit = 0.0;
 
   bool isSaving = false;
 
@@ -157,7 +158,8 @@ class BookingAdvanceController extends ChangeNotifier {
 
   double get totalScrapVal => scrapItems.fold(0.0, (s, i) => s + i.totalValue);
 
-  double get totalAdvance => totalCashAdv + totalScrapVal;
+  double get totalAdvance =>
+      totalCashAdv + totalScrapVal + _editingUnpostedCredit;
   double get totalBookingVal =>
       bookingItems.fold(0.0, (s, i) => s + i.totalValue);
 

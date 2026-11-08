@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/reports/day_book/day_book_balance_verification.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
+import 'day_book_balance_attention.dart';
+import 'day_book_balance_difference_fields.dart';
+import 'day_book_balance_sections.dart';
 import 'day_book_balance_summary.dart';
 import 'day_book_form_visuals.dart';
 
@@ -24,7 +27,7 @@ class DayBookBalanceDialog extends StatefulWidget {
     required this.onSave,
     this.existing,
     this.bankAccountConfigured = true,
-    this.onOpenBankBook,
+    this.onRecordTransfer,
   });
 
   final DateTime date;
@@ -33,7 +36,7 @@ class DayBookBalanceDialog extends StatefulWidget {
   final DayBookBalanceVerification? existing;
   final SaveDayBookBalance onSave;
   final bool bankAccountConfigured;
-  final VoidCallback? onOpenBankBook;
+  final VoidCallback? onRecordTransfer;
 
   @override
   State<DayBookBalanceDialog> createState() => _DayBookBalanceDialogState();
@@ -45,25 +48,29 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
       text: widget.existing?.actualCash.toStringAsFixed(2) ?? '');
   late final _bank = TextEditingController(
       text: widget.existing?.actualBank.toStringAsFixed(2) ?? '');
-  late final _cashReason =
-      TextEditingController(text: widget.existing?.cashReason ?? '');
-  late final _bankReason =
-      TextEditingController(text: widget.existing?.bankReason ?? '');
-  ExpenseCategory? _expenseCategory;
+  late final _note = TextEditingController(
+      text: widget.existing?.cashReason ?? widget.existing?.bankReason ?? '');
+  late ExpenseCategory? _expenseCategory = widget.existing?.cashCategory == null
+      ? null
+      : ExpenseCategory.fromDb(widget.existing!.cashCategory!);
+  late DayBookExpenseScope? _expenseScope = _expenseCategory == null
+      ? null
+      : _expenseCategory!.isPersonal
+          ? DayBookExpenseScope.personal
+          : DayBookExpenseScope.shop;
   bool _saving = false;
   String? _error;
 
-  static const _expenseCategories = [
-    ExpenseCategory.shopRent,
-    ExpenseCategory.staffSalary,
-    ExpenseCategory.electricity,
-    ExpenseCategory.maintenance,
-    ExpenseCategory.advertising,
-    ExpenseCategory.transport,
-    ExpenseCategory.governmentFees,
-    ExpenseCategory.miscExpense,
-    ExpenseCategory.otherExpense,
-  ];
+  double? _amount(TextEditingController controller) {
+    final amount = double.tryParse(controller.text.trim().replaceAll(',', ''));
+    return amount != null && amount.isFinite ? amount : null;
+  }
+
+  double get _netShortage =>
+      widget.expectedCash +
+      widget.expectedBank -
+      (_amount(_cash) ?? 0) -
+      (_amount(_bank) ?? 0);
 
   @override
   void initState() {
@@ -80,33 +87,29 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
     _bank.removeListener(_refresh);
     _cash.dispose();
     _bank.dispose();
-    _cashReason.dispose();
-    _bankReason.dispose();
+    _note.dispose();
     super.dispose();
   }
 
-  double? _parse(TextEditingController input) =>
-      double.tryParse(input.text.trim().replaceAll(',', ''));
-  double? get _cashVariance =>
-      _parse(_cash) == null ? null : _parse(_cash)! - widget.expectedCash;
-  double? get _bankVariance =>
-      _parse(_bank) == null ? null : _parse(_bank)! - widget.expectedBank;
-  bool get _cashMismatch => (_cashVariance?.abs() ?? 0) >= 0.01;
-  bool get _bankMismatch => (_bankVariance?.abs() ?? 0) >= 0.01;
-
   Future<void> _save() async {
     if (_saving || !_formKey.currentState!.validate()) return;
+    if (_netShortage >= 0.01 &&
+        (_expenseScope == null || _expenseCategory == null)) {
+      setState(
+          () => _error = 'Choose Shop or Personal expense and its category.');
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
       await widget.onSave(
-        actualCash: _parse(_cash)!,
-        actualBank: _parse(_bank)!,
-        cashExpenseCategory: _cashVariance! < -0.005 ? _expenseCategory : null,
-        cashReason: _cashMismatch ? _cashReason.text.trim() : null,
-        bankReason: _bankMismatch ? _bankReason.text.trim() : null,
+        actualCash: _amount(_cash)!,
+        actualBank: _amount(_bank)!,
+        cashExpenseCategory: _netShortage >= 0.01 ? _expenseCategory : null,
+        cashReason: _netShortage.abs() >= 0.01 ? _note.text.trim() : null,
+        bankReason: _netShortage < -0.005 ? _note.text.trim() : null,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
@@ -125,304 +128,218 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
   Widget build(BuildContext context) {
     final existing = widget.existing;
     final readOnly = existing != null;
+    final expectedCash = existing?.expectedCash ?? widget.expectedCash;
+    final expectedBank = existing?.expectedBank ?? widget.expectedBank;
+    final actualCash = readOnly ? existing.actualCash : _amount(_cash);
+    final actualBank = readOnly ? existing.actualBank : _amount(_bank);
+    final cashVariance = actualCash == null ? 0 : actualCash - expectedCash;
+    final bankVariance = actualBank == null ? 0 : actualBank - expectedBank;
+    final netDifference = actualCash == null || actualBank == null
+        ? 0.0
+        : expectedCash + expectedBank - actualCash - actualBank;
+    final allocationConflict = actualCash != null &&
+        actualBank != null &&
+        ((cashVariance < -0.005 && bankVariance > 0.005) ||
+            (cashVariance > 0.005 && bankVariance < -0.005));
+
     return DayBookFormVisuals.themed(
-        child: AlertDialog(
-      backgroundColor: DayBookColors.bodyPanel,
-      surfaceTintColor: Colors.transparent,
-      shape: DayBookFormVisuals.dialogShape,
-      title: DayBookFormVisuals.heading(
-        title: readOnly ? 'Balance Verification' : 'Set Balance',
-        subtitle: 'Check today’s opening cash and bank',
-        icon: Icons.fact_check_outlined,
-      ),
-      content: SizedBox(
-        width: 530,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DayBookFormVisuals.contextStrip(date: widget.date),
-                if (readOnly) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Saved ${DateFormat('d MMM yyyy, h:mm a').format(existing.verifiedAt)}'
-                    '${existing.bankNeedsReview ? ' · Bank reconciliation pending' : existing.cashAdjusted ? ' · Cash adjusted' : ' · Verified'}',
-                    style: DayBookStyles.labelStrong.copyWith(
-                      color: existing.bankNeedsReview
-                          ? DayBookColors.warning
-                          : DayBookColors.positive,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                if (!readOnly) ...[
-                  DayBookFormVisuals.note(
-                    'Enter the counted cash and current bank balance. Explain any difference before saving.',
-                  ),
-                  const SizedBox(height: 14),
-                ],
-                if (!widget.bankAccountConfigured) ...[
-                  Text(
-                    'No bank account is configured in Bank Book. Add one before verifying a non-zero bank balance.',
-                    style: DayBookStyles.labelStrong
-                        .copyWith(color: DayBookColors.warning),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                _BalanceLine(
-                  label: 'Counter Cash',
-                  expected:
-                      readOnly ? existing.expectedCash : widget.expectedCash,
-                  input: _cash,
-                  readOnly: readOnly,
-                  keyName: 'actual-cash',
-                  difference: readOnly ? existing.cashVariance : _cashVariance,
-                  allowNegative: false,
-                  bankAccountConfigured: widget.bankAccountConfigured,
-                ),
-                const SizedBox(height: 14),
-                _BalanceLine(
-                  label: 'Bank Balance',
-                  expected:
-                      readOnly ? existing.expectedBank : widget.expectedBank,
-                  input: _bank,
-                  readOnly: readOnly,
-                  keyName: 'actual-bank',
-                  difference: readOnly ? existing.bankVariance : _bankVariance,
-                  allowNegative: true,
-                  bankAccountConfigured: widget.bankAccountConfigured,
-                ),
-                const SizedBox(height: 14),
-                DayBookBalanceSummary(
-                  expectedCash:
-                      readOnly ? existing.expectedCash : widget.expectedCash,
-                  expectedBank:
-                      readOnly ? existing.expectedBank : widget.expectedBank,
-                  actualCash: readOnly ? existing.actualCash : _parse(_cash),
-                  actualBank: readOnly ? existing.actualBank : _parse(_bank),
-                ),
-                if (readOnly
-                    ? existing.cashVariance.abs() >= 0.01
-                    : _cashMismatch) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    (readOnly ? existing.cashVariance : _cashVariance!) < 0
-                        ? 'Cash shortage · record the expense type and reason'
-                        : 'Cash surplus · record the reason',
-                    style: DayBookStyles.labelStrong,
-                  ),
-                  if ((readOnly ? existing.cashVariance : _cashVariance!) < 0 &&
-                      !readOnly) ...[
-                    const SizedBox(height: 9),
-                    DropdownButtonFormField<ExpenseCategory>(
-                      key: const ValueKey('cash-variance-category'),
-                      initialValue: _expenseCategory,
-                      style: DayBookStyles.labelStrong,
-                      decoration: DayBookFormVisuals.field(
-                        'Expense type',
-                        Icons.receipt_long_outlined,
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(18),
+        backgroundColor: const Color(0xFFFFFEFC),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: DayBookColors.brandGoldBorder),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+              maxWidth: 640, maxHeight: MediaQuery.sizeOf(context).height - 36),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _header(context),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DayBookPreviousClosing(
+                        date: widget.date,
+                        cash: expectedCash,
+                        bank: expectedBank,
                       ),
-                      items: _expenseCategories
-                          .map((category) => DropdownMenuItem(
-                                value: category,
-                                child: Text(category.displayLabel,
-                                    style: DayBookStyles.labelStrong),
-                              ))
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _expenseCategory = value),
-                      validator: (value) =>
-                          value == null ? 'Select the expense type.' : null,
-                    ),
-                  ],
-                  if (readOnly && existing.cashCategory != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Expense type: ${resolveDisplayLabel(type: CashTransactionType.expense, categoryDbValue: existing.cashCategory!)}',
-                      style: DayBookStyles.labelStrong,
-                    ),
-                  ],
-                  const SizedBox(height: 9),
-                  TextFormField(
-                    key: const ValueKey('cash-variance-reason'),
-                    controller: _cashReason,
-                    readOnly: readOnly,
-                    maxLines: 2,
-                    style: DayBookStyles.labelStrong,
-                    decoration: DayBookFormVisuals.field(
-                      'Cash difference reason',
-                      Icons.notes_rounded,
-                    ),
-                    validator: (value) => (value ?? '').trim().isEmpty
-                        ? 'Explain the cash difference.'
-                        : null,
+                      const SizedBox(height: 10),
+                      DayBookOpeningInputs(
+                        date: widget.date,
+                        cash: _cash,
+                        bank: _bank,
+                        readOnly: readOnly,
+                        bankAccountConfigured: widget.bankAccountConfigured,
+                      ),
+                      const SizedBox(height: 10),
+                      DayBookBalanceSummary(
+                        expectedCash: expectedCash,
+                        expectedBank: expectedBank,
+                        actualCash: actualCash,
+                        actualBank: actualBank,
+                      ),
+                      if (allocationConflict) ...[
+                        const SizedBox(height: 10),
+                        const DayBookBalanceAttention(),
+                      ] else if (actualCash != null && actualBank != null) ...[
+                        const SizedBox(height: 10),
+                        DayBookBalanceDifferenceFields(
+                          netDifference: netDifference,
+                          scope: _expenseScope,
+                          onScopeChanged: (scope) => setState(() {
+                            _expenseScope = scope;
+                            _expenseCategory = null;
+                          }),
+                          category: _expenseCategory,
+                          onCategoryChanged: (value) =>
+                              setState(() => _expenseCategory = value),
+                          note: _note,
+                          readOnly: readOnly,
+                        ),
+                      ],
+                      if (readOnly) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Saved ${DateFormat('d MMM yyyy, h:mm a').format(existing.verifiedAt)}',
+                          style: DayBookStyles.labelStrong,
+                        ),
+                      ],
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        Text(_error!,
+                            style: DayBookStyles.labelStrong
+                                .copyWith(color: DayBookColors.negative)),
+                      ],
+                    ],
                   ),
-                ],
-                if (readOnly ? existing.bankNeedsReview : _bankMismatch) ...[
-                  const SizedBox(height: 16),
-                  Text('Bank difference · reconciliation pending',
-                      style: DayBookStyles.labelStrong
-                          .copyWith(color: DayBookColors.warning)),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Record the reason. Bank charges or missing transactions should be posted from their source after confirmation.',
-                    style: DayBookStyles.label,
-                  ),
-                  const SizedBox(height: 9),
-                  TextFormField(
-                    key: const ValueKey('bank-variance-reason'),
-                    controller: _bankReason,
-                    readOnly: readOnly,
-                    maxLines: 2,
-                    style: DayBookStyles.labelStrong,
-                    decoration: DayBookFormVisuals.field(
-                      'Bank difference reason',
-                      Icons.notes_rounded,
-                    ),
-                    validator: (value) => (value ?? '').trim().isEmpty
-                        ? 'Explain the bank difference.'
-                        : null,
-                  ),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!,
-                      style: DayBookStyles.labelStrong
-                          .copyWith(color: DayBookColors.negative)),
-                ],
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-      actions: [
-        if (!readOnly &&
-            !widget.bankAccountConfigured &&
-            widget.onOpenBankBook != null)
-          TextButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-              widget.onOpenBankBook!();
-            },
-            icon: const Icon(Icons.account_balance_outlined, size: 18),
-            label: const Text('Open Bank Book'),
-          ),
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-          child: Text(readOnly ? 'Close' : 'Cancel'),
-        ),
-        if (!readOnly)
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: const Icon(Icons.save_outlined, size: 18),
-            label: Text(_saving ? 'Saving...' : 'Save Verification'),
-          ),
-      ],
-    ));
-  }
-}
-
-class _BalanceLine extends StatelessWidget {
-  const _BalanceLine({
-    required this.label,
-    required this.expected,
-    required this.input,
-    required this.readOnly,
-    required this.keyName,
-    required this.difference,
-    required this.allowNegative,
-    required this.bankAccountConfigured,
-  });
-
-  final String label;
-  final double expected;
-  final TextEditingController input;
-  final bool readOnly;
-  final String keyName;
-  final double? difference;
-  final bool allowNegative;
-  final bool bankAccountConfigured;
-
-  @override
-  Widget build(BuildContext context) {
-    final money =
-        NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: DayBookStyles.softPanel(
-        color: DayBookColors.bodySubtle,
-        borderColor: DayBookColors.bodyBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(children: [
-            Icon(
-                label == 'Counter Cash'
-                    ? Icons.payments_outlined
-                    : Icons.account_balance_outlined,
-                color: DayBookColors.goldMetal,
-                size: 19),
-            const SizedBox(width: 8),
-            Text(label,
-                style: DayBookStyles.sectionTitle.copyWith(fontSize: 16)),
+            _footer(readOnly: readOnly, allocationConflict: allocationConflict),
           ]),
-          const SizedBox(height: 6),
-          Text('Expected opening', style: DayBookStyles.label),
-          Text(money.format(expected), style: DayBookStyles.valueLarge),
-          const SizedBox(height: 8),
-          TextFormField(
-            key: ValueKey(keyName),
-            controller: input,
-            readOnly: readOnly,
-            keyboardType: const TextInputType.numberWithOptions(
-                signed: true, decimal: true),
-            style: DayBookStyles.value,
-            decoration: DayBookFormVisuals.field(
-              label == 'Counter Cash'
-                  ? 'Physical cash counted'
-                  : 'Actual bank balance',
-              label == 'Counter Cash'
-                  ? Icons.calculate_outlined
-                  : Icons.account_balance_wallet_outlined,
-              prefixText: '₹ ',
-            ),
-            validator: (value) {
-              final amount =
-                  double.tryParse((value ?? '').trim().replaceAll(',', ''));
-              if (amount == null ||
-                  !amount.isFinite ||
-                  (!allowNegative && amount < 0) ||
-                  (amount * 100 - (amount * 100).round()).abs() > 0.000001) {
-                return 'Enter a valid amount with up to two decimals.';
-              }
-              if (label == 'Bank Balance' &&
-                  !bankAccountConfigured &&
-                  amount.abs() >= 0.01) {
-                return 'Add a bank account in Bank Book first.';
-              }
-              return null;
-            },
-          ),
-          if (difference != null && difference!.abs() >= 0.01) ...[
-            const SizedBox(height: 6),
-            Text('Difference  ${money.format(difference)}',
-                style: DayBookStyles.labelStrong.copyWith(
-                  color: difference! < 0
-                      ? DayBookColors.negative
-                      : DayBookColors.warning,
-                )),
-          ] else if (difference != null) ...[
-            const SizedBox(height: 6),
-            Text('Matched',
-                style: DayBookStyles.labelStrong
-                    .copyWith(color: DayBookColors.positive)),
-          ],
-        ],
+        ),
       ),
     );
   }
+
+  Widget _header(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 17, 13, 14),
+        child: Stack(children: [
+          Positioned(
+            right: 53,
+            top: -9,
+            child: IgnorePointer(
+              child: Icon(Icons.spa_outlined,
+                  size: 71,
+                  color: DayBookColors.brandGold.withValues(alpha: 0.13)),
+            ),
+          ),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: DayBookColors.brandGoldSoft,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: DayBookColors.brandGoldBorder),
+              ),
+              child: const Icon(Icons.fact_check_outlined,
+                  color: DayBookColors.goldMetal, size: 24),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Daily Balance Verification',
+                        style: DayBookStyles.pageTitle.copyWith(
+                            fontSize: 22, color: DayBookColors.goldMetal)),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Compare previous day closing with today’s opening before starting the day.',
+                      style: DayBookStyles.labelStrong.copyWith(
+                          fontSize: 13, color: DayBookColors.textPrimary),
+                    ),
+                  ]),
+            ),
+            IconButton(
+              tooltip: 'Close',
+              onPressed:
+                  _saving ? null : () => Navigator.of(context).pop(false),
+              icon: const Icon(Icons.close_rounded, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: DayBookColors.bodySubtle,
+                side: const BorderSide(color: DayBookColors.bodyBorder),
+              ),
+            ),
+          ]),
+        ]),
+      );
+
+  Widget _footer({required bool readOnly, required bool allocationConflict}) =>
+      Container(
+        padding: const EdgeInsets.fromLTRB(18, 11, 18, 14),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: DayBookColors.bodyBorder)),
+        ),
+        child: Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 9,
+            runSpacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed:
+                    _saving ? null : () => Navigator.of(context).pop(false),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 42),
+                  padding: const EdgeInsets.symmetric(horizontal: 19),
+                  foregroundColor: DayBookColors.textPrimary,
+                  side: const BorderSide(color: DayBookColors.bodyBorder),
+                  textStyle: DayBookStyles.button.copyWith(fontSize: 14),
+                ),
+                child: Text(readOnly ? 'Close' : 'Cancel'),
+              ),
+              if (!readOnly) ...[
+                if (allocationConflict) ...[
+                  OutlinedButton.icon(
+                    onPressed: widget.onRecordTransfer,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 42),
+                      padding: const EdgeInsets.symmetric(horizontal: 17),
+                      foregroundColor: DayBookColors.goldMetal,
+                      disabledForegroundColor: DayBookColors.goldMetal,
+                      side: const BorderSide(
+                          color: DayBookColors.brandGoldBorder),
+                      textStyle: DayBookStyles.button.copyWith(fontSize: 14),
+                    ),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                    label: const Text('Record Transfer'),
+                  ),
+                ],
+                FilledButton.icon(
+                  onPressed: _saving || allocationConflict ? null : _save,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 42),
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    backgroundColor: DayBookColors.brandGold,
+                    foregroundColor: DayBookColors.textPrimary,
+                    disabledBackgroundColor: DayBookColors.brandGoldSoft,
+                    disabledForegroundColor: DayBookColors.goldMetal,
+                    side:
+                        const BorderSide(color: DayBookColors.brandGoldBorder),
+                    elevation: 2,
+                    textStyle: DayBookStyles.button.copyWith(fontSize: 14),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: Text(_saving ? 'Saving...' : 'Save & Verify'),
+                ),
+              ],
+            ]),
+      );
 }

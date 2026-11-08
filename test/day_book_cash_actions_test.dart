@@ -11,10 +11,78 @@ import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_cash_income_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_balance_dialog.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_balance_summary.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_primary_grid.dart';
 import 'package:lotus_erp/theme/reports/day_book/day_book_colors.dart';
 
 void main() {
+  testWidgets('opening comparison shows entered modes and only net difference',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: DayBookBalanceSummary(
+          expectedCash: 404610,
+          expectedBank: 0,
+          actualCash: 200000,
+          actualBank: 200000,
+        ),
+      ),
+    ));
+    expect(find.text('Verification Summary'), findsOneWidget);
+    expect(find.text('System Opening'), findsOneWidget);
+    expect(find.text('Counted Opening'), findsOneWidget);
+    final subtraction = tester.widget<Text>(
+        find.byKey(const ValueKey('opening-balance-subtraction')));
+    expect(subtraction.data, contains('−'));
+    expect(subtraction.data, contains('4,04,610.00'));
+    expect(subtraction.data, contains('4,00,000.00'));
+    expect(find.text('Difference'), findsOneWidget);
+    expect(find.text('₹4,610.00'), findsOneWidget);
+    expect(find.text('Mismatch'), findsOneWidget);
+    final systemTop = tester.getTopLeft(find.text('System Opening'));
+    final countedTop = tester.getTopLeft(find.text('Counted Opening'));
+    final differenceTop = tester.getTopLeft(find.text('Difference'));
+    expect((systemTop.dy - countedTop.dy).abs(), lessThan(1));
+    expect((countedTop.dy - differenceTop.dy).abs(), lessThan(1));
+    expect(tester.getTopLeft(find.text('Mismatch')).dx,
+        greaterThan(tester.getTopRight(find.text('₹4,610.00')).dx));
+  });
+
+  testWidgets('verification dialog matches the compact reference hierarchy',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: DayBookBalanceDialog(
+          date: DateTime(2026, 11, 7),
+          expectedCash: 404610,
+          expectedBank: 0,
+          onSave: ({
+            required actualCash,
+            required actualBank,
+            cashExpenseCategory,
+            cashReason,
+            bankReason,
+          }) async =>
+              throw UnimplementedError(),
+        ),
+      ),
+    ));
+    await tester.enterText(find.byKey(const ValueKey('actual-cash')), '200000');
+    await tester.enterText(find.byKey(const ValueKey('actual-bank')), '200000');
+    await tester.pumpAndSettle();
+    expect(find.text('Previous Day Closing · 6 Nov 2026'), findsOneWidget);
+    expect(find.text('Today’s Opening Count · 7 Nov 2026'), findsOneWidget);
+    expect(find.text('Verification Summary'), findsOneWidget);
+    expect(find.text('₹4,610.00'), findsOneWidget);
+    expect(find.text('Attention Needed'), findsOneWidget);
+    expect(find.text('Record Transfer'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('cash income form saves only a valid extra receipt',
       (tester) async {
     double? savedAmount;
@@ -101,33 +169,51 @@ void main() {
     expect(balanceTheme.colorScheme.primary, DayBookColors.brandGold);
     expect(balanceTheme.inputDecorationTheme.labelStyle?.color,
         DayBookColors.textPrimary);
+    expect(find.text('Daily Balance Verification'), findsOneWidget);
+    expect(find.text('Previous Day Closing · 6 Nov 2026'), findsOneWidget);
+    expect(find.text('Today’s Opening Count · 7 Nov 2026'), findsOneWidget);
+    expect(find.text('Difference'), findsNothing);
+    expect(find.text('Open Bank Book'), findsNothing);
     await tester.enterText(find.byKey(const ValueKey('actual-cash')), '390');
+    await tester.pump();
+    expect(find.text('Verification Summary'), findsOneWidget);
+    expect(find.text('Difference'), findsNothing);
+    expect(find.byKey(const ValueKey('opening-balance-subtraction')),
+        findsNothing);
     await tester.enterText(find.byKey(const ValueKey('actual-bank')), '195');
     await tester.pump();
-    expect(find.text('Combined Opening · Cash + Bank'), findsOneWidget);
-    expect(find.textContaining('585.00'), findsOneWidget);
-    expect(find.textContaining('15.00'), findsOneWidget);
-    expect(find.textContaining('Cash shortage'), findsOneWidget);
-    expect(
-        find.text('Bank difference · reconciliation pending'), findsOneWidget);
-    await tester.tap(find.text('Save Verification'));
-    await tester.pump();
-    expect(find.text('Select the expense type.'), findsOneWidget);
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('cash-variance-category')));
+    expect(find.text('₹585.00'), findsOneWidget);
+    await tester.ensureVisible(find.text('Difference', skipOffstage: false));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('cash-variance-category')));
+    expect(find.text('Difference'), findsOneWidget);
+    expect(find.text('Expense adjustment'), findsOneWidget);
+    await tester.tap(find.text('Save & Verify'));
+    await tester.pump();
+    expect(find.text('Write a reason before saving.'), findsOneWidget);
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('balance-expense-note')));
+    await tester.enterText(find.byKey(const ValueKey('balance-expense-note')),
+        'Cash used for supplies and confirmed bank charge');
+    await tester.tap(find.text('Save & Verify'));
+    await tester.pump();
+    expect(find.text('Choose Shop or Personal expense and its category.'),
+        findsOneWidget);
+    await tester.ensureVisible(find.text('Shop expense'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Shop expense'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+        find.byKey(const ValueKey('balance-expense-category-shop')));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.byKey(const ValueKey('balance-expense-category-shop')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Misc. Expense').last);
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('cash-variance-reason')));
-    await tester.enterText(find.byKey(const ValueKey('cash-variance-reason')),
-        'Cash used for supplies');
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('bank-variance-reason')));
-    await tester.enterText(find.byKey(const ValueKey('bank-variance-reason')),
-        'UPI settlement pending');
-    await tester.tap(find.text('Save Verification'));
+    await tester.pumpAndSettle();
+    tester.binding.focusManager.primaryFocus?.unfocus();
+    await tester.ensureVisible(find.text('Save & Verify'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save & Verify'));
     await tester.pumpAndSettle();
     expect(savedCash, 390);
     expect(savedBank, 195);
@@ -160,11 +246,13 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('actual-cash')), '390');
     await tester.enterText(find.byKey(const ValueKey('actual-bank')), '210');
     await tester.pump();
-    expect(
-        find.textContaining('differences offset each other'), findsOneWidget);
-    expect(find.textContaining('Cash shortage'), findsOneWidget);
-    expect(
-        find.text('Bank difference · reconciliation pending'), findsOneWidget);
+    expect(find.text('Review'), findsOneWidget);
+    expect(find.text('Difference'), findsNothing);
+    expect(find.text('Attention Needed'), findsOneWidget);
+    expect(find.text('Record Transfer'), findsOneWidget);
+    final save = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Save & Verify'));
+    expect(save.onPressed, isNull);
   });
 
   testWidgets('bank amount needs an account before verification',
@@ -193,9 +281,9 @@ void main() {
     ));
     await tester.enterText(find.byKey(const ValueKey('actual-cash')), '400');
     await tester.enterText(find.byKey(const ValueKey('actual-bank')), '50');
-    await tester.tap(find.text('Save Verification'));
+    await tester.tap(find.text('Save & Verify'));
     await tester.pump();
-    expect(find.text('Add a bank account in Bank Book first.'), findsOneWidget);
+    expect(find.text('Add a bank account first.'), findsOneWidget);
   });
 
   testWidgets('Day Book actions sit beside the related sections',
@@ -227,7 +315,7 @@ void main() {
       ),
     ));
     await tester.tap(find.text('Add Cash Income'));
-    await tester.tap(find.text('Set Balance'));
+    await tester.tap(find.text('Verify Opening'));
     expect(incomeTaps, 1);
     expect(balanceTaps, 1);
     expect(tester.takeException(), isNull);

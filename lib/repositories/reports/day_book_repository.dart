@@ -14,6 +14,7 @@ import 'day_book_activity_repository.dart';
 import 'day_book_expense_repository.dart';
 import 'day_book_owned_stock_repository.dart';
 import 'day_book_customer_metal_sales_repository.dart';
+import 'day_book_bill_issue_snapshot_repository.dart';
 import '../../models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -155,6 +156,8 @@ class DayBookRepository {
         start,
         end,
       );
+      final issues = await DayBookBillIssueSnapshotRepository(_db)
+          .fetchForBills(rows.map((bill) => bill.id));
 
       double taxable = 0;
       double cgst = 0;
@@ -164,17 +167,21 @@ class DayBookRepository {
       var payments = const PaymentBreakup();
 
       for (final b in rows) {
-        finalTotal += b.finalAmount;
+        final issue = issues[b.id];
+        final taxableValue = issue?.taxableAmount ?? b.taxableAmount;
+        final cgstValue = issue?.cgst ?? b.cgstAmount;
+        final sgstValue = issue?.sgst ?? b.sgstAmount;
+        final igstValue = issue?.igst ?? b.igstAmount;
+        finalTotal += issue?.finalAmount ?? b.finalAmount;
         if (b.gstAmount > 0.005 &&
-            (b.taxableAmount <= 0 ||
-                b.cgstAmount + b.sgstAmount + b.igstAmount <= 0.005)) {
+            (taxableValue <= 0 || cgstValue + sgstValue + igstValue <= 0.005)) {
           throw StateError(
               'Invoice ${b.billNo} has incomplete finalized tax data.');
         }
-        taxable += b.taxableAmount;
-        cgst += b.cgstAmount;
-        sgst += b.sgstAmount;
-        igst += b.igstAmount;
+        taxable += taxableValue;
+        cgst += cgstValue;
+        sgst += sgstValue;
+        igst += igstValue;
         payments += paymentsByBill[b.billNo] ?? const PaymentBreakup();
       }
 
@@ -215,11 +222,13 @@ class DayBookRepository {
         start,
         end,
       );
+      final issues = await DayBookBillIssueSnapshotRepository(_db)
+          .fetchForBills(rows.map((bill) => bill.id));
 
       double total = 0;
       var payments = const PaymentBreakup();
       for (final b in rows) {
-        total += b.finalAmount;
+        total += issues[b.id]?.finalAmount ?? b.finalAmount;
         payments += paymentsByBill[b.billNo] ?? const PaymentBreakup();
       }
 

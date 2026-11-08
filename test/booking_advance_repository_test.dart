@@ -12,6 +12,10 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/data/customer_metal_purchase_ledger_drift_repository.dart';
 import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_document_repository.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_document_collection_mapper.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
 
 void main() {
   late AppDatabase database;
@@ -67,6 +71,103 @@ void main() {
     expect(advances.single.amountPaid, 2500);
   });
 
+  test('split booking receipts post once to cash and bank Day Book balances',
+      () async {
+    await database.into(database.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Primary Current',
+            bankName: 'HDFC Bank',
+            accountNumber: '111122223333',
+            isPrimary: const drift.Value(true),
+          ),
+        );
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+    await _waitForBookingNumber(controller);
+    controller.nameCtrl.text = 'Split Customer';
+    controller.cashCtrl.text = '1000';
+    controller.upiCtrl.text = '2000';
+    controller.cardCtrl.text = '500';
+    controller.addBookingItem();
+    controller.bookingItems.single.descCtrl.text = 'Gold Ring';
+    controller.bookingItems.single.grossCtrl.text = '10';
+    final saved = await controller.saveBooking();
+    expect(saved.success, isTrue);
+
+    final date = DateTime.now();
+    final money = await DayBookMoneyRepository(database).fetch(date, 0);
+    expect(money.cashIn, 1000);
+    expect(money.bankIn, 2500);
+    expect(money.moneyIn, 3500);
+    expect(
+        money.byMode(incoming: true), {'CASH': 1000, 'UPI': 2000, 'CARD': 500});
+    final docs = DayBookDocumentCollectionMapper.apply(
+        await DayBookDocumentRepository(database).fetch(date), money);
+    final advance = docs
+        .singleWhere((row) => row.kind == DayBookDocumentKind.advanceReceipt);
+    expect(advance.amount, 3500);
+    expect(advance.collection, 3500);
+
+    final originalReceiptId = advance.sourceId;
+    await repository.updateBooking(
+      orderId: saved.orderIds.single,
+      customerId: advance.customerId!,
+      itemName: 'Updated Ring',
+      metalType: 'Gold',
+      purity: '22K',
+      approxWeight: 10,
+      bookingType: 'OPEN',
+      lockedRate: 0,
+      deliveryDate: null,
+      notes: null,
+      totalAdvance: 3500,
+      rateOnDate: 0,
+    );
+    expect(
+        (await database.select(database.orderAdvances).get())
+            .single
+            .id
+            .toString(),
+        originalReceiptId);
+    expect((await database.select(database.cashTransactions).get()).length, 1);
+    expect((await database.select(database.bankTransactions).get()).length, 2);
+    await expectLater(
+      repository.updateBooking(
+        orderId: saved.orderIds.single,
+        customerId: advance.customerId!,
+        itemName: 'Updated Ring',
+        metalType: 'Gold',
+        purity: '22K',
+        approxWeight: 10,
+        bookingType: 'OPEN',
+        lockedRate: 0,
+        deliveryDate: null,
+        notes: null,
+        totalAdvance: 3600,
+        rateOnDate: 0,
+      ),
+      throwsStateError,
+    );
+  });
+
+  test('bank advance without an active account rolls back the booking',
+      () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+    await _waitForBookingNumber(controller);
+    controller.nameCtrl.text = 'UPI Customer';
+    controller.upiCtrl.text = '1000';
+    controller.addBookingItem();
+    controller.bookingItems.single.grossCtrl.text = '4';
+
+    expect((await controller.saveBooking()).success, isFalse);
+    expect(controller.isSaving, isFalse);
+    expect(await database.select(database.customers).get(), isEmpty);
+    expect(await database.select(database.salesOrders).get(), isEmpty);
+    expect(await database.select(database.orderAdvances).get(), isEmpty);
+    expect(await database.select(database.bankTransactions).get(), isEmpty);
+  });
+
   test('booking scrap metal posts into customer metal purchase report',
       () async {
     final controller = BookingAdvanceController(repo: repository);
@@ -120,6 +221,16 @@ void main() {
     expect(bookingMetal.resolvedPaymentStatus, 'PAID');
     expect(summary.entryCount, 1);
     expect(summary.directPurchaseCount, 1);
+    final money =
+        await DayBookMoneyRepository(database).fetch(DateTime.now(), 0);
+    expect(money.moneyIn, 0);
+    expect(money.moneyOut, 0);
+    final docs = DayBookDocumentCollectionMapper.apply(
+        await DayBookDocumentRepository(database).fetch(DateTime.now()), money);
+    final advance = docs
+        .singleWhere((row) => row.kind == DayBookDocumentKind.advanceReceipt);
+    expect(advance.amount, closeTo(27480, 0.01));
+    expect(advance.collection, isNull);
   });
 
   test('printable booking fetch returns saved order and advance details',

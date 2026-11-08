@@ -34,7 +34,7 @@ class DayBookPositionPanels extends StatelessWidget {
         icon: Icons.inventory_2_outlined,
         date: summary.date,
         onAction: onSetBalance,
-        actionLabel: balanceSaved ? 'View Balance' : 'Set Balance',
+        actionLabel: balanceSaved ? 'View Verification' : 'Verify Opening',
         showAction: showBalanceAction,
         tiles: [
           _PositionTile(
@@ -51,8 +51,9 @@ class DayBookPositionPanels extends StatelessWidget {
                   : '—',
               metal: DayBookMetalVisualType.gold,
               color: DayBookColors.goldMetal,
-              hint: _stockHint(goldAvailable,
-                  gold?.openingGrams ?? summary.openingGoldGrams)),
+              hint: _stockHint(
+                  goldAvailable, gold?.openingGrams ?? summary.openingGoldGrams,
+                  verified: summary.metalPositionVerified)),
           _PositionTile(
               label: 'Opening Silver',
               value: silverAvailable
@@ -62,7 +63,8 @@ class DayBookPositionPanels extends StatelessWidget {
               metal: DayBookMetalVisualType.silver,
               color: DayBookColors.silverMetal,
               hint: _stockHint(silverAvailable,
-                  silver?.openingGrams ?? summary.openingSilverGrams)),
+                  silver?.openingGrams ?? summary.openingSilverGrams,
+                  verified: summary.metalPositionVerified)),
         ],
       ),
       const SizedBox(height: 10),
@@ -88,7 +90,8 @@ class DayBookPositionPanels extends StatelessWidget {
                   goldAvailable ? dayBookMetalWeight(summary.closingGold) : '—',
               metal: DayBookMetalVisualType.gold,
               color: DayBookColors.goldMetal,
-              hint: _stockHint(goldAvailable, summary.closingGold)),
+              hint: _stockHint(goldAvailable, summary.closingGold,
+                  verified: summary.metalPositionVerified)),
           _PositionTile(
               label: 'Closing Silver',
               value: silverAvailable
@@ -96,7 +99,8 @@ class DayBookPositionPanels extends StatelessWidget {
                   : '—',
               metal: DayBookMetalVisualType.silver,
               color: DayBookColors.silverMetal,
-              hint: _stockHint(silverAvailable, summary.closingSilver)),
+              hint: _stockHint(silverAvailable, summary.closingSilver,
+                  verified: summary.metalPositionVerified)),
         ],
       ),
     ]);
@@ -164,7 +168,7 @@ class _PositionSection extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onAction,
                   icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: Text(actionLabel ?? 'Set Balance'),
+                  label: Text(actionLabel ?? 'Verify Opening'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     visualDensity: VisualDensity.compact,
@@ -261,7 +265,8 @@ String _money(double value) => NumberFormat.currency(
         decimalDigits: value == value.roundToDouble() ? 0 : 2)
     .format(value);
 
-String _stockHint(bool available, double grams) {
+String _stockHint(bool available, double grams, {required bool verified}) {
   if (!available) return 'Needs review';
+  if (!verified) return 'Calculated net · unverified';
   return grams.abs() < 0.001 ? 'No available stock' : 'Available stock · net';
 }

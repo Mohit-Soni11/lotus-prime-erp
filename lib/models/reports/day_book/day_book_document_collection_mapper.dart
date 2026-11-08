@@ -7,9 +7,22 @@ class DayBookDocumentCollectionMapper {
   static List<DayBookDocument> apply(
       List<DayBookDocument> documents, DayBookMoneyFlow flow) {
     final collections = <String, double>{};
+    final advanceCollections = <String, double>{};
     for (final entry in flow.entries) {
-      if (!entry.incoming ||
-          entry.referenceType?.toUpperCase() != 'BILL' ||
+      if (!entry.incoming) continue;
+      if (entry.referenceType?.toUpperCase() == 'ORDER' &&
+          {'ADVANCE', 'ADVANCE_RECEIVED'}
+              .contains(entry.category.toUpperCase())) {
+        final receiptId = entry.referenceId?.split('#ADV#').last;
+        if (receiptId != null &&
+            receiptId != entry.referenceId &&
+            int.tryParse(receiptId) != null) {
+          advanceCollections[receiptId] =
+              (advanceCollections[receiptId] ?? 0) + entry.amount;
+        }
+        continue;
+      }
+      if (entry.referenceType?.toUpperCase() != 'BILL' ||
           !{'SALE', 'SALE_PAYMENT'}.contains(entry.category.toUpperCase())) {
         continue;
       }
@@ -20,6 +33,12 @@ class DayBookDocumentCollectionMapper {
       collections[billNo] = (collections[billNo] ?? 0) + entry.amount;
     }
     return List.unmodifiable(documents.map((document) {
+      if (document.kind == DayBookDocumentKind.advanceReceipt) {
+        final collection = advanceCollections[document.sourceId];
+        return collection == null
+            ? document
+            : document.withCollection(collection);
+      }
       if (document.kind != DayBookDocumentKind.regularInvoice &&
           document.kind != DayBookDocumentKind.gstInvoice) {
         return document;

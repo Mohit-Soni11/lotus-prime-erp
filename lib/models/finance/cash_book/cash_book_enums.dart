@@ -63,6 +63,12 @@ enum ExpenseCategory {
   transport('TRANSPORT', 'Transport / Logistics'),
   bankCharges('BANK_CHARGES', 'Bank Charges'),
   governmentFees('GOVT_FEES', 'Govt. Fees / Taxes'),
+  ownerDrawing('OWNER_DRAWING', 'Other Personal'),
+  personalHousehold('OWNER_DRAWING_HOUSEHOLD', 'Household'),
+  personalFamily('OWNER_DRAWING_FAMILY', 'Family'),
+  personalMedical('OWNER_DRAWING_MEDICAL', 'Medical'),
+  personalEducation('OWNER_DRAWING_EDUCATION', 'Education'),
+  personalTravel('OWNER_DRAWING_TRAVEL', 'Travel'),
   miscExpense('MISC_EXPENSE', 'Misc. Expense'),
   otherExpense('OTHER_EXPENSE', 'Other'); // ✅ v2
 
@@ -72,6 +78,8 @@ enum ExpenseCategory {
 
   /// Whether this category requires a custom label from the user
   bool get requiresCustomLabel => this == ExpenseCategory.otherExpense;
+
+  bool get isPersonal => dbValue.startsWith('OWNER_DRAWING');
 
   static ExpenseCategory fromDb(String value) =>
       ExpenseCategory.values.firstWhere(

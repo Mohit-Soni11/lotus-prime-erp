@@ -6,8 +6,40 @@ import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/repositories/reports/day_book_document_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_bill_issue_snapshot_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_repository.dart';
 
 void main() {
+  test('later due settlement cannot rewrite issue-day sales or new due',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final date = DateTime(2026, 6, 25, 12);
+    final billId = await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'INV-ISSUE-1',
+          billDate: drift.Value(date),
+          finalAmount: const drift.Value(1000),
+          paidAmount: const drift.Value(700),
+          cashPaid: const drift.Value(700),
+          dueAmount: const drift.Value(300),
+        ));
+    await DayBookBillIssueSnapshotRepository(db).capture(billId);
+    await (db.update(db.bills)..where((row) => row.id.equals(billId))).write(
+      const BillsCompanion(
+        finalAmount: drift.Value(950),
+        paidAmount: drift.Value(950),
+        dueAmount: drift.Value(0),
+      ),
+    );
+
+    final document = (await DayBookDocumentRepository(db).fetch(date)).single;
+    expect(document.amount, 1000);
+    expect(document.outstanding, 300);
+    expect(document.savedDue, 0);
+    final day = await DayBookRepository(db: db).fetchDayBook(date);
+    expect(day.cashIn.nonGstSales.totalAmount, 1000);
+  });
+
   test('invoice explorer receives saved party, all metal lines and payment',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());

@@ -128,6 +128,11 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
         _girviItemGuard('delete', 'OLD'),
       ],
       'shop_profiles': [
+        '''CREATE TRIGGER IF NOT EXISTS day_book_cash_opening_insert_guard
+           BEFORE INSERT ON shop_profiles
+           WHEN NEW.opening_cash_balance != 0
+             AND EXISTS (SELECT 1 FROM finance_day_closures)
+           BEGIN SELECT RAISE(ABORT, 'Day Book opening cash is locked'); END''',
         '''CREATE TRIGGER IF NOT EXISTS day_book_cash_opening_immutable
            BEFORE UPDATE ON shop_profiles
            WHEN NEW.opening_cash_balance IS NOT OLD.opening_cash_balance
@@ -135,11 +140,21 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
            BEGIN SELECT RAISE(ABORT, 'Day Book opening cash is locked'); END''',
       ],
       'bank_accounts': [
+        '''CREATE TRIGGER IF NOT EXISTS day_book_bank_opening_insert_guard
+           BEFORE INSERT ON bank_accounts
+           WHEN EXISTS (SELECT 1 FROM finance_day_closures c
+                        WHERE NEW.active_since < c.end_epoch)
+           BEGIN SELECT RAISE(ABORT, 'Day Book bank opening is locked'); END''',
         '''CREATE TRIGGER IF NOT EXISTS day_book_bank_opening_immutable
            BEFORE UPDATE ON bank_accounts
            WHEN (NEW.opening_balance IS NOT OLD.opening_balance
               OR NEW.active_since IS NOT OLD.active_since)
              AND EXISTS (SELECT 1 FROM finance_day_closures)
+           BEGIN SELECT RAISE(ABORT, 'Day Book bank opening is locked'); END''',
+        '''CREATE TRIGGER IF NOT EXISTS day_book_bank_opening_delete_guard
+           BEFORE DELETE ON bank_accounts
+           WHEN EXISTS (SELECT 1 FROM finance_day_closures c
+                        WHERE OLD.active_since < c.end_epoch)
            BEGIN SELECT RAISE(ABORT, 'Day Book bank opening is locked'); END''',
       ],
       'finance_day_closures': [

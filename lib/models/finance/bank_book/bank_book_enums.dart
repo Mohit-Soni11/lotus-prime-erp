@@ -65,8 +65,10 @@ enum BankDebitCategory {
   shopRent('SHOP_RENT', 'Shop Rent'),
   electricity('ELECTRICITY', 'Electricity / Utilities'),
   gstPayment('GST_PAYMENT', 'GST / Tax Payment'),
+  governmentFees('GOVT_FEES', 'Govt. Fees / Taxes'),
   bankCharges('BANK_CHARGES', 'Bank Charges / Fees'),
   loanRepayment('LOAN_REPAYMENT', 'Loan Repayment'),
+  ownerDrawing('OWNER_DRAWING', 'Personal / Owner Drawing'),
   cashWithdrawal('CASH_WITHDRAWAL', 'Cash Withdrawal'),
   accountTransferOut('TRANSFER_OUT', 'Account Transfer Out'),
   advertising('ADVERTISING', 'Advertising / Marketing'),
@@ -74,6 +76,8 @@ enum BankDebitCategory {
   transport('TRANSPORT', 'Transport / Logistics'),
   insurance('INSURANCE', 'Insurance Premium'),
   chequeBounced('CHEQUE_BOUNCED', 'Cheque Bounced'),
+  miscExpense('MISC_EXPENSE', 'Misc. Expense'),
+  otherExpense('OTHER_EXPENSE', 'Other Expense'),
   miscDebit('MISC_DEBIT', 'Misc. Debit');
 
   const BankDebitCategory(this.dbValue, this.displayLabel);

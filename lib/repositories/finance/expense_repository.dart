@@ -383,6 +383,13 @@ class ExpenseRepository {
         ExpenseCategory.bankCharges => bank.BankDebitCategory.bankCharges,
         ExpenseCategory.girviGiven => bank.BankDebitCategory.girviGiven,
         ExpenseCategory.governmentFees => bank.BankDebitCategory.gstPayment,
+        ExpenseCategory.ownerDrawing ||
+        ExpenseCategory.personalHousehold ||
+        ExpenseCategory.personalFamily ||
+        ExpenseCategory.personalMedical ||
+        ExpenseCategory.personalEducation ||
+        ExpenseCategory.personalTravel =>
+          bank.BankDebitCategory.ownerDrawing,
         ExpenseCategory.miscExpense ||
         ExpenseCategory.otherExpense =>
           bank.BankDebitCategory.miscDebit,

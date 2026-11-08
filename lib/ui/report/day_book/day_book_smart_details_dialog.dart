@@ -208,6 +208,8 @@ class _ReceiptRow extends StatelessWidget {
         'DUE_COLLECTION' => 'Old due collection',
         'ADVANCE' || 'ADVANCE_RECEIVED' => 'Customer advance',
         'GIRVI_RETURN' => 'Girvi principal',
+        'CHANGE_RECEIVED' => 'Change received',
+        'REFUND_PAYABLE_RECEIVED' => 'Customer deposit held',
         'INTEREST_RECEIVED' => 'Girvi interest',
         _ => value.replaceAll('_', ' '),
       };

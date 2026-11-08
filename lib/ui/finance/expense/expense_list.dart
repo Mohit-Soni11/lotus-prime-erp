@@ -261,6 +261,13 @@ class _ExpenseRow extends StatelessWidget {
         ExpenseCategory.transport => ExpenseIcons.transport,
         ExpenseCategory.bankCharges => ExpenseIcons.bankCharges,
         ExpenseCategory.governmentFees => ExpenseIcons.governmentFees,
+        ExpenseCategory.ownerDrawing => ExpenseIcons.other,
+        ExpenseCategory.personalHousehold ||
+        ExpenseCategory.personalFamily ||
+        ExpenseCategory.personalMedical ||
+        ExpenseCategory.personalEducation ||
+        ExpenseCategory.personalTravel =>
+          ExpenseIcons.other,
         ExpenseCategory.miscExpense => ExpenseIcons.misc,
         ExpenseCategory.otherExpense => ExpenseIcons.other,
       };

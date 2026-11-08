@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'pos_metal_settlement_repository.dart';
 import 'sales_bill_edit_audit.dart';
+import 'package:lotus_erp/repositories/reports/day_book_bill_issue_snapshot_repository.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -260,6 +261,7 @@ class PosCheckoutRepository {
         invoice: invoice,
         billNumber: resolved.billNumber,
       );
+      await DayBookBillIssueSnapshotRepository(_db).capture(billId);
 
       return PosCheckoutCommitResult(
         billId: billId,
@@ -572,6 +574,7 @@ class PosCheckoutRepository {
         invoice: invoice,
         billNumber: existingBill.billNo,
       );
+      await DayBookBillIssueSnapshotRepository(_db).capture(billId);
     });
   }
 

@@ -37,6 +37,7 @@ class DayBookExpenseClassification {
     'REFUND_PAID',
     'SALES_REFUND',
     'CUSTOMER_REFUND',
+    'CHANGE_RETURNED',
   };
   static const _ownerCategories = {
     'OWNER_DRAWING',
@@ -59,7 +60,10 @@ class DayBookExpenseClassification {
     if (_refundCategories.contains(category)) {
       return DayBookOutflowPurpose.refunds;
     }
-    if (_ownerCategories.contains(category)) return DayBookOutflowPurpose.owner;
+    if (_ownerCategories.contains(category) ||
+        category.startsWith('OWNER_DRAWING_')) {
+      return DayBookOutflowPurpose.owner;
+    }
     if (_taxCategories.contains(category)) {
       return DayBookOutflowPurpose.taxRemittance;
     }

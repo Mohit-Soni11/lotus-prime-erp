@@ -9,6 +9,7 @@ import 'package:lotus_erp/models/purchase/purchase_voucher_origin.dart';
 import 'package:lotus_erp/repositories/reports/day_book_stock_added_repository.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_activity_controller.dart';
+import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
 
 void main() {
   late AppDatabase database;
@@ -20,6 +21,27 @@ void main() {
   });
 
   tearDown(() => database.close());
+
+  test('noncash purchase requires a bank account and posts a real debit',
+      () async {
+    final draft =
+        _goldDraft(voucherNo: 'BANK-2026-0001', cashPaid: 0, upiPaid: 70000);
+    expect(await repository.savePurchase(draft), isNull);
+    expect(await database.select(database.stockItems).get(), isEmpty);
+    expect(await database.select(database.bankTransactions).get(), isEmpty);
+    await database.into(database.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Primary Current',
+            bankName: 'HDFC Bank',
+            accountNumber: '111122223333',
+          ),
+        );
+    expect(await repository.savePurchase(draft), isNotNull);
+    final money =
+        await DayBookMoneyRepository(database).fetch(DateTime.now(), 0);
+    expect(money.bankOut, 70000);
+    expect(money.cashOut, 0);
+  });
 
   test('savePurchase creates stock and records an inward stock movement',
       () async {
@@ -135,12 +157,14 @@ void main() {
     final activity = StockActivityController(database);
     await activity.load();
     expect(activity.summary.stockAdded, 2);
-    expect(activity.records.any((record) =>
-        record.businessTitle == 'Customer Metal Intake'), isTrue);
+    expect(
+        activity.records
+            .any((record) => record.businessTitle == 'Customer Metal Intake'),
+        isTrue);
 
     final customerUnits = await database.customSelect(
       'SELECT stock_item_id, status FROM stock_item_units WHERE purchase_voucher_id = ?',
-      variables: [Variable.withInt(customer!.voucherId)],
+      variables: [Variable.withInt(customer.voucherId)],
     ).get();
     expect(customerUnits, isNotEmpty);
     expect(
@@ -380,6 +404,10 @@ PurchaseVoucherDraft _goldDraft({
   List<String> huids = const [],
   PurchaseSource source = PurchaseSource.fromSupplier,
   PurchaseVoucherOrigin? origin,
+  double cashPaid = 70000,
+  double upiPaid = 0,
+  double bankPaid = 0,
+  double cardPaid = 0,
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
@@ -396,10 +424,10 @@ PurchaseVoucherDraft _goldDraft({
     cgstAmount: 0,
     sgstAmount: 0,
     grandTotal: 70000,
-    cashPaid: 70000,
-    upiPaid: 0,
-    bankPaid: 0,
-    cardPaid: 0,
+    cashPaid: cashPaid,
+    upiPaid: upiPaid,
+    bankPaid: bankPaid,
+    cardPaid: cardPaid,
     totalPaid: 70000,
     balanceDue: 0,
     ratePerKg: 700000,

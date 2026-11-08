@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'finance_day_close_snapshot.dart';
 
 class FinanceDayClosureRepository {
   FinanceDayClosureRepository(this._db);
@@ -20,10 +21,10 @@ class FinanceDayClosureRepository {
   }
 
   Future<bool> closeDay(DateTime date,
-      {required double closingCash, required String closedBy}) async {
-    if (!closingCash.isFinite ||
-        closingCash < 0 ||
-        closedBy.trim().isEmpty) {
+      {required double closingCash,
+      required String closedBy,
+      Map<String, num>? denominationCount}) async {
+    if (!closingCash.isFinite || closingCash < 0 || closedBy.trim().isEmpty) {
       return false;
     }
     return _db.transaction(() async {
@@ -31,6 +32,11 @@ class FinanceDayClosureRepository {
       if ((recordedClosing - closingCash).abs() >= 0.01) {
         return false;
       }
+      final snapshot = await FinanceDayCloseSnapshotBuilder(_db).build(
+        date,
+        physicalCash: closingCash,
+        denominationCount: denominationCount,
+      );
       final (start, end) = _bounds(date);
       final changed = await _db.customUpdate(
         '''INSERT OR IGNORE INTO finance_day_closures
@@ -45,7 +51,21 @@ class FinanceDayClosureRepository {
           Variable.withString(closedBy.trim()),
         ],
       );
-      if (changed == 1) return true;
+      if (changed == 1) {
+        await _db.customUpdate(
+          '''INSERT INTO finance_day_closure_snapshots
+             (day_key, snapshot_json, source_hash, created_at, created_by)
+             VALUES (?, ?, ?, ?, ?)''',
+          variables: [
+            Variable.withString(_dayKey(date)),
+            Variable.withString(snapshot.json),
+            Variable.withString(snapshot.sourceHash),
+            Variable.withInt(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+            Variable.withString(closedBy.trim()),
+          ],
+        );
+        return true;
+      }
       final existing = await _db.customSelect(
         'SELECT closing_cash, closed_by FROM finance_day_closures WHERE day_key = ?',
         variables: [Variable.withString(_dayKey(date))],
@@ -54,6 +74,18 @@ class FinanceDayClosureRepository {
           (existing.read<double>('closing_cash') - closingCash).abs() < 0.01 &&
           existing.readNullable<String>('closed_by') == closedBy.trim();
     });
+  }
+
+  Future<FinanceDayCloseSnapshot?> fetchSnapshot(DateTime date) async {
+    final row = await _db.customSelect(
+      '''SELECT snapshot_json, source_hash
+         FROM finance_day_closure_snapshots WHERE day_key = ?''',
+      variables: [Variable.withString(_dayKey(date))],
+    ).getSingleOrNull();
+    return row == null
+        ? null
+        : FinanceDayCloseSnapshot(
+            row.read<String>('snapshot_json'), row.read<String>('source_hash'));
   }
 
   Future<double> _recordedCashClosing(DateTime date) async {

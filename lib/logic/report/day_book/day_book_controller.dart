@@ -384,7 +384,7 @@ class DayBookController extends ChangeNotifier {
     closeError = null;
     if (_balanceVerification == null) {
       closeError =
-          'Verify today’s opening cash and bank in Set Balance before closing the day.';
+          'Verify today’s opening cash and bank before closing the day.';
       return false;
     }
     if (!isMetalPositionVerified) {
@@ -408,6 +408,15 @@ class DayBookController extends ChangeNotifier {
         _selectedDate,
         closingCash: physicalCashAmount,
         closedBy: actorId,
+        denominationCount: {
+          '500': denomination.note500,
+          '200': denomination.note200,
+          '100': denomination.note100,
+          '50': denomination.note50,
+          '20': denomination.note20,
+          '10': denomination.note10,
+          'coins': denomination.coins,
+        },
       );
       if (!closed) {
         closeError =

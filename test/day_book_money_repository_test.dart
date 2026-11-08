@@ -142,4 +142,52 @@ void main() {
       'CHEQUE': 50,
     });
   });
+
+  test('previous digital invoice receipt carries into bank closing only',
+      () async {
+    final previousDay = DateTime(2026, 11, 6, 14);
+    final accountId = await db.into(db.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Main Bank',
+            bankName: 'Test Bank',
+            accountNumber: 'PREVIOUS-DAY-MODES',
+            openingBalance: const drift.Value(25),
+            activeSince: drift.Value(DateTime(2026, 11, 1)),
+          ),
+        );
+    await db.into(db.shopProfiles).insert(ShopProfilesCompanion.insert(
+          openingCashBalance: const drift.Value(100),
+        ));
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'INVOICE-CASH',
+          txnDate: previousDay,
+          type: 'INCOME',
+          category: 'SALE',
+          amount: const drift.Value(40),
+          paymentMode: const drift.Value('CASH'),
+          referenceType: const drift.Value('BILL'),
+          referenceId: const drift.Value('INV-1#CASH'),
+        ));
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'INVOICE-UPI',
+            accountId: accountId,
+            txnDate: previousDay,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(60),
+            paymentMode: const drift.Value('UPI'),
+            referenceType: const drift.Value('BILL'),
+            referenceId: const drift.Value('INV-1#UPI'),
+          ),
+        );
+
+    final today = DateTime(2026, 11, 7);
+    final openingCash =
+        await DayBookMoneyRepository(db).fetchOpeningCash(today);
+    final flow = await DayBookMoneyRepository(db).fetch(today, openingCash);
+    expect(flow.openingCash, 140);
+    expect(flow.openingBank, 85);
+    expect(flow.openingTotal, 225);
+  });
 }

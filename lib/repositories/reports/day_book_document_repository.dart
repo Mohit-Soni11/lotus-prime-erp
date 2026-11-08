@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_document.dart';
 import '../../models/reports/day_book/day_book_document_item.dart';
+import 'day_book_bill_issue_snapshot_repository.dart';
 
 class DayBookDocumentRepository {
   const DayBookDocumentRepository(this._db);
@@ -19,6 +20,8 @@ class DayBookDocumentRepository {
               bill.billDate.isBiggerOrEqualValue(start) &
               bill.billDate.isSmallerThanValue(end)))
         .get();
+    final issueSnapshots = await DayBookBillIssueSnapshotRepository(_db)
+        .fetchForBills(bills.map((bill) => bill.id));
     final billItems = bills.isEmpty
         ? <BillItem>[]
         : await (_db.select(_db.billItems)
@@ -34,6 +37,7 @@ class DayBookDocumentRepository {
           ));
     }
     for (final bill in bills) {
+      final issue = issueSnapshots[bill.id];
       if (!const {'ACTIVE', 'PARTIALLY_RETURNED', 'RETURNED'}
           .contains(bill.status.toUpperCase())) {
         continue;
@@ -48,8 +52,11 @@ class DayBookDocumentRepository {
         sourceId: bill.id.toString(),
         number: bill.billNo,
         date: bill.billDate,
-        amount: bill.finalAmount,
-        tax: bill.cgstAmount + bill.sgstAmount + bill.igstAmount,
+        amount: issue?.finalAmount ?? bill.finalAmount,
+        tax: issue == null
+            ? bill.cgstAmount + bill.sgstAmount + bill.igstAmount
+            : issue.cgst + issue.sgst + issue.igst,
+        outstanding: issue?.issuedDue,
         status: bill.status,
         customerId: bill.customerId,
         partyName: bill.customerName,
@@ -84,7 +91,9 @@ class DayBookDocumentRepository {
             '${order?.orderNo ?? 'Order ${advance.orderId}'} / Receipt ${advance.id}',
         date: advance.paymentDate,
         amount: advance.amountPaid,
-        collection: advance.amountPaid,
+        // A booking advance may include old metal credit, which is not money in.
+        // The collection mapper matches only posted cash and bank receipts.
+        collection: null,
         status: 'POSTED',
         customerId: order?.customerId,
         relatedEntityId: advance.orderId,

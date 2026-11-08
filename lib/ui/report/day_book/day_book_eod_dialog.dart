@@ -62,7 +62,7 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                         if (widget.ctrl.balanceVerification == null) ...[
                           const SizedBox(height: 12),
                           Text(
-                            'Set Balance is required for today’s opening cash and bank before day closing.',
+                            'Daily Balance Verification is required before day closing.',
                             style: DayBookStyles.labelStrong.copyWith(
                               color: DayBookColors.warning,
                             ),

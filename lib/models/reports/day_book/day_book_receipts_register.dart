@@ -155,6 +155,8 @@ class DayBookReceiptsRegister {
         'DUE_COLLECTION' => 'Due',
         'ADVANCE' || 'ADVANCE_RECEIVED' => 'Advance',
         'GIRVI_RETURN' => 'Girvi Release',
+        'CHANGE_RECEIVED' => 'Change received',
+        'REFUND_PAYABLE_RECEIVED' => 'Customer deposit',
         'INTEREST_RECEIVED' => 'Interest',
         _ => category.replaceAll('_', ' '),
       };

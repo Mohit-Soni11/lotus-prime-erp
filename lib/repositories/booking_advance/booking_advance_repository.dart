@@ -18,6 +18,7 @@ import 'package:lotus_erp/repositories/setting/billing_setup/booking_advance_bil
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
+import 'booking_advance_financial_posting.dart';
 
 part 'booking_advance_repository_helpers.dart';
 
@@ -93,6 +94,8 @@ class SavedBookingAdvanceDocument {
   final List<int> orderIds;
 }
 
+typedef BookingAdvancePostedMoney = ({double cash, double upi, double card});
+
 class BookingAdvanceRepository {
   final AppDatabase _db;
   ShopSetupRepository? _shopRepository;
@@ -114,6 +117,14 @@ class BookingAdvanceRepository {
 
   Future<BookingAdvanceBillingModel> fetchBillingSettings() {
     return _effectiveBillingSettingsRepository.fetch();
+  }
+
+  Future<bool> hasActiveBankAccount() async {
+    final account = await (_db.select(_db.bankAccounts)
+          ..where((row) => row.isActive.equals(true))
+          ..limit(1))
+        .getSingleOrNull();
+    return account != null;
   }
 
   /// Returns the current Indian financial year string.
@@ -298,9 +309,30 @@ class BookingAdvanceRepository {
     required int customerId,
     required List<BookingAdvanceLineDraft> lines,
     List<BookingAdvanceScrapMetalDraft> scrapLines = const [],
+    double? cashReceived,
+    double upiReceived = 0,
+    double cardReceived = 0,
   }) async {
     if (lines.isEmpty) {
       throw ArgumentError.value(lines, 'lines', 'No booking lines to save.');
+    }
+    final totalCents = _cents(
+      lines.fold<double>(0, (sum, line) => sum + line.advanceAmount),
+    );
+    final metalCents = _cents(
+      scrapLines.fold<double>(0, (sum, line) => sum + line.amount),
+    );
+    final cashCents = _cents(cashReceived ?? (totalCents - metalCents) / 100);
+    final upiCents = _cents(upiReceived);
+    final cardCents = _cents(cardReceived);
+    if (totalCents < 0 ||
+        metalCents < 0 ||
+        cashCents < 0 ||
+        upiCents < 0 ||
+        cardCents < 0 ||
+        cashCents + upiCents + cardCents + metalCents != totalCents) {
+      throw StateError(
+          'Advance payment modes and metal credit must equal the saved advance.');
     }
 
     final shopCode = await resolveShopDocumentCode();
@@ -308,6 +340,18 @@ class BookingAdvanceRepository {
     final settings = await fetchBillingSettings();
 
     return _db.transaction(() async {
+      final customer = await (_db.select(_db.customers)
+            ..where((row) => row.id.equals(customerId)))
+          .getSingleOrNull();
+      if (customer == null) throw StateError('Booking customer was not found.');
+      final lineCents = <int>[
+        for (final line in lines) _cents(line.advanceAmount),
+      ];
+      lineCents.last += totalCents - lineCents.fold<int>(0, (a, b) => a + b);
+      final cashParts = _allocateCents(cashCents, lineCents, totalCents);
+      final upiParts = _allocateCents(upiCents, lineCents, totalCents);
+      final cardParts = _allocateCents(cardCents, lineCents, totalCents);
+      final posting = BookingAdvanceFinancialPosting(_db);
       final firstSequence = await getNextBookingSequence(
         shopCode: shopCode,
         yearToken: yearToken,
@@ -340,14 +384,25 @@ class BookingAdvanceRepository {
               ),
             );
 
-        if (line.advanceAmount > 0) {
-          await _db.into(_db.orderAdvances).insert(
+        if (lineCents[index] > 0) {
+          final paymentDate = DateTime.now();
+          final receiptId = await _db.into(_db.orderAdvances).insert(
                 OrderAdvancesCompanion.insert(
                   orderId: orderId,
-                  amountPaid: Value(line.advanceAmount),
+                  amountPaid: Value(lineCents[index] / 100),
                   rateOnDate: Value(line.rateOnDate),
+                  paymentDate: Value(paymentDate),
                 ),
               );
+          await posting.post(
+            receiptId: receiptId,
+            orderNo: orderNo,
+            customerName: customer.name,
+            date: paymentDate,
+            cash: cashParts[index] / 100,
+            upi: upiParts[index] / 100,
+            card: cardParts[index] / 100,
+          );
         }
 
         orderIds.add(orderId);
@@ -490,6 +545,39 @@ class BookingAdvanceRepository {
     );
   }
 
+  Future<BookingAdvancePostedMoney> fetchPostedMoney(String orderNo) async {
+    final referencePrefix = '$orderNo#ADV#';
+    final cash = await _db.customSelect(
+      '''SELECT COALESCE(SUM(amount), 0) AS amount FROM cash_transactions
+         WHERE is_voided = 0 AND type = 'INCOME' AND category = 'ADVANCE'
+           AND payment_mode = 'CASH' AND substr(reference_id, 1, ?) = ?''',
+      variables: [
+        Variable.withInt(referencePrefix.length),
+        Variable.withString(referencePrefix),
+      ],
+    ).getSingle();
+    final bank = await _db.customSelect(
+      '''SELECT payment_mode, SUM(amount) AS amount FROM bank_transactions
+         WHERE is_voided = 0 AND type = 'CREDIT'
+           AND category = 'ADVANCE_RECEIVED'
+           AND substr(reference_id, 1, ?) = ?
+         GROUP BY payment_mode''',
+      variables: [
+        Variable.withInt(referencePrefix.length),
+        Variable.withString(referencePrefix),
+      ],
+    ).get();
+    final byMode = {
+      for (final row in bank)
+        row.read<String>('payment_mode'): row.read<double>('amount'),
+    };
+    return (
+      cash: cash.read<double>('amount'),
+      upi: byMode['UPI'] ?? 0,
+      card: byMode['CARD'] ?? 0,
+    );
+  }
+
   Future<List<EditableBookingAdvance>> fetchPrintableBookings(
     List<int> orderIds,
   ) async {
@@ -531,6 +619,16 @@ class BookingAdvanceRepository {
     required double rateOnDate,
   }) async {
     await _db.transaction(() async {
+      final existing = await (_db.select(_db.orderAdvances)
+            ..where((row) => row.orderId.equals(orderId)))
+          .get();
+      final savedCents =
+          existing.fold<int>(0, (sum, row) => sum + _cents(row.amountPaid));
+      if (_cents(totalAdvance) != savedCents) {
+        throw StateError(
+          'Existing advance receipts cannot be changed through booking edit. Record a separate receipt or reversal.',
+        );
+      }
       await (_db.update(_db.salesOrders)
             ..where((tbl) => tbl.id.equals(orderId)))
           .write(
@@ -547,21 +645,26 @@ class BookingAdvanceRepository {
           updatedAt: Value(DateTime.now()),
         ),
       );
-
-      await (_db.delete(_db.orderAdvances)
-            ..where((tbl) => tbl.orderId.equals(orderId)))
-          .go();
-
-      if (totalAdvance > 0) {
-        await _db.into(_db.orderAdvances).insert(
-              OrderAdvancesCompanion.insert(
-                orderId: orderId,
-                amountPaid: Value(totalAdvance),
-                rateOnDate: Value(rateOnDate),
-              ),
-            );
-      }
     });
+  }
+
+  static int _cents(double amount) {
+    if (!amount.isFinite) throw ArgumentError.value(amount, 'amount');
+    return (amount * 100).round();
+  }
+
+  static List<int> _allocateCents(
+      int amount, List<int> weights, int totalWeight) {
+    if (amount == 0) return List<int>.filled(weights.length, 0);
+    if (totalWeight <= 0) throw StateError('Cannot allocate an empty advance.');
+    final parts = List<int>.filled(weights.length, 0);
+    var allocated = 0;
+    for (var index = 0; index < weights.length - 1; index++) {
+      parts[index] = (amount * weights[index] / totalWeight).round();
+      allocated += parts[index];
+    }
+    parts.last = amount - allocated;
+    return parts;
   }
 
   Future<bool> markConvertedToSale({

@@ -144,6 +144,13 @@ void main() {
 
   test('loads read-only voucher detail for direct customer purchases',
       () async {
+    await database.into(database.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Primary Current',
+            bankName: 'HDFC Bank',
+            accountNumber: '111122223333',
+          ),
+        );
     final saved = await purchaseRepository.savePurchase(
       _purchaseDraft(
         sequenceNo: 1,

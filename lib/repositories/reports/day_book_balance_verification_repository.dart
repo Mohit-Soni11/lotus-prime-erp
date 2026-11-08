@@ -5,6 +5,7 @@ import '../../database/db/app_database.dart';
 import '../../features/finance/transactions/domain/services/finance_transaction_numbering.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/reports/day_book/day_book_balance_verification.dart';
+import 'day_book_balance_adjustment_posting.dart';
 import 'day_book_money_repository.dart';
 
 class DayBookBalanceVerificationRepository {
@@ -42,17 +43,25 @@ class DayBookBalanceVerificationRepository {
     }
     final cashVariance = _rounded(actualCash - expectedCash);
     final bankVariance = _rounded(actualBank - expectedBank);
-    if (cashVariance.abs() >= 0.01 && (cashReason?.trim().isEmpty ?? true)) {
-      throw ArgumentError('Explain the cash difference before saving.');
+    final netShortage = _rounded(-cashVariance - bankVariance);
+    if ((cashVariance < -0.005 && bankVariance > 0.005) ||
+        (cashVariance > 0.005 && bankVariance < -0.005)) {
+      throw StateError(
+          'Cash and bank differ in opposite directions. Record the transfer or correct the payment mode before verification.');
     }
-    if (bankVariance.abs() >= 0.01 && (bankReason?.trim().isEmpty ?? true)) {
-      throw ArgumentError('Explain the bank difference before saving.');
-    }
-    if (cashVariance < -0.005 &&
+    if (netShortage >= 0.01 &&
         (cashExpenseCategory == null ||
             cashExpenseCategory == ExpenseCategory.purchasePayment ||
             cashExpenseCategory == ExpenseCategory.girviGiven)) {
-      throw ArgumentError('Select an operational expense category.');
+      throw ArgumentError('Select a Shop or Personal expense category.');
+    }
+    if (netShortage >= 0.01 && (cashReason?.trim().isEmpty ?? true)) {
+      throw ArgumentError('Write a reason for the expense adjustment.');
+    }
+    if (netShortage < -0.005 &&
+        (cashVariance > 0.005 || bankVariance > 0.005) &&
+        (cashReason?.trim().isEmpty ?? true)) {
+      throw ArgumentError('Explain the excess before saving.');
     }
 
     return _db.transaction(() async {
@@ -83,32 +92,52 @@ class DayBookBalanceVerificationRepository {
             'Recorded balances changed. Refresh and verify again.');
       }
 
+      int? bankAccountId;
+      if (bankVariance < -0.005) {
+        final accounts = await (_db.select(_db.bankAccounts)
+              ..where((account) => account.isActive.equals(true)))
+            .get();
+        final eligible = accounts.where((account) => !DateTime(
+                account.activeSince.year,
+                account.activeSince.month,
+                account.activeSince.day)
+            .isAfter(start));
+        if (eligible.length != 1) {
+          throw StateError(
+              'Select exactly one active bank account before posting a bank balance adjustment.');
+        }
+        bankAccountId = eligible.single.id;
+      }
+
       String? adjustmentId;
-      if (cashVariance.abs() >= 0.01) {
+      if (netShortage >= 0.01) {
         final now = DateTime.now();
         final postingDate = DateTime(
             date.year, date.month, date.day, now.hour, now.minute, now.second);
-        adjustmentId = cashVariance < 0
-            ? await FinanceTransactionNumbering(_db).nextExpenseTransactionId()
-            : await FinanceTransactionNumbering(_db).nextCashTransactionId();
+        adjustmentId = await DayBookBalanceAdjustmentPosting(_db).postShortage(
+          date: postingDate,
+          dayKey: key,
+          cashAmount: cashVariance < 0 ? -cashVariance : 0,
+          bankAmount: bankVariance < 0 ? -bankVariance : 0,
+          category: cashExpenseCategory!,
+          note: cashReason!.trim(),
+          bankAccountId: bankAccountId,
+        );
+      } else if (cashVariance > 0.005) {
+        final now = DateTime.now();
+        final postingDate = DateTime(
+            date.year, date.month, date.day, now.hour, now.minute, now.second);
+        adjustmentId =
+            await FinanceTransactionNumbering(_db).nextCashTransactionId();
         await _db.into(_db.cashTransactions).insert(
               CashTransactionsCompanion.insert(
                 txnId: adjustmentId,
                 txnDate: postingDate,
-                type: cashVariance < 0
-                    ? CashTransactionType.expense.dbValue
-                    : CashTransactionType.income.dbValue,
-                category: cashVariance < 0
-                    ? cashExpenseCategory!.dbValue
-                    : IncomeCategory.miscIncome.dbValue,
-                amount: Value(cashVariance.abs()),
+                type: CashTransactionType.income.dbValue,
+                category: IncomeCategory.miscIncome.dbValue,
+                amount: Value(cashVariance),
                 paymentMode: const Value('CASH'),
-                customLabel: cashVariance < 0 &&
-                        cashExpenseCategory == ExpenseCategory.otherExpense
-                    ? const Value('Cash shortage')
-                    : cashVariance > 0
-                        ? const Value('Cash surplus')
-                        : const Value.absent(),
+                customLabel: const Value('Cash surplus'),
                 description: Value(cashReason!.trim()),
                 referenceId: Value('DAYBAL-$key'),
                 referenceType: const Value('DAY_BOOK_BALANCE'),
@@ -135,9 +164,9 @@ class DayBookBalanceVerificationRepository {
           Variable.withReal(actualBank),
           Variable.withReal(bankVariance),
           Variable<String>(
-              cashVariance < 0 ? cashExpenseCategory?.dbValue : null),
+              netShortage >= 0.01 ? cashExpenseCategory?.dbValue : null),
           Variable<String>(cashReason?.trim()),
-          Variable<String>(bankReason?.trim()),
+          Variable<String>(bankVariance > 0.005 ? bankReason?.trim() : null),
           Variable<String>(adjustmentId),
           Variable<String>(verifiedBy?.trim()),
         ],
@@ -151,9 +180,9 @@ class DayBookBalanceVerificationRepository {
         expectedBank: expectedBank,
         actualBank: actualBank,
         bankVariance: bankVariance,
-        cashCategory: cashVariance < 0 ? cashExpenseCategory?.dbValue : null,
+        cashCategory: netShortage >= 0.01 ? cashExpenseCategory?.dbValue : null,
         cashReason: cashReason?.trim(),
-        bankReason: bankReason?.trim(),
+        bankReason: bankVariance > 0.005 ? bankReason?.trim() : null,
         cashAdjustmentTransactionId: adjustmentId,
         verifiedBy: verifiedBy?.trim(),
       );

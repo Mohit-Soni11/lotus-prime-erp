@@ -49,3 +49,19 @@ const financeDayClosureSchemaSql = <String>[
       WHERE OLD.txn_date >= start_epoch AND OLD.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
 ];
+
+const financeDayCloseSnapshotSchemaSql = <String>[
+  '''CREATE TABLE IF NOT EXISTS finance_day_closure_snapshots (
+    day_key TEXT PRIMARY KEY REFERENCES finance_day_closures(day_key),
+    snapshot_json TEXT NOT NULL,
+    source_hash TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    created_by TEXT NOT NULL
+  )''',
+  '''CREATE TRIGGER IF NOT EXISTS finance_day_close_snapshot_update
+    BEFORE UPDATE ON finance_day_closure_snapshots
+    BEGIN SELECT RAISE(ABORT, 'Day close snapshot is immutable'); END''',
+  '''CREATE TRIGGER IF NOT EXISTS finance_day_close_snapshot_delete
+    BEFORE DELETE ON finance_day_closure_snapshots
+    BEGIN SELECT RAISE(ABORT, 'Day close snapshot is immutable'); END''',
+];

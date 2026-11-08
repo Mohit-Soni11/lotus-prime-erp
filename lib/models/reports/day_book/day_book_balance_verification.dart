@@ -30,7 +30,10 @@ class DayBookBalanceVerification {
   final String? verifiedBy;
 
   bool get cashAdjusted => cashAdjustmentTransactionId != null;
-  bool get bankNeedsReview => bankVariance.abs() >= 0.01;
+  bool get bankNeedsReview =>
+      bankVariance.abs() >= 0.01 &&
+      bankReason != null &&
+      bankReason!.trim().isNotEmpty;
   bool get fullyMatched =>
       cashVariance.abs() < 0.01 && bankVariance.abs() < 0.01;
 }

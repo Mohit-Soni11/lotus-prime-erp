@@ -73,7 +73,8 @@ class DayBookMoneyRepository {
             amount: row.amount,
             incoming: row.type == 'INCOME',
             isCash: true,
-            category: row.category,
+            category: _categoryFor(
+                row.category, row.referenceType, row.type == 'INCOME'),
             paymentMode: 'CASH',
             transactionId: row.txnId,
             referenceId: row.referenceId,
@@ -87,7 +88,8 @@ class DayBookMoneyRepository {
             amount: row.amount,
             incoming: row.type == 'CREDIT',
             isCash: false,
-            category: row.category,
+            category: _categoryFor(
+                row.category, row.referenceType, row.type == 'CREDIT'),
             paymentMode: row.paymentMode,
             transactionId: row.txnId,
             accountName: accountNames[row.accountId],
@@ -107,5 +109,19 @@ class DayBookMoneyRepository {
       entries: entries,
       bankAccountCount: accounts.length,
     );
+  }
+
+  static String _categoryFor(
+      String category, String? referenceType, bool incoming) {
+    switch (referenceType?.toUpperCase()) {
+      case 'GIRVI' when category.toUpperCase() == 'DUE_COLLECTION':
+        return 'GIRVI_RETURN';
+      case 'CUSTOMER_CHANGE':
+        return incoming ? 'CHANGE_RECEIVED' : 'CHANGE_RETURNED';
+      case 'CUSTOMER_REFUND_PAYABLE':
+        return incoming ? 'REFUND_PAYABLE_RECEIVED' : category;
+      default:
+        return category;
+    }
   }
 }

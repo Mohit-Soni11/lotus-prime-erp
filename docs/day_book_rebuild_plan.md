@@ -63,9 +63,10 @@ or Girvi posting. Cash, bank, owned stock, and customer custody remain separate.
 
 ## Current release status
 
-The module does **not** meet the completion condition yet. The existing stock
-history and closure schema need the migrations and tests above before its metal
-and day-close figures can be certified.
+The module does **not** meet the completion condition yet. Schema v75 now
+persists close evidence, but the unverified historical stock baseline, legacy
+source values, and remaining reconciliation flows prevent certified metal and
+day-close figures.
 
 ### Implemented in the current rebuild pass
 
@@ -102,6 +103,28 @@ and day-close figures can be certified.
   their lines, stock movements, Girvi collateral, and opening balances. Later
   due settlement and documented return status changes remain possible; the
   original invoice turnover stays on its issue date after a return.
+- New booking advances post cash, UPI, and card receipts atomically with the
+  source receipt. Old metal credit remains in the purchase/booking source and
+  does not become Money In. Booking edits preserve receipt IDs and dates;
+  changing an existing receipt requires a separate reversal or receipt flow.
+- Girvi bank principal now posts as Girvi return. The Day Book projection also
+  reclassifies old Girvi bank rows that were saved as Due Collection, without
+  rewriting their historical ledger records. Customer change and refund-payable
+  receipts are separated from operating income and expense classifications.
+- Purchase bank/UPI/card payouts now require an active bank account. A failed
+  lookup rolls back the voucher and stock writes instead of saving a noncash
+  shadow transaction that Day Book could not include.
+- Schema v75 stores an immutable day-close evidence snapshot with physical
+  denomination count, cash/bank and account positions, owned gold/silver,
+  Girvi custody, and a hash of source records. The snapshot is inserted in the
+  same database transaction as the close lock. Existing v74 closures remain
+  locked but are explicitly missing audit snapshots; evidence is not invented.
+- New and edited sales invoices persist an issue-time financial snapshot in
+  the same transaction as the bill. Day Book uses it for original sales value,
+  saved tax, and new due even after a later due receipt/discount changes the
+  mutable bill balance. Legacy invoices without this snapshot still need
+  source-document reconciliation before their historical issue value is
+  certified.
 
 ### Remaining blockers for the stated completion condition
 
@@ -114,9 +137,13 @@ and day-close figures can be certified.
 - Due settlements and refund payments need their own document event projections.
   Historical outstanding balances and an all-source chronological register
   (with audit history) remain pending.
+- Legacy invoice issue-time amounts and tax require reconciliation against
+  archived issued PDFs or original source documents where no issue snapshot
+  exists. The migration never invents an original invoice amount.
 - Settlement-aware bank position, including cleared balance and value dates.
-- Atomic close snapshot covering bank, owned metal, custody, physical count,
-  variance decision, source watermark, and audit events. The current source
-  guards are a safety layer, not a substitute for that snapshot and audit.
+- The v75 close snapshot records bank, owned metal, custody, and physical
+  count, but it does not certify an unknown historical stock baseline or
+  partial Girvi handover. A formal variance approval event and item-wise
+  authorized stock baseline are still required for final certification.
 - Historical upgrade/backups and end-to-end reconciliation tests for every
   required posting path. Current focused tests do not certify these gates.

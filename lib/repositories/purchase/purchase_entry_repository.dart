@@ -674,67 +674,43 @@ class PurchaseEntryRepository {
         }
 
         final bankAccountId = await _findPreferredBankAccountId();
+        if ((draft.bankPaid > 0 || draft.upiPaid > 0 || draft.cardPaid > 0) &&
+            bankAccountId == null) {
+          throw StateError(
+            'Add an active bank account before recording a bank, UPI or card purchase payment.',
+          );
+        }
         if (draft.bankPaid > 0) {
-          if (bankAccountId != null) {
-            await _insertBankExpense(
-              accountId: bankAccountId,
-              amount: draft.bankPaid,
-              paymentMode: BankPaymentMode.neft,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          } else {
-            await _insertCashExpense(
-              amount: draft.bankPaid,
-              paymentMode: PaymentMode.bank,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          }
+          await _insertBankExpense(
+            accountId: bankAccountId!,
+            amount: draft.bankPaid,
+            paymentMode: BankPaymentMode.neft,
+            voucherNo: draft.voucherNo,
+            partyName: draft.party.name,
+            txnDate: now,
+          );
         }
 
         if (draft.upiPaid > 0) {
-          if (bankAccountId != null) {
-            await _insertBankExpense(
-              accountId: bankAccountId,
-              amount: draft.upiPaid,
-              paymentMode: BankPaymentMode.upi,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          } else {
-            await _insertCashExpense(
-              amount: draft.upiPaid,
-              paymentMode: PaymentMode.upi,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          }
+          await _insertBankExpense(
+            accountId: bankAccountId!,
+            amount: draft.upiPaid,
+            paymentMode: BankPaymentMode.upi,
+            voucherNo: draft.voucherNo,
+            partyName: draft.party.name,
+            txnDate: now,
+          );
         }
 
         if (draft.cardPaid > 0) {
-          if (bankAccountId != null) {
-            await _insertBankExpense(
-              accountId: bankAccountId,
-              amount: draft.cardPaid,
-              paymentMode: BankPaymentMode.card,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          } else {
-            await _insertCashExpense(
-              amount: draft.cardPaid,
-              paymentMode: PaymentMode.card,
-              voucherNo: draft.voucherNo,
-              partyName: draft.party.name,
-              txnDate: now,
-            );
-          }
+          await _insertBankExpense(
+            accountId: bankAccountId!,
+            amount: draft.cardPaid,
+            paymentMode: BankPaymentMode.card,
+            voucherNo: draft.voucherNo,
+            partyName: draft.party.name,
+            txnDate: now,
+          );
         }
 
         await _db.customStatement(

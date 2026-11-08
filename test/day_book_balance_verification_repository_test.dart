@@ -8,6 +8,7 @@ import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_expense_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
+import 'package:lotus_erp/repositories/finance/expense_repository.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 Future<AppDatabase> _database() async {
@@ -58,7 +59,7 @@ void main() {
     );
   });
 
-  test('cash shortage posts classified expense; bank mismatch stays pending',
+  test('cash and bank shortages post classified Expense Entry sources',
       () async {
     final db = await _database();
     addTearDown(db.close);
@@ -72,24 +73,82 @@ void main() {
       actualBank: 45,
       cashExpenseCategory: ExpenseCategory.miscExpense,
       cashReason: 'Cash used for packing supplies',
-      bankReason: 'UPI settlement pending',
+      bankReason: 'Bank charge confirmed',
     );
 
     expect(saved.cashVariance, -10);
     expect(saved.bankVariance, -5);
-    expect(saved.bankNeedsReview, isTrue);
+    expect(saved.bankNeedsReview, isFalse);
     final cashRows = await db.select(db.cashTransactions).get();
-    expect(cashRows, hasLength(1));
-    expect(cashRows.single.type, 'EXPENSE');
-    expect(cashRows.single.category, ExpenseCategory.miscExpense.dbValue);
-    expect(cashRows.single.amount, 10);
-    expect(cashRows.single.referenceType, 'DAY_BOOK_BALANCE');
-    expect(cashRows.single.txnId, saved.cashAdjustmentTransactionId);
-    expect((await DayBookExpenseRepository(db).fetch(date)).single.amount, 10);
+    expect(cashRows, hasLength(2));
+    expect(cashRows.map((row) => row.amount), containsAll([10, 5]));
+    expect(cashRows.every((row) => row.type == 'EXPENSE'), isTrue);
+    expect(cashRows.every((row) =>
+        row.category == ExpenseCategory.miscExpense.dbValue), isTrue);
+    expect(cashRows.every((row) =>
+        row.referenceType == 'DAY_BOOK_BALANCE'), isTrue);
+    expect(cashRows.first.txnId, saved.cashAdjustmentTransactionId);
+    expect((await DayBookExpenseRepository(db).fetch(date)), hasLength(2));
     final flow = await DayBookMoneyRepository(db).fetch(date, 100);
     expect(flow.closingCash, 90);
-    expect(flow.closingBank, 50);
-    expect(await db.select(db.bankTransactions).get(), isEmpty);
+    expect(flow.closingBank, 45);
+    expect((await db.select(db.bankTransactions).get()).single.amount, 5);
+  });
+
+  test('personal cash shortage is linked to Expense Entry as owner drawing',
+      () async {
+    final db = await _database();
+    addTearDown(db.close);
+    final saved = await DayBookBalanceVerificationRepository(db).verify(
+      date: date,
+      expectedCash: 100,
+      actualCash: 80,
+      expectedBank: 50,
+      actualBank: 50,
+      cashExpenseCategory: ExpenseCategory.personalHousehold,
+      cashReason: 'Owner took cash for personal use',
+    );
+
+    final entries = await ExpenseRepository(db: db).fetchExpenses(
+      from: date,
+      to: DateTime(2026, 11, 7, 23, 59, 59),
+    );
+    expect(entries, hasLength(1));
+    expect(entries.single.category, ExpenseCategory.personalHousehold);
+    expect(entries.single.expenseId, saved.cashAdjustmentTransactionId);
+    expect(await DayBookExpenseRepository(db).fetch(date), isEmpty);
+  });
+
+  test('bank-only shortage links Expense Entry and debits the bank once',
+      () async {
+    final db = await _database();
+    addTearDown(db.close);
+    final saved = await DayBookBalanceVerificationRepository(db).verify(
+      date: date,
+      expectedCash: 100,
+      actualCash: 100,
+      expectedBank: 50,
+      actualBank: 45,
+      cashExpenseCategory: ExpenseCategory.bankCharges,
+      cashReason: 'Confirmed service charge',
+    );
+
+    final source = (await db.select(db.cashTransactions).get()).single;
+    final bank = (await db.select(db.bankTransactions).get()).single;
+    expect(source.txnId, saved.cashAdjustmentTransactionId);
+    expect(source.amount, 5);
+    expect(source.paymentMode, 'BANK');
+    expect(source.category, ExpenseCategory.bankCharges.dbValue);
+    expect(bank.referenceId, source.txnId);
+    expect(bank.amount, 5);
+    expect(saved.bankNeedsReview, isFalse);
+    final flow = await DayBookMoneyRepository(db).fetch(date, 100);
+    expect(flow.closingCash, 100);
+    expect(flow.closingBank, 45);
+    expect((await ExpenseRepository(db: db).fetchExpenses(
+      from: date,
+      to: DateTime(2026, 11, 7, 23, 59, 59),
+    )), hasLength(1));
   });
 
   test('cash surplus posts income and stale expected balance is rejected',
@@ -154,6 +213,29 @@ void main() {
     expect(await repo.fetch(date), isNull);
   });
 
+  test('opposite cash and bank differences never become a false expense',
+      () async {
+    final db = await _database();
+    addTearDown(db.close);
+    final repo = DayBookBalanceVerificationRepository(db);
+
+    await expectLater(
+      repo.verify(
+        date: date,
+        expectedCash: 100,
+        actualCash: 80,
+        expectedBank: 50,
+        actualBank: 65,
+        cashExpenseCategory: ExpenseCategory.miscExpense,
+        cashReason: 'Unexplained cash shortage',
+        bankReason: 'Unexplained bank excess',
+      ),
+      throwsStateError,
+    );
+    expect(await db.select(db.cashTransactions).get(), isEmpty);
+    expect(await repo.fetch(date), isNull);
+  });
+
   test('non-zero bank balance cannot be verified without a bank account',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -170,6 +252,7 @@ void main() {
         expectedBank: 0,
         actualBank: 50,
         bankReason: 'Actual balance shown by bank',
+        cashReason: 'Unrecorded bank credit needs review',
       ),
       throwsStateError,
     );

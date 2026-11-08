@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../../constants/app_routes.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
@@ -79,7 +76,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
         bankAccountConfigured: flow.bankAccountCount != 0,
         existing: _ctrl.balanceVerification,
         onSave: _ctrl.verifyBalance,
-        onOpenBankBook: () => context.go(AppRoutes.bankBookRoute),
       ),
     );
     if (saved == true) _showSuccess('Daily balance verification saved.');

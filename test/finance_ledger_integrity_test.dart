@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +9,8 @@ import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/repositories/finance/bank_book_repository.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
 import 'package:lotus_erp/repositories/finance/expense_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_expense_classification.dart';
 
 void main() {
   late AppDatabase db;
@@ -74,6 +78,64 @@ void main() {
     expect(rows, hasLength(1));
     expect(rows.single.amount, 200);
     expect(rows.single.referenceId, 'B-MIXED#UPI');
+  });
+
+  test('legacy Girvi bank principal is reported as Girvi, not invoice due',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    final accountId = await _bankAccount(db);
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'GIRVI-PAY-1-P',
+            accountId: accountId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'DUE_COLLECTION',
+            amount: const drift.Value(250),
+            paymentMode: const drift.Value('UPI'),
+            referenceId: const drift.Value('GIRVI-1-PAY-1'),
+            referenceType: const drift.Value('GIRVI'),
+          ),
+        );
+    final money = await DayBookMoneyRepository(db).fetch(date, 0);
+    expect(money.bySource(incoming: true)['GIRVI_RETURN'], 250);
+    expect(money.bySource(incoming: true)['DUE_COLLECTION'], isNull);
+  });
+
+  test('customer change and held refund are not operating income or expense',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'CHANGE-OUT',
+            txnDate: date,
+            type: 'EXPENSE',
+            category: 'MISC_EXPENSE',
+            amount: const drift.Value(30),
+            referenceType: const drift.Value('CUSTOMER_CHANGE'),
+          ),
+        );
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'HELD-REFUND',
+            txnDate: date,
+            type: 'INCOME',
+            category: 'ADVANCE',
+            amount: const drift.Value(25),
+            referenceType: const drift.Value('CUSTOMER_REFUND_PAYABLE'),
+          ),
+        );
+    final money = await DayBookMoneyRepository(db).fetch(date, 0);
+    expect(money.bySource(incoming: true)['REFUND_PAYABLE_RECEIVED'], 25);
+    expect(money.bySource(incoming: true)['ADVANCE'], isNull);
+    expect(
+        DayBookExpenseClassification.totals(
+            money)[DayBookOutflowPurpose.refunds],
+        30);
+    expect(
+        DayBookExpenseClassification.totals(
+            money)[DayBookOutflowPurpose.operations],
+        isNull);
   });
 
   test('bank reconciliation keeps valid legacy UPI and restores card',
@@ -179,6 +241,76 @@ void main() {
     );
     expect(
         (await db.select(db.cashTransactions).get()).single.isVoided, isFalse);
+  });
+
+  test('day close stores immutable cash, bank and metal evidence', () async {
+    final date = DateTime(2026, 6, 25, 12);
+    await _cashRow(db, 'C-SNAPSHOT', date, 'INCOME', 100);
+    final bankId = await _bankAccount(db);
+    await (db.update(db.bankAccounts)..where((row) => row.id.equals(bankId)))
+        .write(BankAccountsCompanion(
+      activeSince: drift.Value(DateTime(2026, 6, 24)),
+    ));
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'B-SNAPSHOT',
+            accountId: bankId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(250),
+            paymentMode: const drift.Value('UPI'),
+          ),
+        );
+    final closure = FinanceDayClosureRepository(db);
+    expect(
+      await closure.closeDay(date,
+          closingCash: 100, closedBy: 'owner-1', denominationCount: {'50': 2}),
+      isTrue,
+    );
+    final snapshot = (await closure.fetchSnapshot(date))!;
+    final payload = jsonDecode(snapshot.json) as Map<String, dynamic>;
+    final money = payload['money'] as Map<String, dynamic>;
+    expect(money['closingCash'], 100);
+    expect(money['closingBank'], 250);
+    expect(money['closingTotal'], 350);
+    expect(payload['ownedMetal'], isA<Map<String, dynamic>>());
+    expect(snapshot.sourceHash, hasLength(64));
+    expect(await closure.closeDay(date, closingCash: 100, closedBy: 'owner-1'),
+        isTrue);
+    expect(
+        (await closure.fetchSnapshot(date))!.sourceHash, snapshot.sourceHash);
+    await expectLater(
+      db.customUpdate(
+          "UPDATE finance_day_closure_snapshots SET source_hash = 'changed' WHERE day_key = '20260625'"),
+      throwsA(isA<Exception>()),
+    );
+    await expectLater(
+      db.into(db.bankAccounts).insert(BankAccountsCompanion.insert(
+            accountName: 'Retroactive Account',
+            bankName: 'SBI',
+            accountNumber: '444455556666',
+            openingBalance: const drift.Value(500),
+            activeSince: drift.Value(DateTime(2026, 6, 24)),
+          )),
+      throwsA(isA<Exception>()),
+    );
+    await expectLater(
+      (db.delete(db.bankAccounts)..where((row) => row.id.equals(bankId))).go(),
+      throwsA(isA<Exception>()),
+    );
+  });
+
+  test('mismatched physical denomination count cannot close the day', () async {
+    final date = DateTime(2026, 6, 26, 12);
+    await _cashRow(db, 'C-COUNT', date, 'INCOME', 100);
+    final closure = FinanceDayClosureRepository(db);
+    await expectLater(
+      closure.closeDay(date,
+          closingCash: 100, closedBy: 'owner-1', denominationCount: {'50': 1}),
+      throwsStateError,
+    );
+    expect(await closure.isClosed(date), isFalse);
   });
 
   test('day closing rejects a stale or incorrect physical cash amount',

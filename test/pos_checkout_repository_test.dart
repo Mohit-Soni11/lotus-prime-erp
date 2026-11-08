@@ -171,6 +171,12 @@ void main() {
       expect(result.invoiceNumber, 'LJ-26-001');
       expect(result.invoiceSequence, 1);
       expect(bill.finalAmount, 910);
+      final issue = await db.customSelect(
+        'SELECT final_amount, issued_due FROM bill_issue_snapshots WHERE bill_id = ?',
+        variables: [drift.Variable.withInt(result.billId)],
+      ).getSingle();
+      expect(issue.read<double>('final_amount'), 910);
+      expect(issue.read<double>('issued_due'), 0);
       expect(bill.tradeInDeduction, 90);
       expect(bill.paymentStatus, 'PAID');
       expect(billItems, hasLength(1));
@@ -1378,8 +1384,10 @@ void main() {
       expect(updatedBooking.status, 'DELIVERED');
       expect(updatedBooking.notes,
           'Converted to sales invoice ${result.invoiceNumber}');
-      expect(cashRows, hasLength(1));
-      expect(cashRows.single.amount, 700);
+      expect(cashRows, hasLength(2));
+      expect(
+          cashRows.singleWhere((row) => row.category == 'ADVANCE').amount, 300);
+      expect(cashRows.singleWhere((row) => row.category == 'SALE').amount, 700);
 
       _disposeItems(saleItems: [saleItem]);
     },

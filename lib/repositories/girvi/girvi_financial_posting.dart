@@ -52,7 +52,7 @@ class GirviFinancialPosting {
         cashType: 'INCOME',
         bankType: 'CREDIT',
         cashCategory: 'GIRVI_RETURN',
-        bankCategory: 'DUE_COLLECTION',
+        bankCategory: 'GIRVI_RETURN',
         description: 'Pledge principal collected',
         referenceId: 'GIRVI-$loanId-PAY-$paymentId',
         customerName: customerName,

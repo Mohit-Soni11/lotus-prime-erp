@@ -46,8 +46,16 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
 
       final totalAdvance =
           details.advances.fold<double>(0, (sum, row) => sum + row.amountPaid);
-      cashCtrl.text = _formatNumber(totalAdvance);
-      _cashInput = totalAdvance;
+      final posted = await _repo.fetchPostedMoney(order.orderNo);
+      cashCtrl.text = posted.cash > 0 ? _formatNumber(posted.cash) : '';
+      upiCtrl.text = posted.upi > 0 ? _formatNumber(posted.upi) : '';
+      cardCtrl.text = posted.card > 0 ? _formatNumber(posted.card) : '';
+      _cashInput = posted.cash;
+      _upiInput = posted.upi;
+      _cardInput = posted.card;
+      _editingUnpostedCredit =
+          (totalAdvance - posted.cash - posted.upi - posted.card)
+              .clamp(0, double.infinity);
       if (details.advances.isNotEmpty && lockedRateCtrl.text.isEmpty) {
         lockedRateCtrl.text = _formatNumber(details.advances.first.rateOnDate);
       }
@@ -138,6 +146,19 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         await _initBookingNumber();
       }
 
+      if ((upiAdvance > 0 || cardAdvance > 0) &&
+          !await _repo.hasActiveBankAccount()) {
+        isSaving = false;
+        _emitChanged();
+        return (
+          success: false,
+          message:
+              'Add an active bank account before recording UPI or card advance.',
+          bookingNo: '',
+          orderIds: const <int>[],
+        );
+      }
+
       final customerId = await _repo.resolveCustomerForBooking(
         selectedCustomerId: selectedCustomerId,
         customerName: nameCtrl.text,
@@ -194,6 +215,9 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
             .map((item) => _bookingLineDraft(item, perItemAdv))
             .toList(growable: false),
         scrapLines: scrapDrafts,
+        cashReceived: cashAdvance,
+        upiReceived: upiAdvance,
+        cardReceived: cardAdvance,
       );
 
       await _initBookingNumber();
@@ -214,7 +238,8 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
       AppLogger.debug('Booking save error: $e');
       return (
         success: false,
-        message: 'Failed to save. Please try again.',
+        message:
+            e is StateError ? e.message : 'Failed to save. Please try again.',
         bookingNo: '',
         orderIds: const <int>[],
       );
@@ -309,6 +334,7 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
     _cashInput = 0;
     _upiInput = 0;
     _cardInput = 0;
+    _editingUnpostedCredit = 0;
     selectedCustomerId = null;
     _selectedCustomerMobile = '';
     _selectedCustomerName = '';
