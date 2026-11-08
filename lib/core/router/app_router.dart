@@ -649,6 +649,8 @@ GoRouter createAppRouter() {
               initialDate:
                   DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
               initialReference: state.uri.queryParameters['reference'],
+              initialDraftAmount:
+                  state.extra is double ? state.extra as double : null,
             ),
           ),
           GoRoute(

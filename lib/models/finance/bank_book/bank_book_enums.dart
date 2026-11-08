@@ -41,6 +41,11 @@ enum BankCreditCategory {
   loanReceived('LOAN_RECEIVED', 'Loan Received'),
   interestReceived('INTEREST_RECEIVED', 'Interest Received'),
   refundReceived('REFUND_RECEIVED', 'Refund Received'),
+  counterSaleIncome('COUNTER_SALE_INCOME', 'Counter sale (no invoice)'),
+  goldRepairIncome('GOLD_REPAIR_INCOME', 'Gold repair'),
+  silverRepairIncome('SILVER_REPAIR_INCOME', 'Silver repair'),
+  jewelleryMakingIncome('JEWELLERY_MAKING_INCOME', 'Jewellery making'),
+  otherIncome('OTHER_INCOME', 'Other income'),
   accountTransferIn('TRANSFER_IN', 'Account Transfer In'),
   miscCredit('MISC_CREDIT', 'Misc. Credit');
 
@@ -94,6 +99,7 @@ enum BankDebitCategory {
 // ── 4. PAYMENT MODE ────────────────────────────────────────────────────────────
 
 enum BankPaymentMode {
+  bankTransfer('BANK', 'Bank Transfer'),
   neft('NEFT', 'NEFT'),
   rtgs('RTGS', 'RTGS'),
   imps('IMPS', 'IMPS'),

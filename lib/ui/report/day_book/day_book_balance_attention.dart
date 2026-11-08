@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 
 class DayBookBalanceAttention extends StatelessWidget {
-  const DayBookBalanceAttention({super.key});
+  const DayBookBalanceAttention({
+    super.key,
+    required this.hasNetShortage,
+  });
+
+  final bool hasNetShortage;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -28,7 +33,9 @@ class DayBookBalanceAttention extends StatelessWidget {
                         fontSize: 16, color: DayBookColors.goldMetal)),
                 const SizedBox(height: 4),
                 Text(
-                  'Cash and bank do not match yesterday’s closing. Check the payment modes and any cash–bank transfer before verifying today’s opening.',
+                  hasNetShortage
+                      ? 'Cash and bank do not match yesterday’s closing. Mismatch Transfer opens an expense draft for the net shortage. Review any cash–bank movement before verifying.'
+                      : 'Cash and bank do not match yesterday’s closing. Review the payment modes and any cash–bank movement before verifying.',
                   style: DayBookStyles.labelStrong
                       .copyWith(fontSize: 13, color: DayBookColors.textPrimary),
                 ),

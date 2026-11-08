@@ -39,12 +39,14 @@ class ExpenseScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final DateTime? initialDate;
   final String? initialReference;
+  final double? initialDraftAmount;
 
   const ExpenseScreen({
     super.key,
     this.onBack,
     this.initialDate,
     this.initialReference,
+    this.initialDraftAmount,
   });
 
   @override
@@ -61,6 +63,12 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       initialDate: widget.initialDate,
       initialReference: widget.initialReference,
     );
+    final amount = widget.initialDraftAmount;
+    if (amount != null && amount.isFinite && amount > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showAddExpenseDialog(initialAmount: amount);
+      });
+    }
   }
 
   @override
@@ -71,12 +79,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   // â”€â”€ Show Add Expense Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  void _showAddExpenseDialog() {
+  void _showAddExpenseDialog({double? initialAmount}) {
     showDialog(
       context: context,
       barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.45),
-      builder: (_) => ExpenseEntryDialog(ctrl: _ctrl),
+      builder: (_) => ExpenseEntryDialog(
+        ctrl: _ctrl,
+        initialAmount: initialAmount,
+      ),
     );
   }
 

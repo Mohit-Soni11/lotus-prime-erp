@@ -12,11 +12,11 @@ class DayBookMoneyPanel extends StatelessWidget {
   const DayBookMoneyPanel({
     super.key,
     required this.flow,
-    this.onAddCashIncome,
+    this.onAddIncome,
   });
 
   final DayBookMoneyFlow flow;
-  final VoidCallback? onAddCashIncome;
+  final VoidCallback? onAddIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class DayBookMoneyPanel extends StatelessWidget {
         children: [
           DayBookMoneySummary(
             flow: flow,
-            onAddCashIncome: onAddCashIncome,
+            onAddIncome: onAddIncome,
           ),
           const SizedBox(height: 10),
           _ResponsivePair(

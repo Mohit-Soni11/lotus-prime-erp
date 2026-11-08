@@ -88,7 +88,11 @@ class DayBookRepository {
           loanReceived: incomeMap['LOAN_RECEIVED'] ?? 0,
           interestRec: incomeMap['INTEREST_RECEIVED'] ?? 0,
           miscIncome: incomeMap['MISC_INCOME'] ?? 0,
-          otherIncome: incomeMap['OTHER_INCOME'] ?? 0,
+          otherIncome: (incomeMap['OTHER_INCOME'] ?? 0) +
+              (incomeMap['COUNTER_SALE_INCOME'] ?? 0) +
+              (incomeMap['GOLD_REPAIR_INCOME'] ?? 0) +
+              (incomeMap['SILVER_REPAIR_INCOME'] ?? 0) +
+              (incomeMap['JEWELLERY_MAKING_INCOME'] ?? 0),
         );
 
         // ── Build CashOutflow ─────────────────────────────────────────────────

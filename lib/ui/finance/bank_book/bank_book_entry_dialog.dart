@@ -479,6 +479,7 @@ class _PaymentModeSelector extends StatelessWidget {
 
   IconData _modeIcon(BankPaymentMode mode) {
     return switch (mode) {
+      BankPaymentMode.bankTransfer => BankBookIcons.neft,
       BankPaymentMode.neft => BankBookIcons.neft,
       BankPaymentMode.rtgs => BankBookIcons.neft,
       BankPaymentMode.imps => BankBookIcons.neft,

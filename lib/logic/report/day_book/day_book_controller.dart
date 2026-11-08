@@ -18,7 +18,7 @@ import 'package:intl/intl.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../models/reports/day_book/day_book_balance_verification.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
-import '../../../repositories/finance/cash_book_repository.dart';
+import '../../../repositories/reports/day_book_manual_income_repository.dart';
 import '../../../repositories/reports/day_book_balance_verification_repository.dart';
 import '../../../repositories/reports/day_book_repository.dart';
 import '../../../database/db/app_database.dart';
@@ -32,7 +32,8 @@ class DayBookController extends ChangeNotifier {
   }
 
   final DayBookRepository _repo = DayBookRepository();
-  final CashBookRepository _cashEntries = CashBookRepository();
+  final DayBookManualIncomeRepository _manualIncome =
+      DayBookManualIncomeRepository(AppDatabase());
   final DayBookBalanceVerificationRepository _balanceVerifications =
       DayBookBalanceVerificationRepository(AppDatabase());
   final FinanceDayClosureRepository _closures =
@@ -186,18 +187,23 @@ class DayBookController extends ChangeNotifier {
     }
   }
 
-  Future<bool> addManualCashIncome({
+  Future<List<ManualIncomeBankAccount>> loadIncomeBankAccounts() =>
+      _manualIncome.listActiveBankAccounts();
+
+  Future<bool> addManualIncome({
     required double amount,
     required String category,
-    required String description,
+    required PaymentMode paymentMode,
+    int? bankAccountId,
     String? customLabel,
-    String? partyName,
   }) async {
     final now = DateTime.now();
-    final saved = await _cashEntries.saveExtraCashIncome(
-      categoryDbValue: category,
+    final saved = await _manualIncome.save(
+      category: IncomeCategory.fromDb(category),
       amount: amount,
-      txnDate: DateTime(
+      paymentMode: paymentMode,
+      bankAccountId: bankAccountId,
+      date: DateTime(
         _selectedDate.year,
         _selectedDate.month,
         _selectedDate.day,
@@ -205,9 +211,7 @@ class DayBookController extends ChangeNotifier {
         now.minute,
         now.second,
       ),
-      description: description,
       customLabel: customLabel,
-      partyName: partyName,
     );
     if (saved) await loadData(silent: true);
     return saved;

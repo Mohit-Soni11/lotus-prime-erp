@@ -18,6 +18,13 @@ typedef SaveDayBookBalance = Future<DayBookBalanceVerification> Function({
   String? bankReason,
 });
 
+class DayBookBalanceDialogResult {
+  const DayBookBalanceDialogResult.verified() : mismatchExpenseAmount = null;
+  const DayBookBalanceDialogResult.mismatchExpense(this.mismatchExpenseAmount);
+
+  final double? mismatchExpenseAmount;
+}
+
 class DayBookBalanceDialog extends StatefulWidget {
   const DayBookBalanceDialog({
     super.key,
@@ -27,7 +34,6 @@ class DayBookBalanceDialog extends StatefulWidget {
     required this.onSave,
     this.existing,
     this.bankAccountConfigured = true,
-    this.onRecordTransfer,
   });
 
   final DateTime date;
@@ -36,7 +42,6 @@ class DayBookBalanceDialog extends StatefulWidget {
   final DayBookBalanceVerification? existing;
   final SaveDayBookBalance onSave;
   final bool bankAccountConfigured;
-  final VoidCallback? onRecordTransfer;
 
   @override
   State<DayBookBalanceDialog> createState() => _DayBookBalanceDialogState();
@@ -111,7 +116,9 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
         cashReason: _netShortage.abs() >= 0.01 ? _note.text.trim() : null,
         bankReason: _netShortage < -0.005 ? _note.text.trim() : null,
       );
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) {
+        Navigator.of(context).pop(const DayBookBalanceDialogResult.verified());
+      }
     } catch (error) {
       if (mounted) {
         setState(() => _error = error
@@ -122,6 +129,11 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  void _openMismatchExpense(double amount) {
+    Navigator.of(context)
+        .pop(DayBookBalanceDialogResult.mismatchExpense(amount));
   }
 
   @override
@@ -141,6 +153,9 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
         actualBank != null &&
         ((cashVariance < -0.005 && bankVariance > 0.005) ||
             (cashVariance > 0.005 && bankVariance < -0.005));
+    final hasMismatch = actualCash != null &&
+        actualBank != null &&
+        (cashVariance.abs() >= 0.01 || bankVariance.abs() >= 0.01);
 
     return DayBookFormVisuals.themed(
       child: Dialog(
@@ -186,7 +201,8 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
                       ),
                       if (allocationConflict) ...[
                         const SizedBox(height: 10),
-                        const DayBookBalanceAttention(),
+                        DayBookBalanceAttention(
+                            hasNetShortage: netDifference > 0.005),
                       ] else if (actualCash != null && actualBank != null) ...[
                         const SizedBox(height: 10),
                         DayBookBalanceDifferenceFields(
@@ -221,7 +237,14 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
                 ),
               ),
             ),
-            _footer(readOnly: readOnly, allocationConflict: allocationConflict),
+            _footer(
+              readOnly: readOnly,
+              allocationConflict: allocationConflict,
+              showMismatchAction: hasMismatch,
+              mismatchExpenseAmount: netDifference > 0.005
+                  ? (netDifference * 100).roundToDouble() / 100
+                  : null,
+            ),
           ]),
         ),
       ),
@@ -282,7 +305,12 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
         ]),
       );
 
-  Widget _footer({required bool readOnly, required bool allocationConflict}) =>
+  Widget _footer({
+    required bool readOnly,
+    required bool allocationConflict,
+    required bool showMismatchAction,
+    required double? mismatchExpenseAmount,
+  }) =>
       Container(
         padding: const EdgeInsets.fromLTRB(18, 11, 18, 14),
         decoration: const BoxDecoration(
@@ -306,9 +334,11 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
                 child: Text(readOnly ? 'Close' : 'Cancel'),
               ),
               if (!readOnly) ...[
-                if (allocationConflict) ...[
+                if (showMismatchAction) ...[
                   OutlinedButton.icon(
-                    onPressed: widget.onRecordTransfer,
+                    onPressed: mismatchExpenseAmount == null || _saving
+                        ? null
+                        : () => _openMismatchExpense(mismatchExpenseAmount),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 42),
                       padding: const EdgeInsets.symmetric(horizontal: 17),
@@ -319,7 +349,7 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
                       textStyle: DayBookStyles.button.copyWith(fontSize: 14),
                     ),
                     icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                    label: const Text('Record Transfer'),
+                    label: const Text('Mismatch Transfer'),
                   ),
                 ],
                 FilledButton.icon(

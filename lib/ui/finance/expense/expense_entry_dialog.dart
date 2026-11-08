@@ -21,7 +21,13 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ExpenseEntryDialog extends StatefulWidget {
   final ExpenseController ctrl;
-  const ExpenseEntryDialog({super.key, required this.ctrl});
+  final double? initialAmount;
+
+  const ExpenseEntryDialog({
+    super.key,
+    required this.ctrl,
+    this.initialAmount,
+  });
 
   @override
   State<ExpenseEntryDialog> createState() => _ExpenseEntryDialogState();
@@ -32,11 +38,20 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
   late AnimationController _slideCtrl;
   late Animation<Offset> _slideAnim;
   late Animation<double> _fadeAnim;
+  late bool _categoryConfirmed;
+  late bool _modeConfirmed;
 
   @override
   void initState() {
     super.initState();
     widget.ctrl.resetEntryForm();
+    final amount = widget.initialAmount;
+    final isDraft = amount != null && amount.isFinite && amount > 0;
+    _categoryConfirmed = !isDraft;
+    _modeConfirmed = !isDraft;
+    if (isDraft) {
+      widget.ctrl.amountCtrl.text = amount.toStringAsFixed(2);
+    }
     widget.ctrl.refreshBankAccounts();
 
     _slideCtrl = AnimationController(
@@ -148,7 +163,14 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
           // â”€â”€ Category â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           const _FieldLabel(ExpenseStrings.category),
           const SizedBox(height: 6),
-          _CategoryDropdown(ctrl: ctrl),
+          _CategoryDropdown(
+            ctrl: ctrl,
+            isSelected: _categoryConfirmed,
+            onSelected: (category) {
+              ctrl.setEntryCategory(category);
+              setState(() => _categoryConfirmed = true);
+            },
+          ),
 
           // â”€â”€ Custom Label (only for OTHER_EXPENSE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (ctrl.entryNeedsCustomLabel) ...[
@@ -161,8 +183,15 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
           // â”€â”€ Payment Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           const _FieldLabel(ExpenseStrings.paymentMode),
           const SizedBox(height: 8),
-          _PaymentModeChips(ctrl: ctrl),
-          if (ctrl.entryMode != PaymentMode.cash) ...[
+          _PaymentModeChips(
+            ctrl: ctrl,
+            isSelected: _modeConfirmed,
+            onSelected: (mode) {
+              ctrl.setEntryMode(mode);
+              setState(() => _modeConfirmed = true);
+            },
+          ),
+          if (_modeConfirmed && ctrl.entryMode != PaymentMode.cash) ...[
             const SizedBox(height: 12),
             if (ctrl.bankAccounts.isEmpty)
               const Text(
@@ -234,7 +263,11 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: _SaveButton(ctrl: ctrl, context: context),
+              child: _SaveButton(
+                ctrl: ctrl,
+                context: context,
+                selectionsConfirmed: _categoryConfirmed && _modeConfirmed,
+              ),
             ),
           ]),
         ],
@@ -290,7 +323,14 @@ class _AmountField extends StatelessWidget {
 
 class _CategoryDropdown extends StatelessWidget {
   final ExpenseController ctrl;
-  const _CategoryDropdown({required this.ctrl});
+  final bool isSelected;
+  final ValueChanged<ExpenseCategory> onSelected;
+
+  const _CategoryDropdown({
+    required this.ctrl,
+    required this.isSelected,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +343,8 @@ class _CategoryDropdown extends StatelessWidget {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ExpenseCategory>(
-          value: ctrl.entryCategory,
+          value: isSelected ? ctrl.entryCategory : null,
+          hint: const Text('Select a category'),
           isExpanded: true,
           style: ExpenseStyles.labelPrimary,
           dropdownColor: ExpenseColors.bodyPanel,
@@ -322,7 +363,7 @@ class _CategoryDropdown extends StatelessWidget {
             );
           }).toList(),
           onChanged: (val) {
-            if (val != null) ctrl.setEntryCategory(val);
+            if (val != null) onSelected(val);
           },
         ),
       ),
@@ -393,7 +434,14 @@ class _CustomLabelField extends StatelessWidget {
 
 class _PaymentModeChips extends StatelessWidget {
   final ExpenseController ctrl;
-  const _PaymentModeChips({required this.ctrl});
+  final bool isSelected;
+  final ValueChanged<PaymentMode> onSelected;
+
+  const _PaymentModeChips({
+    required this.ctrl,
+    required this.isSelected,
+    required this.onSelected,
+  });
 
   IconData _modeIcon(PaymentMode mode) => switch (mode) {
         PaymentMode.cash => ExpenseIcons.cash,
@@ -409,9 +457,9 @@ class _PaymentModeChips extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: PaymentMode.values.map((mode) {
-        final isActive = ctrl.entryMode == mode;
+        final isActive = isSelected && ctrl.entryMode == mode;
         return GestureDetector(
-          onTap: () => ctrl.setEntryMode(mode),
+          onTap: () => onSelected(mode),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -506,11 +554,18 @@ class _DateSelector extends StatelessWidget {
 class _SaveButton extends StatelessWidget {
   final ExpenseController ctrl;
   final BuildContext context;
-  const _SaveButton({required this.ctrl, required this.context});
+  final bool selectionsConfirmed;
+
+  const _SaveButton({
+    required this.ctrl,
+    required this.context,
+    required this.selectionsConfirmed,
+  });
 
   @override
   Widget build(BuildContext ctx) {
-    final isDisabled = (ctrl.entryNeedsCustomLabel &&
+    final isDisabled = !selectionsConfirmed ||
+        (ctrl.entryNeedsCustomLabel &&
             ctrl.customLabelCtrl.text.trim().isEmpty) ||
         (ctrl.entryMode != PaymentMode.cash &&
             ctrl.selectedBankAccountId == null);

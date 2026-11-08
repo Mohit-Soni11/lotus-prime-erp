@@ -8,14 +8,14 @@ class DayBookPrimaryGrid extends StatelessWidget {
   const DayBookPrimaryGrid({
     super.key,
     required this.summary,
-    this.onAddCashIncome,
+    this.onAddIncome,
     this.onSetBalance,
     this.showBalanceAction = false,
     this.balanceSaved = false,
   });
 
   final DayBookSummary summary;
-  final VoidCallback? onAddCashIncome;
+  final VoidCallback? onAddIncome;
   final VoidCallback? onSetBalance;
   final bool showBalanceAction;
   final bool balanceSaved;
@@ -34,7 +34,7 @@ class DayBookPrimaryGrid extends StatelessWidget {
 
           final movement = DayBookMoneyPanel(
             flow: flow,
-            onAddCashIncome: onAddCashIncome,
+            onAddIncome: onAddIncome,
           );
           if (constraints.maxWidth < 1550) {
             return Column(

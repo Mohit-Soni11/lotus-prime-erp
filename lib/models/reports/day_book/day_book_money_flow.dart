@@ -10,6 +10,7 @@ class DayBookMoneyEntry {
     required this.paymentMode,
     required this.transactionId,
     this.accountName,
+    this.partyName,
     this.referenceId,
     this.referenceType,
     this.isInternalTransfer = false,
@@ -27,6 +28,7 @@ class DayBookMoneyEntry {
   final String paymentMode;
   final String transactionId;
   final String? accountName;
+  final String? partyName;
   final String? referenceId;
   final String? referenceType;
   final bool isInternalTransfer;

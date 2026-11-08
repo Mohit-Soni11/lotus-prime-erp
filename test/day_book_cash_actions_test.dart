@@ -9,7 +9,8 @@ import 'package:lotus_erp/models/reports/day_book/day_book_balance_verification.
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
-import 'package:lotus_erp/ui/report/day_book/day_book_cash_income_dialog.dart';
+import 'package:lotus_erp/repositories/reports/day_book_manual_income_repository.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_income_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_balance_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_balance_summary.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_primary_grid.dart';
@@ -79,27 +80,29 @@ void main() {
     expect(find.text('Verification Summary'), findsOneWidget);
     expect(find.text('₹4,610.00'), findsOneWidget);
     expect(find.text('Attention Needed'), findsOneWidget);
-    expect(find.text('Record Transfer'), findsOneWidget);
+    expect(find.text('Mismatch Transfer'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('cash income form saves only a valid extra receipt',
-      (tester) async {
+  testWidgets('income form saves a non-invoiced cash receipt', (tester) async {
     double? savedAmount;
     String? savedCategory;
+    PaymentMode? savedMode;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: DayBookCashIncomeDialog(
+        body: DayBookIncomeDialog(
           date: DateTime(2026, 11, 7),
+          bankAccounts: const [],
           onSave: ({
             required amount,
             required category,
-            required description,
+            required paymentMode,
+            bankAccountId,
             customLabel,
-            partyName,
           }) async {
             savedAmount = amount;
             savedCategory = category;
+            savedMode = paymentMode;
             return true;
           },
         ),
@@ -118,12 +121,106 @@ void main() {
 
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Amount'), '250.50');
-    await tester.enterText(
-        find.widgetWithText(TextFormField, 'Reason'), 'Other cash received');
+    expect(find.widgetWithText(TextFormField, 'Reason'), findsNothing);
+    await tester
+        .tap(find.byKey(const ValueKey('day-book-income-category-options')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Gold repair').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save Income'));
     await tester.pumpAndSettle();
     expect(savedAmount, 250.50);
-    expect(savedCategory, IncomeCategory.miscIncome.dbValue);
+    expect(savedCategory, IncomeCategory.goldRepairIncome.dbValue);
+    expect(savedMode, PaymentMode.cash);
+  });
+
+  testWidgets('Other category is typed in the category field', (tester) async {
+    String? savedCategory;
+    String? savedLabel;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: DayBookIncomeDialog(
+          date: DateTime(2026, 11, 8),
+          bankAccounts: const [],
+          onSave: ({
+            required amount,
+            required category,
+            required paymentMode,
+            bankAccountId,
+            customLabel,
+          }) async {
+            savedCategory = category;
+            savedLabel = customLabel;
+            return true;
+          },
+        ),
+      ),
+    ));
+    expect(find.text('Received from (optional)'), findsNothing);
+    expect(find.text('Category name'), findsNothing);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '750');
+    await tester
+        .tap(find.byKey(const ValueKey('day-book-income-category-options')));
+    await tester.pumpAndSettle();
+    expect(find.text('Counter sale (no invoice)'), findsNothing);
+    expect(find.text('Jewellery making'), findsNothing);
+    await tester.tap(find.text('Other · type your own'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('day-book-income-category')),
+        'Pearl restringing');
+    await tester.tap(find.text('Save Income'));
+    await tester.pumpAndSettle();
+    expect(savedCategory, IncomeCategory.otherIncome.dbValue);
+    expect(savedLabel, 'Pearl restringing');
+  });
+
+  testWidgets('bank income requires an account and uses bank mode',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    PaymentMode? savedMode;
+    int? savedAccount;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: DayBookIncomeDialog(
+          date: DateTime(2026, 11, 8),
+          bankAccounts: const [ManualIncomeBankAccount(7, 'Current Account')],
+          onSave: ({
+            required amount,
+            required category,
+            required paymentMode,
+            bankAccountId,
+            customLabel,
+          }) async {
+            savedMode = paymentMode;
+            savedAccount = bankAccountId;
+            return true;
+          },
+        ),
+      ),
+    ));
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '600');
+    await tester
+        .tap(find.byKey(const ValueKey('day-book-income-category-options')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Silver repair').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save Income'));
+    await tester.pump();
+    expect(find.text('Select a bank account.'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Current Account').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save Income'));
+    await tester.pumpAndSettle();
+    expect(savedMode, PaymentMode.bank);
+    expect(savedAccount, 7);
   });
 
   testWidgets('daily balance requires reasons and expense type for shortages',
@@ -187,6 +284,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Difference'), findsOneWidget);
     expect(find.text('Expense adjustment'), findsOneWidget);
+    expect(
+        tester
+            .widget<OutlinedButton>(
+                find.widgetWithText(OutlinedButton, 'Mismatch Transfer'))
+            .onPressed,
+        isNotNull);
     await tester.tap(find.text('Save & Verify'));
     await tester.pump();
     expect(find.text('Write a reason before saving.'), findsOneWidget);
@@ -249,10 +352,86 @@ void main() {
     expect(find.text('Review'), findsOneWidget);
     expect(find.text('Difference'), findsNothing);
     expect(find.text('Attention Needed'), findsOneWidget);
-    expect(find.text('Record Transfer'), findsOneWidget);
+    expect(find.text('Mismatch Transfer'), findsOneWidget);
+    final mismatch = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Mismatch Transfer'));
+    expect(mismatch.onPressed, isNull);
     final save = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'Save & Verify'));
     expect(save.onPressed, isNull);
+  });
+
+  testWidgets('mismatch action hands off only the net shortage',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    DayBookBalanceDialogResult? result;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return TextButton(
+            onPressed: () async {
+              result = await showDialog<DayBookBalanceDialogResult>(
+                context: context,
+                builder: (_) => DayBookBalanceDialog(
+                  date: DateTime(2026, 11, 7),
+                  expectedCash: 404610,
+                  expectedBank: 0,
+                  onSave: ({
+                    required actualCash,
+                    required actualBank,
+                    cashExpenseCategory,
+                    cashReason,
+                    bankReason,
+                  }) async =>
+                      throw UnimplementedError(),
+                ),
+              );
+            },
+            child: const Text('Open verification'),
+          );
+        }),
+      ),
+    ));
+    await tester.tap(find.text('Open verification'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('actual-cash')), '200000');
+    await tester.enterText(find.byKey(const ValueKey('actual-bank')), '200000');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mismatch Transfer'));
+    await tester.pumpAndSettle();
+    expect(result?.mismatchExpenseAmount, 4610);
+  });
+
+  testWidgets('matched opening does not show mismatch action', (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: DayBookBalanceDialog(
+          date: DateTime(2026, 11, 7),
+          expectedCash: 400,
+          expectedBank: 200,
+          onSave: ({
+            required actualCash,
+            required actualBank,
+            cashExpenseCategory,
+            cashReason,
+            bankReason,
+          }) async =>
+              throw UnimplementedError(),
+        ),
+      ),
+    ));
+    await tester.enterText(find.byKey(const ValueKey('actual-cash')), '400');
+    await tester.enterText(find.byKey(const ValueKey('actual-bank')), '200');
+    await tester.pump();
+    expect(find.text('Mismatch Transfer'), findsNothing);
+    expect(find.text('Verified'), findsOneWidget);
   });
 
   testWidgets('bank amount needs an account before verification',
@@ -307,14 +486,14 @@ void main() {
         body: SingleChildScrollView(
           child: DayBookPrimaryGrid(
             summary: summary,
-            onAddCashIncome: () => incomeTaps++,
+            onAddIncome: () => incomeTaps++,
             onSetBalance: () => balanceTaps++,
             showBalanceAction: true,
           ),
         ),
       ),
     ));
-    await tester.tap(find.text('Add Cash Income'));
+    await tester.tap(find.text('Add Income'));
     await tester.tap(find.text('Verify Opening'));
     expect(incomeTaps, 1);
     expect(balanceTaps, 1);
@@ -326,7 +505,7 @@ void main() {
         body: SingleChildScrollView(
           child: DayBookPrimaryGrid(
             summary: summary,
-            onAddCashIncome: () => incomeTaps++,
+            onAddIncome: () => incomeTaps++,
             onSetBalance: () => balanceTaps++,
             showBalanceAction: true,
           ),
@@ -334,7 +513,7 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Add Cash Income'), findsOneWidget);
+    expect(find.byTooltip('Add Income'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

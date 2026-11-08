@@ -134,7 +134,8 @@ class DayBookReceiptsRegister {
       received.add(DayBookReceivedRow(
         reference: number?.isNotEmpty == true ? number! : entry.transactionId,
         type: _receiptType(entry.category),
-        customerName: document?.partyName ?? activity?.partyName,
+        customerName:
+            document?.partyName ?? activity?.partyName ?? entry.partyName,
         phone: document?.mobile ?? activity?.mobile,
         totalValue: document?.amount ?? activity?.invoiceValue,
         amount: entry.amount,
@@ -158,6 +159,11 @@ class DayBookReceiptsRegister {
         'CHANGE_RECEIVED' => 'Change received',
         'REFUND_PAYABLE_RECEIVED' => 'Customer deposit',
         'INTEREST_RECEIVED' => 'Interest',
+        'COUNTER_SALE_INCOME' => 'Counter sale (no invoice)',
+        'GOLD_REPAIR_INCOME' => 'Gold repair',
+        'SILVER_REPAIR_INCOME' => 'Silver repair',
+        'JEWELLERY_MAKING_INCOME' => 'Jewellery making',
+        'OTHER_INCOME' => 'Other income',
         _ => category.replaceAll('_', ' '),
       };
 }

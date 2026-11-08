@@ -8,11 +8,11 @@ class DayBookMoneySummary extends StatelessWidget {
   const DayBookMoneySummary({
     super.key,
     required this.flow,
-    this.onAddCashIncome,
+    this.onAddIncome,
   });
 
   final DayBookMoneyFlow flow;
-  final VoidCallback? onAddCashIncome;
+  final VoidCallback? onAddIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -56,17 +56,17 @@ class DayBookMoneySummary extends StatelessWidget {
           Expanded(
               child: Text('Money Movement',
                   style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
-          if (onAddCashIncome != null)
+          if (onAddIncome != null)
             compact
                 ? IconButton(
-                    tooltip: 'Add Cash Income',
-                    onPressed: onAddCashIncome,
+                    tooltip: 'Add Income',
+                    onPressed: onAddIncome,
                     icon: const Icon(Icons.add_circle_outline_rounded),
                   )
                 : OutlinedButton.icon(
-                    onPressed: onAddCashIncome,
+                    onPressed: onAddIncome,
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add Cash Income'),
+                    label: const Text('Add Income'),
                   ),
         ]);
       }),

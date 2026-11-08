@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../constants/app_routes.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
-import 'day_book_cash_income_dialog.dart';
+import 'day_book_income_dialog.dart';
 import 'day_book_balance_dialog.dart';
 import 'day_book_top_section.dart';
 import 'day_book_document_summary_panel.dart';
@@ -51,22 +53,31 @@ class _DayBookScreenState extends State<DayBookScreen> {
     );
   }
 
-  Future<void> _addCashIncome() async {
-    final saved = await showDialog<bool>(
-      context: context,
-      barrierColor: DayBookColors.overlay,
-      builder: (_) => DayBookCashIncomeDialog(
-        date: _ctrl.selectedDate,
-        onSave: _ctrl.addManualCashIncome,
-      ),
-    );
-    if (saved == true) _showSuccess('Cash income saved in Day Book.');
+  Future<void> _addIncome() async {
+    try {
+      final bankAccounts = await _ctrl.loadIncomeBankAccounts();
+      if (!mounted) return;
+      final saved = await showDialog<bool>(
+        context: context,
+        barrierColor: DayBookColors.overlay,
+      builder: (_) => DayBookIncomeDialog(
+          date: _ctrl.selectedDate,
+          bankAccounts: bankAccounts,
+          onSave: _ctrl.addManualIncome,
+        ),
+      );
+      if (saved == true) _showSuccess('Income saved in Day Book.');
+    } catch (error, stackTrace) {
+      AppLogger.debug(
+          'Income bank accounts could not be loaded: $error\n$stackTrace');
+      _showNotice('Bank accounts could not be loaded. Try again.');
+    }
   }
 
   Future<void> _setBalance() async {
     final flow = _ctrl.summary?.moneyFlow;
     if (flow == null) return;
-    final saved = await showDialog<bool>(
+    final result = await showDialog<DayBookBalanceDialogResult>(
       context: context,
       barrierColor: DayBookColors.overlay,
       builder: (_) => DayBookBalanceDialog(
@@ -78,7 +89,13 @@ class _DayBookScreenState extends State<DayBookScreen> {
         onSave: _ctrl.verifyBalance,
       ),
     );
-    if (saved == true) _showSuccess('Daily balance verification saved.');
+    if (!mounted || result == null) return;
+    final amount = result.mismatchExpenseAmount;
+    if (amount != null) {
+      context.push(RoutePaths.financeExpense, extra: amount);
+      return;
+    }
+    _showSuccess('Daily balance verification saved.');
   }
 
   Future<void> _previewPdf() async {
@@ -195,7 +212,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
             const SizedBox(height: 16),
             DayBookPrimaryGrid(
               summary: summary,
-              onAddCashIncome: summary.isDayLocked ? null : _addCashIncome,
+              onAddIncome: summary.isDayLocked ? null : _addIncome,
               showBalanceAction:
                   _ctrl.isToday || _ctrl.balanceVerification != null,
               balanceSaved: _ctrl.balanceVerification != null,

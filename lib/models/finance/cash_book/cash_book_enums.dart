@@ -33,6 +33,10 @@ enum IncomeCategory {
   girviReturn('GIRVI_RETURN', 'Girvi Released'), // ✅ v2
   loanReceived('LOAN_RECEIVED', 'Loan Received'),
   interestReceived('INTEREST_RECEIVED', 'Interest Received'),
+  counterSaleIncome('COUNTER_SALE_INCOME', 'Counter sale (no invoice)'),
+  goldRepairIncome('GOLD_REPAIR_INCOME', 'Gold repair'),
+  silverRepairIncome('SILVER_REPAIR_INCOME', 'Silver repair'),
+  jewelleryMakingIncome('JEWELLERY_MAKING_INCOME', 'Jewellery making'),
   miscIncome('MISC_INCOME', 'Misc. Income'),
   otherIncome('OTHER_INCOME', 'Other'); // ✅ v2
 
@@ -42,6 +46,11 @@ enum IncomeCategory {
 
   /// Whether this category requires a custom label from the user
   bool get requiresCustomLabel => this == IncomeCategory.otherIncome;
+
+  bool get isManualDayBookIncome => switch (this) {
+        goldRepairIncome || silverRepairIncome || otherIncome => true,
+        _ => false,
+      };
 
   static IncomeCategory fromDb(String value) =>
       IncomeCategory.values.firstWhere(
