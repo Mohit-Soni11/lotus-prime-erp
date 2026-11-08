@@ -359,7 +359,7 @@ class DayBookController extends ChangeNotifier {
   double get systemCashAmount => _summary?.closingCash ?? 0.0;
   double get physicalCashAmount => denomination.physicalTotal;
   double get cashDifference => physicalCashAmount - systemCashAmount;
-  bool get isCashMatched => cashDifference.abs() < 1.0;
+  bool get isCashMatched => _summary != null && cashDifference.abs() < 0.01;
   bool get isMetalPositionVerified => _summary?.metalPositionVerified == true;
   bool get isCustodyPositionVerified =>
       _summary?.custodyPosition?.closingVerified == true;
@@ -384,8 +384,18 @@ class DayBookController extends ChangeNotifier {
   // CLOSE DAY & LOCK LEDGER
   // Persists the close in the finance ledger database.
   // ==========================================================================
-  Future<bool> closeDay() async {
+  Future<bool> closeDay({required double physicalBank}) async {
     closeError = null;
+    final expectedBank = _summary?.moneyFlow?.closingBank;
+    if (expectedBank == null) {
+      closeError = 'Refresh the Day Book before closing the day.';
+      return false;
+    }
+    if (!physicalBank.isFinite || (physicalBank - expectedBank).abs() >= 0.01) {
+      closeError =
+          'The bank balance does not match the recorded closing balance.';
+      return false;
+    }
     if (_balanceVerification == null) {
       closeError =
           'Verify today’s opening cash and bank before closing the day.';
@@ -411,6 +421,7 @@ class DayBookController extends ChangeNotifier {
       final closed = await _closures.closeDay(
         _selectedDate,
         closingCash: physicalCashAmount,
+        physicalBank: physicalBank,
         closedBy: actorId,
         denominationCount: {
           '500': denomination.note500,
@@ -424,7 +435,7 @@ class DayBookController extends ChangeNotifier {
       );
       if (!closed) {
         closeError =
-            'Cash changed after the count. Refresh and recount before closing.';
+            'Cash or bank changed after the count. Refresh and recount before closing.';
         return false;
       }
       await loadData(silent: true);

@@ -26,6 +26,7 @@ class FinanceDayCloseSnapshotBuilder {
   Future<FinanceDayCloseSnapshot> build(
     DateTime day, {
     required double physicalCash,
+    double? physicalBank,
     Map<String, num>? denominationCount,
   }) async {
     final start = DateTime(day.year, day.month, day.day);
@@ -58,6 +59,11 @@ class FinanceDayCloseSnapshotBuilder {
     final money = await moneyRepo.fetch(start, openingCash);
     if ((money.closingCash - physicalCash).abs() >= 0.01) {
       throw StateError('Cash balance changed during day closing.');
+    }
+    if (physicalBank != null &&
+        (!physicalBank.isFinite ||
+            (money.closingBank - physicalBank).abs() >= 0.01)) {
+      throw StateError('Bank balance changed during day closing.');
     }
 
     final movements = await DayBookStockMovementRepository(db).fetch(start);
@@ -154,6 +160,7 @@ class FinanceDayCloseSnapshotBuilder {
           '${start.month.toString().padLeft(2, '0')}-'
           '${start.day.toString().padLeft(2, '0')}',
       'physicalCash': physicalCash,
+      if (physicalBank != null) 'physicalBank': physicalBank,
       'denominations': denominationCount,
       'money': {
         'openingCash': money.openingCash,

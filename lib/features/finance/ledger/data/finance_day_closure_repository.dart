@@ -22,9 +22,13 @@ class FinanceDayClosureRepository {
 
   Future<bool> closeDay(DateTime date,
       {required double closingCash,
+      double? physicalBank,
       required String closedBy,
       Map<String, num>? denominationCount}) async {
-    if (!closingCash.isFinite || closingCash < 0 || closedBy.trim().isEmpty) {
+    if (!closingCash.isFinite ||
+        closingCash < 0 ||
+        (physicalBank != null && !physicalBank.isFinite) ||
+        closedBy.trim().isEmpty) {
       return false;
     }
     return _db.transaction(() async {
@@ -35,6 +39,7 @@ class FinanceDayClosureRepository {
       final snapshot = await FinanceDayCloseSnapshotBuilder(_db).build(
         date,
         physicalCash: closingCash,
+        physicalBank: physicalBank,
         denominationCount: denominationCount,
       );
       final (start, end) = _bounds(date);

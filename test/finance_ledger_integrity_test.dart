@@ -265,7 +265,10 @@ void main() {
     final closure = FinanceDayClosureRepository(db);
     expect(
       await closure.closeDay(date,
-          closingCash: 100, closedBy: 'owner-1', denominationCount: {'50': 2}),
+          closingCash: 100,
+          physicalBank: 250,
+          closedBy: 'owner-1',
+          denominationCount: {'50': 2}),
       isTrue,
     );
     final snapshot = (await closure.fetchSnapshot(date))!;
@@ -274,6 +277,7 @@ void main() {
     expect(money['closingCash'], 100);
     expect(money['closingBank'], 250);
     expect(money['closingTotal'], 350);
+    expect(payload['physicalBank'], 250);
     expect(payload['ownedMetal'], isA<Map<String, dynamic>>());
     expect(snapshot.sourceHash, hasLength(64));
     expect(await closure.closeDay(date, closingCash: 100, closedBy: 'owner-1'),
@@ -311,6 +315,34 @@ void main() {
       throwsStateError,
     );
     expect(await closure.isClosed(date), isFalse);
+  });
+
+  test('bank closing mismatch cannot lock cash or bank ledgers', () async {
+    final date = DateTime(2026, 6, 27, 12);
+    final bankId = await _bankAccount(db);
+    await (db.update(db.bankAccounts)..where((row) => row.id.equals(bankId)))
+        .write(BankAccountsCompanion(
+      activeSince: drift.Value(DateTime(2026, 6, 26)),
+    ));
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'B-MISMATCH',
+            accountId: bankId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(250),
+            paymentMode: const drift.Value('UPI'),
+          ),
+        );
+    final closure = FinanceDayClosureRepository(db);
+    await expectLater(
+      closure.closeDay(date,
+          closingCash: 0, physicalBank: 200, closedBy: 'owner-1'),
+      throwsStateError,
+    );
+    expect(await closure.isClosed(date), isFalse);
+    expect(await closure.fetchSnapshot(date), isNull);
   });
 
   test('day closing rejects a stale or incorrect physical cash amount',
