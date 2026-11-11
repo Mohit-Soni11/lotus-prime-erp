@@ -16,17 +16,20 @@ import 'package:intl/intl.dart';
 
 import '../../../logic/finance/expense/expense_controller.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
+import '../../../models/finance/expense/expense_draft.dart';
 import '../../../theme/finance/expense/expense_theme.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ExpenseEntryDialog extends StatefulWidget {
   final ExpenseController ctrl;
   final double? initialAmount;
+  final ExpenseDraft? initialDraft;
 
   const ExpenseEntryDialog({
     super.key,
     required this.ctrl,
     this.initialAmount,
+    this.initialDraft,
   });
 
   @override
@@ -45,12 +48,16 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
   void initState() {
     super.initState();
     widget.ctrl.resetEntryForm();
-    final amount = widget.initialAmount;
+    final amount = widget.initialDraft?.amount ?? widget.initialAmount;
     final isDraft = amount != null && amount.isFinite && amount > 0;
     _categoryConfirmed = !isDraft;
-    _modeConfirmed = !isDraft;
+    _modeConfirmed = !isDraft || widget.initialDraft != null;
     if (isDraft) {
       widget.ctrl.amountCtrl.text = amount.toStringAsFixed(2);
+    }
+    if (widget.initialDraft case final draft?) {
+      widget.ctrl.setEntryMode(draft.paymentMode);
+      widget.ctrl.setEntryDate(draft.date);
     }
     widget.ctrl.refreshBankAccounts();
 

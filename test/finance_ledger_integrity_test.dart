@@ -10,6 +10,7 @@ import 'package:lotus_erp/repositories/finance/bank_book_repository.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
 import 'package:lotus_erp/repositories/finance/expense_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_expense_classification.dart';
 
 void main() {
@@ -51,6 +52,44 @@ void main() {
       to: DateTime(2026, 6, 25, 23, 59, 59),
     );
     expect(visible.map((entry) => entry.txnId), ['C-3']);
+  });
+
+  test('a day without transactions closes with carried cash and bank balances',
+      () async {
+    await db.into(db.shopProfiles).insert(const ShopProfilesCompanion(
+          openingCashBalance: drift.Value(500),
+        ));
+    await db.into(db.bankAccounts).insert(BankAccountsCompanion.insert(
+          accountName: 'Current Account',
+          bankName: 'HDFC Bank',
+          accountNumber: '111122223333',
+          openingBalance: const drift.Value(200),
+          activeSince: drift.Value(DateTime(2026, 6, 24)),
+        ));
+
+    final day = DateTime(2026, 6, 25);
+    final moneyRepo = DayBookMoneyRepository(db);
+    final openingCash = await moneyRepo.fetchOpeningCash(day);
+    final flow = await moneyRepo.fetch(day, openingCash);
+    expect(flow.openingCash, 500);
+    expect(flow.openingBank, 200);
+    expect(flow.closingCash, 500);
+    expect(flow.closingBank, 200);
+
+    final closure = FinanceDayClosureRepository(db);
+    expect(
+      await closure.closeDay(day,
+          closingCash: 500,
+          physicalBank: 200,
+          closedBy: 'owner-1',
+          denominationCount: {'500': 1}),
+      isTrue,
+    );
+    final nextDay = DateTime(2026, 6, 26);
+    final nextOpeningCash = await moneyRepo.fetchOpeningCash(nextDay);
+    final nextFlow = await moneyRepo.fetch(nextDay, nextOpeningCash);
+    expect(nextFlow.openingCash, 500);
+    expect(nextFlow.openingBank, 200);
   });
 
   test('bill reconciliation posts only actual cash and is idempotent',
@@ -343,6 +382,42 @@ void main() {
     );
     expect(await closure.isClosed(date), isFalse);
     expect(await closure.fetchSnapshot(date), isNull);
+  });
+
+  test('verified opening and day movements are saved as close evidence',
+      () async {
+    final date = DateTime(2026, 6, 28, 12);
+    final closure = FinanceDayClosureRepository(db);
+    await expectLater(
+      closure.closeDay(date,
+          closingCash: 0,
+          physicalBank: 0,
+          closedBy: 'owner-1',
+          requireVerifiedOpening: true),
+      throwsStateError,
+    );
+    await DayBookBalanceVerificationRepository(db).verify(
+      date: date,
+      expectedCash: 0,
+      actualCash: 0,
+      expectedBank: 0,
+      actualBank: 0,
+    );
+    await _cashRow(db, 'C-VERIFIED-CLOSE', date, 'INCOME', 100);
+    expect(
+      await closure.closeDay(date,
+          closingCash: 100,
+          physicalBank: 0,
+          closedBy: 'owner-1',
+          requireVerifiedOpening: true),
+      isTrue,
+    );
+    final snapshot = jsonDecode((await closure.fetchSnapshot(date))!.json)
+        as Map<String, dynamic>;
+    final opening = snapshot['verifiedOpening'] as Map<String, dynamic>;
+    expect(opening['actualCash'], 0);
+    expect(opening['closingCash'], 100);
+    expect(opening['closingBank'], 0);
   });
 
   test('day closing rejects a stale or incorrect physical cash amount',

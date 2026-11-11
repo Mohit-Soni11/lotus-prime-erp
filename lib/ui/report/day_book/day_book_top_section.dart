@@ -10,7 +10,10 @@ class DayBookTopSection extends StatelessWidget {
     super.key,
     required this.ctrl,
     required this.summary,
-    required this.onReconcile,
+    required this.onDayClosing,
+    required this.onAddIncome,
+    required this.onBalanceVerification,
+    required this.balanceSaved,
     required this.onViewPdf,
     required this.onExportCsv,
     required this.onSharePdf,
@@ -18,7 +21,10 @@ class DayBookTopSection extends StatelessWidget {
 
   final DayBookController ctrl;
   final DayBookSummary summary;
-  final VoidCallback onReconcile;
+  final VoidCallback onDayClosing;
+  final VoidCallback? onAddIncome;
+  final VoidCallback? onBalanceVerification;
+  final bool balanceSaved;
   final VoidCallback? onViewPdf;
   final VoidCallback? onExportCsv;
   final VoidCallback? onSharePdf;
@@ -30,7 +36,10 @@ class DayBookTopSection extends StatelessWidget {
           DayBookWorkspaceHeader(
             ctrl: ctrl,
             summary: summary,
-            onReconcile: onReconcile,
+            onDayClosing: onDayClosing,
+            onAddIncome: onAddIncome,
+            onBalanceVerification: onBalanceVerification,
+            balanceSaved: balanceSaved,
             onViewPdf: onViewPdf,
             onExportCsv: onExportCsv,
             onSharePdf: onSharePdf,

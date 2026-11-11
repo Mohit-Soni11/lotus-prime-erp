@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/reports/day_book/day_book_balance_verification.dart';
+import '../../../models/reports/day_book/day_book_expense_record.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_balance_attention.dart';
 import 'day_book_balance_difference_fields.dart';
+import 'day_book_balance_expense_summary.dart';
 import 'day_book_balance_sections.dart';
 import 'day_book_balance_summary.dart';
 import 'day_book_form_visuals.dart';
@@ -33,6 +35,7 @@ class DayBookBalanceDialog extends StatefulWidget {
     required this.expectedBank,
     required this.onSave,
     this.existing,
+    this.expenseRecords = const [],
     this.bankAccountConfigured = true,
   });
 
@@ -40,6 +43,7 @@ class DayBookBalanceDialog extends StatefulWidget {
   final double expectedCash;
   final double expectedBank;
   final DayBookBalanceVerification? existing;
+  final List<DayBookExpenseRecord> expenseRecords;
   final SaveDayBookBalance onSave;
   final bool bankAccountConfigured;
 
@@ -199,6 +203,9 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
                         actualCash: actualCash,
                         actualBank: actualBank,
                       ),
+                      const SizedBox(height: 10),
+                      DayBookBalanceExpenseSummary(
+                          records: widget.expenseRecords),
                       if (allocationConflict) ...[
                         const SizedBox(height: 10),
                         DayBookBalanceAttention(
@@ -293,8 +300,7 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
             ),
             IconButton(
               tooltip: 'Close',
-              onPressed:
-                  _saving ? null : () => Navigator.of(context).pop(false),
+              onPressed: _saving ? null : () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close_rounded, size: 20),
               style: IconButton.styleFrom(
                 backgroundColor: DayBookColors.bodySubtle,
@@ -322,8 +328,7 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
             runSpacing: 8,
             children: [
               OutlinedButton(
-                onPressed:
-                    _saving ? null : () => Navigator.of(context).pop(false),
+                onPressed: _saving ? null : () => Navigator.of(context).pop(),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(0, 42),
                   padding: const EdgeInsets.symmetric(horizontal: 19),

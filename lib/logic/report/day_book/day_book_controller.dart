@@ -249,6 +249,7 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   void goToPreviousDay() {
     _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+    resetDenomination();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
@@ -257,6 +258,7 @@ class DayBookController extends ChangeNotifier {
   void goToNextDay() {
     if (!canGoNext) return;
     _selectedDate = _selectedDate.add(const Duration(days: 1));
+    resetDenomination();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
@@ -264,6 +266,7 @@ class DayBookController extends ChangeNotifier {
 
   void goToToday() {
     _selectedDate = DateTime.now();
+    resetDenomination();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
@@ -287,6 +290,7 @@ class DayBookController extends ChangeNotifier {
     );
     if (picked != null) {
       _selectedDate = picked;
+      resetDenomination();
       _watchSub?.cancel();
       _startWatcher();
       loadData();
@@ -356,10 +360,11 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   // EOD HELPERS
   // ==========================================================================
-  double get systemCashAmount => _summary?.closingCash ?? 0.0;
+  double get systemCashAmount => _summary?.moneyFlow?.closingCash ?? 0.0;
   double get physicalCashAmount => denomination.physicalTotal;
   double get cashDifference => physicalCashAmount - systemCashAmount;
-  bool get isCashMatched => _summary != null && cashDifference.abs() < 0.01;
+  bool get isCashMatched =>
+      _summary?.moneyFlow != null && cashDifference.abs() < 0.01;
   bool get isMetalPositionVerified => _summary?.metalPositionVerified == true;
   bool get isCustodyPositionVerified =>
       _summary?.custodyPosition?.closingVerified == true;
@@ -386,19 +391,16 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   Future<bool> closeDay({required double physicalBank}) async {
     closeError = null;
-    final expectedBank = _summary?.moneyFlow?.closingBank;
-    if (expectedBank == null) {
-      closeError = 'Refresh the Day Book before closing the day.';
+    final money = _summary?.moneyFlow;
+    if (money == null) {
+      closeError =
+          'Day Book closing balances are unavailable. Refresh and retry.';
       return false;
     }
-    if (!physicalBank.isFinite || (physicalBank - expectedBank).abs() >= 0.01) {
+    if (!physicalBank.isFinite ||
+        (physicalBank - money.closingBank).abs() >= 0.01) {
       closeError =
           'The bank balance does not match the recorded closing balance.';
-      return false;
-    }
-    if (_balanceVerification == null) {
-      closeError =
-          'Verify today’s opening cash and bank before closing the day.';
       return false;
     }
     if (!isMetalPositionVerified) {

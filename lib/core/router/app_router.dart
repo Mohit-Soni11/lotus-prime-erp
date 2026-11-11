@@ -60,6 +60,7 @@ import '../../ui/finance/due_collection_entry/due_collection_entry_screen.dart';
 import '../../ui/finance/due_report/due_report_screen.dart';
 import '../../ui/finance/due_receipt_history/due_receipt_history_screen.dart';
 import '../../ui/finance/expense/expense_screen.dart';
+import '../../models/finance/expense/expense_draft.dart';
 
 import '../../ui/girvi/new_girvi/new_girvi_screen.dart';
 import '../../ui/girvi/girvi_account/girvi_account_detail_screen.dart';
@@ -651,6 +652,9 @@ GoRouter createAppRouter() {
               initialReference: state.uri.queryParameters['reference'],
               initialDraftAmount:
                   state.extra is double ? state.extra as double : null,
+              initialDraft: state.extra is ExpenseDraft
+                  ? state.extra as ExpenseDraft
+                  : null,
             ),
           ),
           GoRoute(

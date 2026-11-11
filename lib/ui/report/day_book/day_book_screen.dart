@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../constants/app_routes.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
+import '../../../models/finance/expense/expense_draft.dart';
 import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
@@ -45,12 +46,15 @@ class _DayBookScreenState extends State<DayBookScreen> {
     super.dispose();
   }
 
-  void _showReconciliation() {
-    showDialog<void>(
+  Future<void> _showDayClosing() async {
+    final draft = await showDialog<ExpenseDraft>(
       context: context,
       barrierColor: DayBookColors.overlay,
       builder: (context) => DayBookEodDialog(ctrl: _ctrl),
     );
+    if (!mounted || draft == null) return;
+    await context.push(RoutePaths.financeExpense, extra: draft);
+    if (mounted) await _ctrl.loadData(silent: true);
   }
 
   Future<void> _addIncome() async {
@@ -60,7 +64,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
       final saved = await showDialog<bool>(
         context: context,
         barrierColor: DayBookColors.overlay,
-      builder: (_) => DayBookIncomeDialog(
+        builder: (_) => DayBookIncomeDialog(
           date: _ctrl.selectedDate,
           bankAccounts: bankAccounts,
           onSave: _ctrl.addManualIncome,
@@ -84,6 +88,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
         date: _ctrl.selectedDate,
         expectedCash: flow.openingCash,
         expectedBank: flow.openingBank,
+        expenseRecords: _ctrl.summary?.expenseRecords ?? const [],
         bankAccountConfigured: flow.bankAccountCount != 0,
         existing: _ctrl.balanceVerification,
         onSave: _ctrl.verifyBalance,
@@ -204,23 +209,19 @@ class _DayBookScreenState extends State<DayBookScreen> {
             DayBookTopSection(
               ctrl: _ctrl,
               summary: summary,
-              onReconcile: _showReconciliation,
+              onDayClosing: _showDayClosing,
+              onAddIncome: summary.isDayLocked ? null : _addIncome,
+              onBalanceVerification: (_ctrl.isToday && !summary.isDayLocked) ||
+                      _ctrl.balanceVerification != null
+                  ? _setBalance
+                  : null,
+              balanceSaved: _ctrl.balanceVerification != null,
               onViewPdf: _exporting ? null : _previewPdf,
               onExportCsv: _exporting ? null : _exportCsv,
               onSharePdf: _exporting ? null : _sharePdf,
             ),
             const SizedBox(height: 16),
-            DayBookPrimaryGrid(
-              summary: summary,
-              onAddIncome: summary.isDayLocked ? null : _addIncome,
-              showBalanceAction:
-                  _ctrl.isToday || _ctrl.balanceVerification != null,
-              balanceSaved: _ctrl.balanceVerification != null,
-              onSetBalance: (_ctrl.isToday && !summary.isDayLocked) ||
-                      _ctrl.balanceVerification != null
-                  ? _setBalance
-                  : null,
-            ),
+            DayBookPrimaryGrid(summary: summary),
             const SizedBox(height: 16),
             if (summary.anomalies.isNotEmpty) ...[
               _Reveal(

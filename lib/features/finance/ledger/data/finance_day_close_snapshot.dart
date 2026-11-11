@@ -4,10 +4,12 @@ import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/repositories/reports/day_book_custody_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_document_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_owned_stock_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_stock_movement_repository.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_verified_closing.dart';
 
 class FinanceDayCloseSnapshot {
   const FinanceDayCloseSnapshot(this.json, this.sourceHash);
@@ -27,6 +29,7 @@ class FinanceDayCloseSnapshotBuilder {
     DateTime day, {
     required double physicalCash,
     double? physicalBank,
+    bool requireVerifiedOpening = false,
     Map<String, num>? denominationCount,
   }) async {
     final start = DateTime(day.year, day.month, day.day);
@@ -57,6 +60,24 @@ class FinanceDayCloseSnapshotBuilder {
     final moneyRepo = DayBookMoneyRepository(db);
     final openingCash = await moneyRepo.fetchOpeningCash(start);
     final money = await moneyRepo.fetch(start, openingCash);
+    final openingVerification = requireVerifiedOpening
+        ? await DayBookBalanceVerificationRepository(db).fetch(start)
+        : null;
+    final verifiedClosing = openingVerification == null
+        ? null
+        : DayBookVerifiedClosing(
+            opening: openingVerification,
+            money: money,
+          );
+    if (requireVerifiedOpening &&
+        (verifiedClosing == null ||
+            !verifiedClosing.matchesLedger ||
+            physicalBank == null ||
+            (verifiedClosing.closingCash - physicalCash).abs() >= 0.01 ||
+            (verifiedClosing.closingBank - physicalBank).abs() >= 0.01)) {
+      throw StateError(
+          'Verified opening and posted activity do not match the counted closing.');
+    }
     if ((money.closingCash - physicalCash).abs() >= 0.01) {
       throw StateError('Cash balance changed during day closing.');
     }
@@ -100,6 +121,15 @@ class FinanceDayCloseSnapshotBuilder {
     ]..sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));
 
     final sourceEvidence = {
+      if (openingVerification != null)
+        'openingVerification': [
+          openingVerification.verifiedAt.toIso8601String(),
+          openingVerification.expectedCash,
+          openingVerification.actualCash,
+          openingVerification.expectedBank,
+          openingVerification.actualBank,
+          openingVerification.cashAdjustmentTransactionId,
+        ],
       'openingCash': money.openingCash,
       'openingBank': money.openingBank,
       'bankAccounts': bankPositions,
@@ -161,6 +191,16 @@ class FinanceDayCloseSnapshotBuilder {
           '${start.day.toString().padLeft(2, '0')}',
       'physicalCash': physicalCash,
       if (physicalBank != null) 'physicalBank': physicalBank,
+      if (openingVerification != null)
+        'verifiedOpening': {
+          'verifiedAt': openingVerification.verifiedAt.toIso8601String(),
+          'expectedCash': openingVerification.expectedCash,
+          'actualCash': openingVerification.actualCash,
+          'expectedBank': openingVerification.expectedBank,
+          'actualBank': openingVerification.actualBank,
+          'closingCash': verifiedClosing!.closingCash,
+          'closingBank': verifiedClosing.closingBank,
+        },
       'denominations': denominationCount,
       'money': {
         'openingCash': money.openingCash,

@@ -8,34 +8,18 @@ class DayBookPrimaryGrid extends StatelessWidget {
   const DayBookPrimaryGrid({
     super.key,
     required this.summary,
-    this.onAddIncome,
-    this.onSetBalance,
-    this.showBalanceAction = false,
-    this.balanceSaved = false,
   });
 
   final DayBookSummary summary;
-  final VoidCallback? onAddIncome;
-  final VoidCallback? onSetBalance;
-  final bool showBalanceAction;
-  final bool balanceSaved;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final position = DayBookPositionPanels(
-            summary: summary,
-            onSetBalance: onSetBalance,
-            showBalanceAction: showBalanceAction,
-            balanceSaved: balanceSaved,
-          );
+          final position = DayBookPositionPanels(summary: summary);
           final flow = summary.moneyFlow;
           if (flow == null) return position;
 
-          final movement = DayBookMoneyPanel(
-            flow: flow,
-            onAddIncome: onAddIncome,
-          );
+          final movement = DayBookMoneyPanel(flow: flow);
           if (constraints.maxWidth < 1550) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

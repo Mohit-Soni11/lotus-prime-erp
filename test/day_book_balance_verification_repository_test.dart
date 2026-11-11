@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_repository.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_expense_repository.dart';
@@ -83,16 +84,28 @@ void main() {
     expect(cashRows, hasLength(2));
     expect(cashRows.map((row) => row.amount), containsAll([10, 5]));
     expect(cashRows.every((row) => row.type == 'EXPENSE'), isTrue);
-    expect(cashRows.every((row) =>
-        row.category == ExpenseCategory.miscExpense.dbValue), isTrue);
-    expect(cashRows.every((row) =>
-        row.referenceType == 'DAY_BOOK_BALANCE'), isTrue);
+    expect(
+        cashRows.every(
+            (row) => row.category == ExpenseCategory.miscExpense.dbValue),
+        isTrue);
+    expect(cashRows.every((row) => row.referenceType == 'DAY_BOOK_BALANCE'),
+        isTrue);
     expect(cashRows.first.txnId, saved.cashAdjustmentTransactionId);
     expect((await DayBookExpenseRepository(db).fetch(date)), hasLength(2));
     final flow = await DayBookMoneyRepository(db).fetch(date, 100);
     expect(flow.closingCash, 90);
     expect(flow.closingBank, 45);
     expect((await db.select(db.bankTransactions).get()).single.amount, 5);
+    expect(
+      await FinanceDayClosureRepository(db).closeDay(
+        date,
+        closingCash: 90,
+        physicalBank: 45,
+        closedBy: 'tester',
+        requireVerifiedOpening: true,
+      ),
+      isTrue,
+    );
   });
 
   test('personal cash shortage is linked to Expense Entry as owner drawing',
@@ -145,10 +158,12 @@ void main() {
     final flow = await DayBookMoneyRepository(db).fetch(date, 100);
     expect(flow.closingCash, 100);
     expect(flow.closingBank, 45);
-    expect((await ExpenseRepository(db: db).fetchExpenses(
-      from: date,
-      to: DateTime(2026, 11, 7, 23, 59, 59),
-    )), hasLength(1));
+    expect(
+        (await ExpenseRepository(db: db).fetchExpenses(
+          from: date,
+          to: DateTime(2026, 11, 7, 23, 59, 59),
+        )),
+        hasLength(1));
   });
 
   test('cash surplus posts income and stale expected balance is rejected',

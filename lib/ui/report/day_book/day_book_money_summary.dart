@@ -8,11 +8,9 @@ class DayBookMoneySummary extends StatelessWidget {
   const DayBookMoneySummary({
     super.key,
     required this.flow,
-    this.onAddIncome,
   });
 
   final DayBookMoneyFlow flow;
-  final VoidCallback? onAddIncome;
 
   @override
   Widget build(BuildContext context) {
@@ -47,29 +45,14 @@ class DayBookMoneySummary extends StatelessWidget {
           DayBookColors.warningBorder),
     ];
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      LayoutBuilder(builder: (context, constraints) {
-        final compact = constraints.maxWidth < 500;
-        return Row(children: [
-          const Icon(DayBookIcons.netMovement,
-              size: 24, color: DayBookColors.goldMetal),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Text('Money Movement',
-                  style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
-          if (onAddIncome != null)
-            compact
-                ? IconButton(
-                    tooltip: 'Add Income',
-                    onPressed: onAddIncome,
-                    icon: const Icon(Icons.add_circle_outline_rounded),
-                  )
-                : OutlinedButton.icon(
-                    onPressed: onAddIncome,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add Income'),
-                  ),
-        ]);
-      }),
+      Row(children: [
+        const Icon(DayBookIcons.netMovement,
+            size: 24, color: DayBookColors.goldMetal),
+        const SizedBox(width: 10),
+        Expanded(
+            child: Text('Money Movement',
+                style: DayBookStyles.sectionTitle.copyWith(fontSize: 19))),
+      ]),
       const SizedBox(height: 13),
       LayoutBuilder(builder: (context, constraints) {
         final columns = constraints.maxWidth >= 900

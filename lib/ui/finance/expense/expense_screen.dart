@@ -34,12 +34,14 @@ import 'expense_app_bar.dart';
 import 'expense_left_panel.dart';
 import 'expense_list.dart';
 import 'expense_entry_dialog.dart';
+import '../../../models/finance/expense/expense_draft.dart';
 
 class ExpenseScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final DateTime? initialDate;
   final String? initialReference;
   final double? initialDraftAmount;
+  final ExpenseDraft? initialDraft;
 
   const ExpenseScreen({
     super.key,
@@ -47,6 +49,7 @@ class ExpenseScreen extends StatefulWidget {
     this.initialDate,
     this.initialReference,
     this.initialDraftAmount,
+    this.initialDraft,
   });
 
   @override
@@ -60,13 +63,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
   void initState() {
     super.initState();
     _ctrl = ExpenseController(
-      initialDate: widget.initialDate,
+      initialDate: widget.initialDraft?.date ?? widget.initialDate,
       initialReference: widget.initialReference,
     );
-    final amount = widget.initialDraftAmount;
+    final amount = widget.initialDraft?.amount ?? widget.initialDraftAmount;
     if (amount != null && amount.isFinite && amount > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showAddExpenseDialog(initialAmount: amount);
+        if (mounted) {
+          _showAddExpenseDialog(
+            initialAmount: amount,
+            initialDraft: widget.initialDraft,
+          );
+        }
       });
     }
   }
@@ -79,7 +87,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
   // â”€â”€ Show Add Expense Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  void _showAddExpenseDialog({double? initialAmount}) {
+  void _showAddExpenseDialog({
+    double? initialAmount,
+    ExpenseDraft? initialDraft,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -87,6 +98,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       builder: (_) => ExpenseEntryDialog(
         ctrl: _ctrl,
         initialAmount: initialAmount,
+        initialDraft: initialDraft,
       ),
     );
   }

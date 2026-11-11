@@ -6,6 +6,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_schema.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_balance_verification.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_expense_record.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
@@ -61,6 +62,20 @@ void main() {
           date: DateTime(2026, 11, 7),
           expectedCash: 404610,
           expectedBank: 0,
+          expenseRecords: const [
+            DayBookExpenseRecord(
+              reference: 'EXP-1',
+              category: 'Shop Rent',
+              amount: 750,
+              paymentMode: 'CASH',
+            ),
+            DayBookExpenseRecord(
+              reference: 'EXP-2',
+              category: 'Personal',
+              amount: 250,
+              paymentMode: 'UPI',
+            ),
+          ],
           onSave: ({
             required actualCash,
             required actualBank,
@@ -78,6 +93,8 @@ void main() {
     expect(find.text('Previous Day Closing · 6 Nov 2026'), findsOneWidget);
     expect(find.text('Today’s Opening Count · 7 Nov 2026'), findsOneWidget);
     expect(find.text('Verification Summary'), findsOneWidget);
+    expect(find.text("Today's Expenses Paid"), findsOneWidget);
+    expect(find.text('₹1,000.00'), findsOneWidget);
     expect(find.text('₹4,610.00'), findsOneWidget);
     expect(find.text('Attention Needed'), findsOneWidget);
     expect(find.text('Mismatch Transfer'), findsOneWidget);
@@ -465,14 +482,12 @@ void main() {
     expect(find.text('Add a bank account first.'), findsOneWidget);
   });
 
-  testWidgets('Day Book actions sit beside the related sections',
+  testWidgets('Day Book money and position cards have no header actions',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    var incomeTaps = 0;
-    var balanceTaps = 0;
     final summary = DayBookSummary(
       date: DateTime(2026, 11, 7),
       moneyFlow: DayBookMoneyFlow(
@@ -486,17 +501,12 @@ void main() {
         body: SingleChildScrollView(
           child: DayBookPrimaryGrid(
             summary: summary,
-            onAddIncome: () => incomeTaps++,
-            onSetBalance: () => balanceTaps++,
-            showBalanceAction: true,
           ),
         ),
       ),
     ));
-    await tester.tap(find.text('Add Income'));
-    await tester.tap(find.text('Verify Opening'));
-    expect(incomeTaps, 1);
-    expect(balanceTaps, 1);
+    expect(find.text('Add Income'), findsNothing);
+    expect(find.text('Verify Opening'), findsNothing);
     expect(tester.takeException(), isNull);
 
     tester.view.physicalSize = const Size(320, 900);
@@ -505,15 +515,13 @@ void main() {
         body: SingleChildScrollView(
           child: DayBookPrimaryGrid(
             summary: summary,
-            onAddIncome: () => incomeTaps++,
-            onSetBalance: () => balanceTaps++,
-            showBalanceAction: true,
           ),
         ),
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.byTooltip('Add Income'), findsOneWidget);
+    expect(find.text('Add Income'), findsNothing);
+    expect(find.text('Verify Opening'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

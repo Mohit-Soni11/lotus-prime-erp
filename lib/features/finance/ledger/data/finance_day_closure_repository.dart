@@ -23,6 +23,7 @@ class FinanceDayClosureRepository {
   Future<bool> closeDay(DateTime date,
       {required double closingCash,
       double? physicalBank,
+      bool requireVerifiedOpening = false,
       required String closedBy,
       Map<String, num>? denominationCount}) async {
     if (!closingCash.isFinite ||
@@ -40,6 +41,7 @@ class FinanceDayClosureRepository {
         date,
         physicalCash: closingCash,
         physicalBank: physicalBank,
+        requireVerifiedOpening: requireVerifiedOpening,
         denominationCount: denominationCount,
       );
       final (start, end) = _bounds(date);

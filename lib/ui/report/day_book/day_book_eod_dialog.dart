@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
+import '../../../models/finance/expense/expense_draft.dart';
+import '../../../models/reports/day_book/day_book_closing_mismatch.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_eod_sections.dart';
 import 'day_book_form_visuals.dart';
@@ -17,41 +19,22 @@ class DayBookEodDialog extends StatefulWidget {
 
 class _DayBookEodDialogState extends State<DayBookEodDialog> {
   final _bank = TextEditingController();
-  bool _countConfirmed = false;
+  bool _cashCountEntered = false;
   bool _closing = false;
-
-  List<TextEditingController> get _cashFields => [
-        widget.ctrl.denom500Ctrl,
-        widget.ctrl.denom200Ctrl,
-        widget.ctrl.denom100Ctrl,
-        widget.ctrl.denom50Ctrl,
-        widget.ctrl.denom20Ctrl,
-        widget.ctrl.denom10Ctrl,
-        widget.ctrl.denomCoinsCtrl,
-      ];
 
   @override
   void initState() {
     super.initState();
+    _cashCountEntered = widget.ctrl.physicalCashAmount > 0;
     _bank.addListener(_refresh);
-    for (final field in _cashFields) {
-      field.addListener(_cashEdited);
-    }
   }
 
   void _refresh() => setState(() {});
-
-  void _cashEdited() {
-    if (_countConfirmed) setState(() => _countConfirmed = false);
-  }
 
   @override
   void dispose() {
     _bank.removeListener(_refresh);
     _bank.dispose();
-    for (final field in _cashFields) {
-      field.removeListener(_cashEdited);
-    }
     super.dispose();
   }
 
@@ -65,7 +48,11 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
   void _reset() {
     widget.ctrl.resetDenomination();
     _bank.clear();
-    setState(() => _countConfirmed = false);
+    setState(() => _cashCountEntered = false);
+  }
+
+  void _openExpenseDraft(ExpenseDraft draft) {
+    Navigator.of(context).pop(draft);
   }
 
   Future<void> _closeDay() async {
@@ -105,13 +92,30 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
               builder: (context, _) {
                 final flow = widget.ctrl.summary?.moneyFlow;
                 final actualBank = _actualBank;
+                final countedCash = _cashCountEntered ||
+                        (flow != null && flow.closingCash.abs() < 0.01)
+                    ? widget.ctrl.physicalCashAmount
+                    : null;
+                final mismatch = flow == null
+                    ? null
+                    : DayBookClosingMismatch(
+                        expectedCash: flow.closingCash,
+                        countedCash: countedCash,
+                        expectedBank: flow.closingBank,
+                        countedBank: actualBank,
+                      );
+                final expenseDrafts =
+                    mismatch?.expenseDrafts(widget.ctrl.selectedDate) ??
+                        const <ExpenseDraft>[];
                 final cashMatched =
-                    _countConfirmed && widget.ctrl.isCashMatched;
+                    countedCash != null && widget.ctrl.isCashMatched;
                 final bankMatched = flow != null &&
                     actualBank != null &&
                     (actualBank - flow.closingBank).abs() < 0.01;
-                final prerequisites = widget.ctrl.balanceVerification != null &&
-                    widget.ctrl.isMetalPositionVerified &&
+                final expenseTotal = widget.ctrl.summary?.expenseRecords
+                        .fold<double>(0, (total, row) => total + row.amount) ??
+                    0.0;
+                final prerequisites = widget.ctrl.isMetalPositionVerified &&
                     widget.ctrl.isCustodyPositionVerified;
                 final ready = cashMatched && bankMatched && prerequisites;
                 return Column(mainAxisSize: MainAxisSize.min, children: [
@@ -128,13 +132,15 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                                     'Day Book balances are unavailable. Refresh before reconciling.')
                           else ...[
                             EodSystemClosing(
-                                date: widget.ctrl.selectedDate, flow: flow),
+                              date: widget.ctrl.selectedDate,
+                              flow: flow,
+                              expenseTotal: expenseTotal,
+                            ),
                             const SizedBox(height: 10),
                             EodCashCount(
                               ctrl: widget.ctrl,
-                              confirmed: _countConfirmed,
-                              onConfirmed: (value) =>
-                                  setState(() => _countConfirmed = value),
+                              onCountChanged: () =>
+                                  setState(() => _cashCountEntered = true),
                             ),
                             const SizedBox(height: 10),
                             EodBankCount(
@@ -142,24 +148,27 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                             const SizedBox(height: 10),
                             EodVerificationSummary(
                               expectedCash: flow.closingCash,
-                              countedCash: _countConfirmed
-                                  ? widget.ctrl.physicalCashAmount
-                                  : null,
+                              countedCash: countedCash,
                               expectedBank: flow.closingBank,
                               countedBank: actualBank,
+                              expenseTotal: expenseTotal,
                             ),
-                            if (!cashMatched || !bankMatched) ...[
+                            if (mismatch != null &&
+                                countedCash != null &&
+                                actualBank != null &&
+                                (!cashMatched || !bankMatched)) ...[
                               const SizedBox(height: 10),
-                              const EodNotice(
-                                  text:
-                                      'Cash and bank must each match the system closing. Review missing entries or transfers before closing the day.'),
+                              EodNotice(
+                                  text: mismatch.hasOppositeMovements
+                                      ? 'Cash and bank differ in opposite directions. Record the transfer or correct the payment mode before closing.'
+                                      : expenseDrafts.isNotEmpty
+                                          ? 'Record the shortage in Expense Entry, then return to recount and close the day.'
+                                          : 'Review any excess or missing receipt before closing the day.'),
                             ],
                             if (!prerequisites) ...[
                               const SizedBox(height: 10),
                               EodNotice(
                                   text: [
-                                if (widget.ctrl.balanceVerification == null)
-                                  'Opening balance verification is pending.',
                                 if (!widget.ctrl.isMetalPositionVerified)
                                   'Owned metal stock is unverified.',
                                 if (!widget.ctrl.isCustodyPositionVerified)
@@ -171,7 +180,7 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                       ),
                     ),
                   ),
-                  _footer(context, ready),
+                  _footer(context, ready, expenseDrafts),
                 ]);
               },
             ),
@@ -220,7 +229,9 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
         ]),
       );
 
-  Widget _footer(BuildContext context, bool ready) => Container(
+  Widget _footer(
+          BuildContext context, bool ready, List<ExpenseDraft> expenseDrafts) =>
+      Container(
         padding: const EdgeInsets.fromLTRB(18, 11, 18, 14),
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: DayBookColors.bodyBorder)),
@@ -230,6 +241,14 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
           spacing: 9,
           runSpacing: 8,
           children: [
+            for (final draft in expenseDrafts)
+              OutlinedButton.icon(
+                onPressed: _closing ? null : () => _openExpenseDraft(draft),
+                icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                label: Text(draft.paymentMode.dbValue == 'CASH'
+                    ? 'Cash Shortage → Expense'
+                    : 'Bank Shortage → Expense'),
+              ),
             OutlinedButton.icon(
               onPressed: _closing ? null : _reset,
               icon: const Icon(Icons.restart_alt_rounded, size: 18),

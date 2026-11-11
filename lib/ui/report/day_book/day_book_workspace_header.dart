@@ -12,7 +12,10 @@ class DayBookWorkspaceHeader extends StatelessWidget {
     super.key,
     required this.ctrl,
     required this.summary,
-    required this.onReconcile,
+    required this.onDayClosing,
+    required this.onAddIncome,
+    required this.onBalanceVerification,
+    required this.balanceSaved,
     required this.onViewPdf,
     required this.onExportCsv,
     required this.onSharePdf,
@@ -20,7 +23,10 @@ class DayBookWorkspaceHeader extends StatelessWidget {
 
   final DayBookController ctrl;
   final DayBookSummary summary;
-  final VoidCallback onReconcile;
+  final VoidCallback onDayClosing;
+  final VoidCallback? onAddIncome;
+  final VoidCallback? onBalanceVerification;
+  final bool balanceSaved;
   final VoidCallback? onViewPdf;
   final VoidCallback? onExportCsv;
   final VoidCallback? onSharePdf;
@@ -36,13 +42,26 @@ class DayBookWorkspaceHeader extends StatelessWidget {
       width: 266,
       child: _DateNavigation(ctrl: ctrl),
     );
-    final reconcile = _ReconcileAction(
-      locked: summary.isDayLocked,
-      onPressed: onReconcile,
+    final dayClosing = _WorkspaceAction(
+      label: summary.isDayLocked ? 'Day Closed' : 'Day Closing',
+      icon: summary.isDayLocked
+          ? Icons.lock_outline_rounded
+          : Icons.task_alt_rounded,
+      onPressed: summary.isDayLocked ? null : onDayClosing,
+    );
+    final balanceVerification = _WorkspaceAction(
+      label: 'Balance Verification',
+      icon: balanceSaved ? Icons.verified_outlined : Icons.fact_check_outlined,
+      onPressed: onBalanceVerification,
+    );
+    final addIncome = _WorkspaceAction(
+      label: 'Add Income',
+      icon: Icons.add_circle_outline_rounded,
+      onPressed: onAddIncome,
     );
 
     return LayoutBuilder(builder: (context, constraints) {
-      final inline = constraints.maxWidth >= 1030;
+      final inline = constraints.maxWidth >= 1320;
       return Container(
         color: DayBookColors.bodyPanel,
         padding: EdgeInsets.fromLTRB(0, inline ? 8 : 10, 12, 8),
@@ -52,9 +71,13 @@ class DayBookWorkspaceHeader extends StatelessWidget {
                 navigation,
                 const SizedBox(width: 10),
                 export,
+                const SizedBox(width: 10),
+                balanceVerification,
+                const SizedBox(width: 10),
+                addIncome,
                 if (ctrl.isToday) ...[
                   const SizedBox(width: 10),
-                  reconcile,
+                  dayClosing,
                 ],
               ])
             : Column(
@@ -71,7 +94,9 @@ class DayBookWorkspaceHeader extends StatelessWidget {
                       children: [
                         navigation,
                         export,
-                        if (ctrl.isToday) reconcile,
+                        balanceVerification,
+                        addIncome,
+                        if (ctrl.isToday) dayClosing,
                       ],
                     ),
                   ),
@@ -80,6 +105,55 @@ class DayBookWorkspaceHeader extends StatelessWidget {
       );
     });
   }
+}
+
+class _WorkspaceAction extends StatelessWidget {
+  const _WorkspaceAction({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onPressed,
+          child: Ink(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              gradient: onPressed == null
+                  ? null
+                  : const LinearGradient(colors: [
+                      Color(0xFFE9C741),
+                      Color(0xFFD6AD16),
+                    ]),
+              color: onPressed == null ? DayBookColors.bodyBorder : null,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(icon, size: 17, color: DayBookColors.textPrimary),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DayBookStyles.button.copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: DayBookColors.textPrimary,
+                    )),
+              ),
+            ]),
+          ),
+        ),
+      );
 }
 
 class _WorkspaceHeading extends StatelessWidget {
@@ -184,51 +258,5 @@ class _NavigationButton extends StatelessWidget {
         disabledColor: DayBookColors.textPrimary.withValues(alpha: 0.35),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints.tightFor(width: 36, height: 36),
-      );
-}
-
-class _ReconcileAction extends StatelessWidget {
-  const _ReconcileAction({required this.locked, required this.onPressed});
-
-  final bool locked;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: locked ? null : onPressed,
-          child: Ink(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            decoration: BoxDecoration(
-              gradient: locked
-                  ? null
-                  : const LinearGradient(colors: [
-                      Color(0xFFE9C741),
-                      Color(0xFFD6AD16),
-                    ]),
-              color: locked ? DayBookColors.bodyBorder : null,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(
-                locked ? Icons.lock_outline_rounded : Icons.payments_outlined,
-                size: 17,
-                color: DayBookColors.textPrimary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                locked ? 'Day Reconciled' : 'Reconcile Cash',
-                style: DayBookStyles.button.copyWith(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  color: DayBookColors.textPrimary,
-                ),
-              ),
-            ]),
-          ),
-        ),
       );
 }

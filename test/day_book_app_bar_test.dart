@@ -9,7 +9,7 @@ import 'package:lotus_erp/ui/report/day_book/day_book_overview_panel.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_workspace_header.dart';
 
 void main() {
-  for (final width in [320.0, 1200.0]) {
+  for (final width in [320.0, 1200.0, 1920.0]) {
     testWidgets('Day Book header and report actions work at ${width.toInt()}px',
         (tester) async {
       tester.view.physicalSize = Size(width, 800);
@@ -21,7 +21,9 @@ void main() {
       addTearDown(controller.dispose);
       var backCount = 0;
       var exportCount = 0;
-      var reconcileCount = 0;
+      var closingCount = 0;
+      var incomeCount = 0;
+      var balanceCount = 0;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -37,7 +39,10 @@ void main() {
                 builder: (context, _) => DayBookTopSection(
                   ctrl: controller,
                   summary: controller.summary,
-                  onReconcile: () => reconcileCount++,
+                  onDayClosing: () => closingCount++,
+                  onAddIncome: () => incomeCount++,
+                  onBalanceVerification: () => balanceCount++,
+                  balanceSaved: false,
                   onViewPdf: () => exportCount++,
                   onExportCsv: () {},
                   onSharePdf: () {},
@@ -61,6 +66,8 @@ void main() {
       expect(find.text('Daily business register for the selected date.'),
           findsNothing);
       expect(find.byType(DayBookExportButton), findsOneWidget);
+      expect(find.text('Balance Verification'), findsOneWidget);
+      expect(find.text('Add Income'), findsOneWidget);
       for (final title in [
         'Total Sales',
         'Girvi Given',
@@ -76,9 +83,16 @@ void main() {
       expect(find.textContaining('DEMO PREVIEW'), findsNothing);
       expect(tester.takeException(), isNull);
 
-      await tester.ensureVisible(find.text('Reconcile Cash'));
-      await tester.tap(find.text('Reconcile Cash'));
-      expect(reconcileCount, 1);
+      await tester.ensureVisible(find.text('Balance Verification'));
+      await tester.tap(find.text('Balance Verification'));
+      await tester.ensureVisible(find.text('Add Income'));
+      await tester.tap(find.text('Add Income'));
+      expect(balanceCount, 1);
+      expect(incomeCount, 1);
+
+      await tester.ensureVisible(find.text('Day Closing'));
+      await tester.tap(find.text('Day Closing'));
+      expect(closingCount, 1);
 
       await tester.tap(find.byTooltip('Back'));
       expect(backCount, 1);
