@@ -4,6 +4,7 @@ class DayBookExpenseRecord {
     required this.category,
     required this.amount,
     required this.paymentMode,
+    this.postedAt,
     this.description,
     this.partyName,
   });
@@ -12,6 +13,7 @@ class DayBookExpenseRecord {
   final String category;
   final double amount;
   final String paymentMode;
+  final DateTime? postedAt;
   final String? description;
   final String? partyName;
 }

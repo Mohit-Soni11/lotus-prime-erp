@@ -101,6 +101,7 @@ class DayBookMoneyRepository {
             chequeNumber: row.chequeNumber,
             chequeStatus: row.chequeStatus,
             valueDate: row.valueDate,
+            reportDayEnd: end,
             isReconciled: row.isReconciled,
           ),
     ]..sort((a, b) => b.date.compareTo(a.date));

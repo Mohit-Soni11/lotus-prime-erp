@@ -12,6 +12,7 @@ import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_
 import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_schema.dart';
 import 'package:lotus_erp/features/finance/ledger/data/day_book_bill_issue_snapshot_schema.dart';
 import 'package:lotus_erp/features/finance/ledger/data/day_book_balance_verification_schema.dart';
+import 'package:lotus_erp/features/finance/ledger/data/day_book_metal_verification_schema.dart';
 import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_trade_in_items.dart';
@@ -138,6 +139,12 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> _ensureDayBookMetalVerificationSchema() async {
+    for (final statement in dayBookMetalVerificationSchemaSql) {
+      await customStatement(statement);
+    }
+  }
+
   Future<void> _ensureDayBookPuritySnapshotSchema() async {
     if (!await _tableExists('stock_movements')) return;
     await _addColumnIfMissing(
@@ -185,6 +192,23 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(statement);
       }
     }
+  }
+
+  Future<void> _rebuildDayBookHistoricalGuards() async {
+    final rows = await customSelect('''
+      SELECT name FROM sqlite_master WHERE type = 'trigger'
+        AND (name GLOB 'cash_day_closed_*'
+          OR name GLOB 'bank_day_closed_*'
+          OR name GLOB 'day_book_*_closed_*'
+          OR name GLOB 'bill_issue_snapshot_closed_*')
+    ''').get();
+    for (final row in rows) {
+      final name = row.read<String>('name').replaceAll('"', '""');
+      await customStatement('DROP TRIGGER IF EXISTS "$name"');
+    }
+    await _ensureFinanceDayClosureSchema();
+    await _ensureDayBookBillIssueSnapshotSchema();
+    await _ensureDayBookClosedSourceGuards();
   }
 
   Future<void> ensureSalesMetalSettlementSchema() async {
@@ -1150,6 +1174,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureFinanceDayClosureSchema();
           await _ensureDayBookBillIssueSnapshotSchema();
           await _ensureDayBookBalanceVerificationSchema();
+          await _ensureDayBookMetalVerificationSchema();
           await _ensureDayBookPuritySnapshotSchema();
           await _ensureDayBookClosedSourceGuards();
         },
@@ -2117,6 +2142,8 @@ class AppDatabase extends _$AppDatabase {
             await _ensureDayBookBillIssueSnapshotSchema();
             await _ensureDayBookClosedSourceGuards();
           }
+          if (from < 76) await _rebuildDayBookHistoricalGuards();
+          if (from < 77) await _ensureDayBookMetalVerificationSchema();
           await _ensureReturnReversalSchemaInternal();
           if (from < 71) await _ensureDayBookClosedSourceGuards();
         },

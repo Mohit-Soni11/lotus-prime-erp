@@ -12,15 +12,13 @@ class DayBookStockAddedRow extends StatelessWidget {
   const DayBookStockAddedRow({
     super.key,
     required this.batch,
-    required this.isDemo,
   });
 
   final DayBookStockAddedBatch batch;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
-    final canOpen = !isDemo && batch.canOpenInventory;
+    final canOpen = batch.canOpenInventory;
     return Material(
       color: DayBookColors.bodyPanel,
       borderRadius: BorderRadius.circular(11),

@@ -1,5 +1,5 @@
 import 'day_book_demo_preview.dart';
-import 'day_book_receipts_register.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_receipts_register.dart';
 
 /// Isolated design samples; never used by financial posting or exports.
 class DayBookReceiptsRegisterPreview {

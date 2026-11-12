@@ -26,13 +26,13 @@ class DayBookExpenseRepository {
     return List.unmodifiable(rows.where((row) {
       // Purchase payments and Girvi disbursements have their own cards.
       return row.category != ExpenseCategory.purchasePayment.dbValue &&
-          row.category != ExpenseCategory.girviGiven.dbValue &&
-          !row.category.startsWith('OWNER_DRAWING');
+          row.category != ExpenseCategory.girviGiven.dbValue;
     }).map((row) => DayBookExpenseRecord(
           reference: row.txnId,
           category: _categoryLabel(row.category, row.customLabel),
           amount: row.amount,
           paymentMode: row.paymentMode,
+          postedAt: row.txnDate,
           description: row.description,
           partyName: row.partyName,
         )));

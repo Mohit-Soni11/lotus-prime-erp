@@ -198,4 +198,62 @@ void main() {
       throwsA(isA<Exception>()),
     );
   });
+
+  test('a later closed day blocks backdated postings and issue snapshots',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final prior = DateTime(2026, 6, 24, 12);
+    final closed = DateTime(2026, 6, 25, 12);
+    final billId = await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'INV-PRIOR',
+          billDate: drift.Value(prior),
+          finalAmount: const drift.Value(100),
+        ));
+    final itemId = await db.into(db.stockItems).insert(
+          StockItemsCompanion.insert(
+            sku: 'G-PRIOR',
+            itemName: 'Ring',
+            category: 'Jewellery',
+            subCategory: 'Ring',
+          ),
+        );
+    expect(
+        await FinanceDayClosureRepository(db)
+            .closeDay(closed, closingCash: 0, closedBy: 'owner-1'),
+        isTrue);
+
+    await expectLater(
+      db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+            txnId: 'C-BACKDATE',
+            txnDate: prior,
+            type: 'INCOME',
+            category: 'OTHER_INCOME',
+            amount: const drift.Value(50),
+          )),
+      throwsA(isA<Exception>()),
+    );
+    await expectLater(
+      db.into(db.stockMovements).insert(StockMovementsCompanion.insert(
+            stockItemId: itemId,
+            movementType: 'IN',
+            sourceType: 'PURCHASE',
+            sourceId: 'PUR-BACKDATE',
+            skuSnapshot: 'G-PRIOR',
+            metalTypeSnapshot: 'Gold',
+            itemNameSnapshot: 'Ring',
+            quantityDelta: 1,
+            occurredAt: prior,
+          )),
+      throwsA(isA<Exception>()),
+    );
+    await expectLater(
+      db.customStatement('''INSERT INTO bill_issue_snapshots
+        (bill_id, final_amount, taxable_amount, cgst_amount, sgst_amount,
+         igst_amount, issued_due, issued_at)
+        VALUES (?, 100, 100, 0, 0, 0, 100, ?)''',
+          [billId, prior.millisecondsSinceEpoch ~/ 1000]),
+      throwsA(isA<Exception>()),
+    );
+  });
 }

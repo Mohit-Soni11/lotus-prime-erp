@@ -9,11 +9,9 @@ class DayBookOverviewPanel extends StatelessWidget {
   const DayBookOverviewPanel({
     super.key,
     required this.summary,
-    this.showDemoPreview = false,
   });
 
   final DayBookSummary summary;
-  final bool showDemoPreview;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -30,16 +28,10 @@ class DayBookOverviewPanel extends StatelessWidget {
                   child: Text('Daily Overview',
                       style:
                           DayBookStyles.sectionTitle.copyWith(fontSize: 18))),
-              if (showDemoPreview)
-                Text('DEMO PREVIEW',
-                    style: DayBookStyles.labelStrong
-                        .copyWith(color: DayBookColors.warning)),
             ]),
             const SizedBox(height: 12),
             DayBookSmartCards(
               summary: summary,
-              showDemoPreview: showDemoPreview,
-              showPreviewNotice: false,
             ),
           ],
         ),

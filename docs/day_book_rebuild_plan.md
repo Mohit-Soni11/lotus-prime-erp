@@ -63,10 +63,38 @@ or Girvi posting. Cash, bank, owned stock, and customer custody remain separate.
 
 ## Current release status
 
-The module does **not** meet the completion condition yet. Schema v75 now
-persists close evidence, but the unverified historical stock baseline, legacy
-source values, and remaining reconciliation flows prevent certified metal and
-day-close figures.
+The module does **not** meet the completion condition yet. Schema v77 now
+persists close evidence and protects earlier source dates after a later close,
+but the unverified historical stock baseline, legacy source values, and
+remaining reconciliation flows prevent certified metal and day-close figures.
+
+### Latest integrity and UI pass
+
+- Schema v77 adds append-only, actor-attributed physical owned-metal counts.
+  The closing dialog requires item/purity-wise pieces and gross/net/fine
+  weights, rejects unknown purity and mismatches, and marks a count stale when
+  underlying inventory changes. Closing rechecks the count against the owned
+  stock ledger inside the database transaction and saves its evidence in the
+  day-close snapshot and export. No physical result is assumed for the shop.
+- Day Book now refreshes the selected date when registered source tables change,
+  including an open historical date. Source read and watcher failures show an
+  error instead of leaving a fabricated zero balance on screen.
+- Schema v76 rebuilds the day-lock triggers on upgrade. Once any later day has
+  closed, cash, bank, invoice issue snapshots, stock movements, and the other
+  guarded source records cannot be backdated into an earlier day.
+- The Day Book closing action requires a saved daily opening verification and
+  rechecks that opening against posted cash and bank activity in its closing
+  transaction. Owned metal remains unverified without a physical count.
+- Issue-time due is shown only when an invoice issue snapshot exists. Legacy
+  invoices with an unknown issue-time due show an unavailable value. Personal
+  owner drawings appear in the Expense Entry list; cancelled purchase vouchers
+  no longer count as purchases.
+- Historical day locks without a saved closing snapshot export as legacy locks
+  with missing physical evidence clearly identified. They are not presented as
+  open days, and a physical count or hash is never invented.
+- The retired 2,497-line Day Book screen implementation and its obsolete layout
+  test were removed. Current UI uses the modular overview, movement, position,
+  source, receipts, and stock batch panels.
 
 ### Implemented in the current rebuild pass
 
@@ -82,8 +110,13 @@ day-close figures.
   clearly marked legacy loan totals), with pieces and gross/net/fine weights.
   Metal opening and closing show **Unverified** until a
   historical baseline and immutable purity snapshot are available.
-- Money register supports source/reference search and direction/mode filters.
-  Linked sales receipts open original archived PDF bytes when present.
+- The chronological transaction timeline combines source documents, posted
+  payments, owned-metal movements, business activities, and expense entries.
+  It filters by source, event type, and payment mode without adding event values
+  into another total. Linked sales receipts open original archived PDF bytes
+  when present.
+- Day Book UI panels now consume live summary records only. Design sample
+  records live under `test/support` and are absent from the release build.
 - Daily source-document summary now separates regular/GST invoices, order
   advances, Girvi tickets, purchase vouchers, and returns. Split sale receipts
   enrich invoice collection; old due receipts never add new turnover. Unknown
@@ -128,22 +161,22 @@ day-close figures.
 
 ### Remaining blockers for the stated completion condition
 
-- Verified opening inventory baseline and item-wise closing reconciliation.
-  Historical stock movement purity needs source-document verification before
-  a legacy row can be certified.
+- Actual shop physical inventory count and correction of any missing legacy
+  purity or stock variance. The count workflow exists, but no physical count
+  has been supplied, so the current shop position remains unverified.
 - Girvi partial handovers and disputed legacy item values need source-level
   custody events and historical verification; current item dates come from
   loan-level delivery or recovery disposition.
-- Due settlements and refund payments need their own document event projections.
-  Historical outstanding balances and an all-source chronological register
-  (with audit history) remain pending.
+- Due settlements and refund payments need their own immutable document event
+  projections. The read-only timeline is present, but source edit audit history
+  and historical outstanding balances are not yet certified.
 - Legacy invoice issue-time amounts and tax require reconciliation against
   archived issued PDFs or original source documents where no issue snapshot
   exists. The migration never invents an original invoice amount.
 - Settlement-aware bank position, including cleared balance and value dates.
-- The v75 close snapshot records bank, owned metal, custody, and physical
-  count, but it does not certify an unknown historical stock baseline or
-  partial Girvi handover. A formal variance approval event and item-wise
-  authorized stock baseline are still required for final certification.
+- The close snapshot records bank, owned metal, custody, and physical cash and
+  owned-metal counts when verified. Historical days without physical counts
+  are not retroactively certified. Partial Girvi handover and formal variance
+  approvals still require dedicated source events.
 - Historical upgrade/backups and end-to-end reconciliation tests for every
   required posting path. Current focused tests do not certify these gates.

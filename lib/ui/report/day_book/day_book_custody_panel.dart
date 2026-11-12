@@ -26,7 +26,7 @@ class DayBookCustodyPanel extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Closing custody is unverified: a closed Girvi ticket lacks a recorded item handover date.',
+                  'Custody record incomplete: a closed Girvi ticket has no recorded item handover date.',
                   style: DayBookStyles.labelStrong.copyWith(
                     color: DayBookColors.warning,
                   ),
@@ -37,8 +37,9 @@ class DayBookCustodyPanel extends StatelessWidget {
             _CustodySection(
                 label: 'Released / Recovered', lines: position.released),
             _CustodySection(
-              label:
-                  position.closingVerified ? 'Closing' : 'Closing (Unverified)',
+              label: position.closingVerified
+                  ? 'Closing (recorded custody)'
+                  : 'Closing (handover date missing)',
               lines: position.closing,
             ),
           ],

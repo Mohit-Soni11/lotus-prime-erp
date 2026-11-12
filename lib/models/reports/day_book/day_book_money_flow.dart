@@ -17,6 +17,7 @@ class DayBookMoneyEntry {
     this.chequeNumber,
     this.chequeStatus,
     this.valueDate,
+    this.reportDayEnd,
     this.isReconciled = false,
   });
 
@@ -35,13 +36,18 @@ class DayBookMoneyEntry {
   final String? chequeNumber;
   final String? chequeStatus;
   final DateTime? valueDate;
+  final DateTime? reportDayEnd;
   final bool isReconciled;
 
-  bool get isUnclearedCheque =>
-      !isCash &&
-      paymentMode.toUpperCase() == 'CHEQUE' &&
-      chequeStatus?.toUpperCase() != 'CLEARED' &&
-      chequeStatus?.toUpperCase() != 'BOUNCED';
+  bool get isUnclearedCheque {
+    if (isCash || paymentMode.toUpperCase() != 'CHEQUE') return false;
+    final status = chequeStatus?.toUpperCase();
+    if (status == 'BOUNCED') return false;
+    if (status != 'CLEARED') return true;
+    return valueDate != null &&
+        reportDayEnd != null &&
+        !valueDate!.isBefore(reportDayEnd!);
+  }
 }
 
 /// Posted movements only. Non-cash shadow rows in cash_transactions are ignored.

@@ -8,6 +8,7 @@ import '../../../models/reports/day_book/day_book_closing_mismatch.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_eod_sections.dart';
 import 'day_book_form_visuals.dart';
+import 'day_book_metal_count_dialog.dart';
 
 class DayBookEodDialog extends StatefulWidget {
   const DayBookEodDialog({super.key, required this.ctrl});
@@ -53,6 +54,14 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
   void _openExpenseDraft(ExpenseDraft draft) {
     Navigator.of(context).pop(draft);
+  }
+
+  Future<void> _openMetalCount() async {
+    await showDialog<bool>(
+      context: context,
+      barrierColor: DayBookColors.overlay,
+      builder: (_) => DayBookMetalCountDialog(controller: widget.ctrl),
+    );
   }
 
   Future<void> _closeDay() async {
@@ -115,7 +124,8 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                 final expenseTotal = widget.ctrl.summary?.expenseRecords
                         .fold<double>(0, (total, row) => total + row.amount) ??
                     0.0;
-                final prerequisites = widget.ctrl.isMetalPositionVerified &&
+                final prerequisites = widget.ctrl.balanceVerification != null &&
+                    widget.ctrl.isMetalPositionVerified &&
                     widget.ctrl.isCustodyPositionVerified;
                 final ready = cashMatched && bankMatched && prerequisites;
                 return Column(mainAxisSize: MainAxisSize.min, children: [
@@ -169,11 +179,21 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                               const SizedBox(height: 10),
                               EodNotice(
                                   text: [
+                                if (widget.ctrl.balanceVerification == null)
+                                  'Verify today’s opening cash and bank.',
                                 if (!widget.ctrl.isMetalPositionVerified)
                                   'Owned metal stock is unverified.',
                                 if (!widget.ctrl.isCustodyPositionVerified)
-                                  'Girvi custody is unverified.',
+                                  'Girvi custody handover dates are incomplete.',
                               ].join(' ')),
+                            ],
+                            if (!widget.ctrl.isMetalPositionVerified) ...[
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: _openMetalCount,
+                                icon: const Icon(Icons.inventory_2_outlined),
+                                label: const Text('Count Owned Metal Stock'),
+                              ),
                             ],
                           ],
                         ],

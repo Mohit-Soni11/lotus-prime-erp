@@ -9,11 +9,9 @@ class DayBookActivityCard extends StatefulWidget {
   const DayBookActivityCard({
     super.key,
     required this.card,
-    required this.isDemo,
   });
 
   final DayBookSmartCard card;
-  final bool isDemo;
 
   @override
   State<DayBookActivityCard> createState() => _DayBookActivityCardState();
@@ -63,7 +61,6 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
               context: context,
               builder: (_) => DayBookSmartDetailsDialog(
                 card: widget.card,
-                isDemo: widget.isDemo,
               ),
             ),
             child: Container(
@@ -107,7 +104,7 @@ class _DayBookActivityCardState extends State<DayBookActivityCard> {
                             style: DayBookStyles.valueLarge.copyWith(
                               fontSize: 20,
                               height: 1.12,
-                              color: DayBookColors.textPrimary,
+                              color: display.valueColor,
                             ),
                           ),
                         ],

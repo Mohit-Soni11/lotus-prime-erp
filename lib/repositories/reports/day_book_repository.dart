@@ -15,6 +15,7 @@ import 'day_book_expense_repository.dart';
 import 'day_book_owned_stock_repository.dart';
 import 'day_book_customer_metal_sales_repository.dart';
 import 'day_book_bill_issue_snapshot_repository.dart';
+import 'day_book_metal_verification_repository.dart';
 import '../../models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -76,6 +77,8 @@ class DayBookRepository {
         final activityEvents = await DayBookActivityRepository(_db)
             .fetch(date, moneyFlow: moneyFlow);
         final expenseRecords = await DayBookExpenseRepository(_db).fetch(date);
+        final metalVerified = await DayBookMetalVerificationRepository(_db)
+            .isVerifiedForPosition(date, ownedStockPosition);
 
         // ── Build CashInflow ───────────────────────────────────────────────────
         final cashIn = CashInflow(
@@ -125,6 +128,7 @@ class DayBookRepository {
           activityEvents: activityEvents,
           expenseRecords: expenseRecords,
           custodyPosition: custodyPosition,
+          metalPositionVerified: metalVerified,
           openingCash: openingCash,
           openingGoldGrams: ownedStockPosition.gold.openingGrams,
           openingSilverGrams: ownedStockPosition.silver.openingGrams,
@@ -512,13 +516,11 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // LIVE STREAM — Real-time auto-refresh for today's screen
-  // Relevant ledger and opening-balance changes refresh today's statement.
+  // LIVE STREAM — refresh the selected statement when a source table changes.
   // ==========================================================================
-  Stream<void> watchTodayChanges() {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day, 0, 0, 0);
-    final end = DateTime(now.year, now.month, now.day + 1);
+  Stream<void> watchDayChanges(DateTime day) {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = DateTime(day.year, day.month, day.day + 1);
 
     return _db
         .customSelect(

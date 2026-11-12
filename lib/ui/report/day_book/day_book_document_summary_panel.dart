@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/reports/day_book/day_book_demo_preview.dart';
 import '../../../models/reports/day_book/day_book_document_explorer.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
@@ -11,11 +10,9 @@ class DayBookDocumentSummaryPanel extends StatefulWidget {
   const DayBookDocumentSummaryPanel({
     super.key,
     required this.summary,
-    this.showDemoPreview = false,
   });
 
   final DayBookSummary summary;
-  final bool showDemoPreview;
 
   @override
   State<DayBookDocumentSummaryPanel> createState() =>
@@ -36,9 +33,7 @@ class _DayBookDocumentSummaryPanelState
 
   @override
   Widget build(BuildContext context) {
-    final summary = widget.showDemoPreview
-        ? DayBookDemoPreview.forDate(widget.summary.date)
-        : widget.summary;
+    final summary = widget.summary;
     final explorer = DayBookDocumentExplorer(summary);
     final entries = explorer.entriesFor(_selected);
     final visible = entries.take(_visibleCount).toList();
@@ -54,15 +49,6 @@ class _DayBookDocumentSummaryPanelState
             child: Text('Source Documents',
                 style: DayBookStyles.sectionTitle.copyWith(fontSize: 18)),
           ),
-          if (widget.showDemoPreview)
-            Tooltip(
-              message: 'Sample records for design review. Links are disabled.',
-              child: Text('DEMO PREVIEW',
-                  style: DayBookStyles.labelStrong.copyWith(
-                    color: DayBookColors.warning,
-                    fontSize: 13,
-                  )),
-            ),
         ]),
         const SizedBox(height: 13),
         _ExplorerTabs(selected: _selected, onSelected: _select),
@@ -99,7 +85,6 @@ class _DayBookDocumentSummaryPanelState
                   child: DayBookDocumentExplorerCard(
                     entry: entry,
                     summary: summary,
-                    isDemo: widget.showDemoPreview,
                   ),
                 ),
             ]);

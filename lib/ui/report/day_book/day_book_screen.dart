@@ -15,7 +15,7 @@ import 'day_book_eod_dialog.dart';
 import 'day_book_receipts_register_panel.dart';
 import 'day_book_primary_grid.dart';
 import 'day_book_stock_added_panel.dart';
-import 'day_book_sections.dart';
+import 'day_book_timeline_panel.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -134,7 +134,11 @@ class _DayBookScreenState extends State<DayBookScreen> {
       await action();
     } catch (error, stackTrace) {
       AppLogger.debug('Day Book export failed: $error\n$stackTrace');
-      _showNotice(DayBookStrings.exportFailed);
+      if (mounted) {
+        AppFeedback.warning(context,
+            message: 'Day Book export failed: '
+                '${error.toString().replaceFirst('Bad state: ', '')}');
+      }
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -223,13 +227,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
             const SizedBox(height: 16),
             DayBookPrimaryGrid(summary: summary),
             const SizedBox(height: 16),
-            if (summary.anomalies.isNotEmpty) ...[
-              _Reveal(
-                delay: 70,
-                child: DayBookAlerts(ctrl: _ctrl),
-              ),
-              const SizedBox(height: 12),
-            ],
             ..._workspaceSections(summary),
           ],
         ),
@@ -239,13 +236,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
 
   List<Widget> _workspaceSections(DayBookSummary summary) {
     return [
-      if (summary.moneyFlow == null) ...[
-        _Reveal(
-          delay: 100,
-          child: CashMovementPanel(summary: summary),
-        ),
-        const SizedBox(height: 12),
-      ],
       DayBookDocumentSummaryPanel(
         summary: summary,
       ),
@@ -260,6 +250,8 @@ class _DayBookScreenState extends State<DayBookScreen> {
           summary: summary,
         ),
       ),
+      const SizedBox(height: 12),
+      DayBookTimelinePanel(summary: summary),
     ];
   }
 }

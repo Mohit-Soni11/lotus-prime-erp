@@ -13,6 +13,7 @@ void main() {
     String number,
     double amount, {
     double? collection,
+    double? outstanding,
     double? tax,
     String? sourceType,
     String status = 'POSTED',
@@ -24,6 +25,7 @@ void main() {
         date: date,
         amount: amount,
         collection: collection,
+        outstanding: outstanding,
         tax: tax,
         status: status,
         sourceType: sourceType,
@@ -53,9 +55,9 @@ void main() {
       date: date,
       documents: [
         document(DayBookDocumentKind.regularInvoice, 'INV-25', 25000,
-            collection: 15000),
+            collection: 15000, outstanding: 10000),
         document(DayBookDocumentKind.gstInvoice, 'TAX-30', 50000,
-            collection: 30000, tax: 2500),
+            collection: 30000, outstanding: 20000, tax: 2500),
       ],
     ));
     final sales = card(result, DayBookCardType.sales);
@@ -65,6 +67,17 @@ void main() {
     expect(sales.groups.first.collection, 15000);
     expect(sales.groups.last.tax, 2500);
     expect(card(result, DayBookCardType.dues).amount, 30000);
+  });
+
+  test('legacy invoice with unknown issue due is not reported as zero', () {
+    final result = DayBookSmartSummary.fromDay(DayBookSummary(
+      date: date,
+      documents: [
+        document(DayBookDocumentKind.regularInvoice, 'INV-OLD', 25000,
+            collection: 25000),
+      ],
+    ));
+    expect(card(result, DayBookCardType.dues).hasUnknownDue, isTrue);
   });
 
   test('Girvi release and advance cancellation do not reduce given or received',
@@ -107,6 +120,8 @@ void main() {
             sourceType: 'SUPPLIER'),
         document(DayBookDocumentKind.purchaseVoucher, 'PUR-V', 3000,
             sourceType: 'CUSTOMER', status: 'VOID'),
+        document(DayBookDocumentKind.purchaseVoucher, 'PUR-X', 4000,
+            sourceType: 'CUSTOMER', status: 'CANCELLED'),
       ],
     ));
     expect(card(result, DayBookCardType.customerMetalPurchase).amount, 18000);

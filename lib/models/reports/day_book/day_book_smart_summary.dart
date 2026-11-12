@@ -45,11 +45,8 @@ class DayBookSmartGroup {
   double get tax =>
       documents.fold<double>(0, (sum, row) => sum + (row.tax ?? 0));
   double get due => documents.fold<double>(
-      0,
-      (sum, row) =>
-          sum +
-          (row.outstanding ?? (row.amount - (row.collection ?? 0)))
-              .clamp(0, double.infinity));
+      0, (sum, row) => sum + (row.outstanding ?? 0).clamp(0, double.infinity));
+  bool get hasUnknownDue => documents.any((row) => row.outstanding == null);
   String get numberRange {
     final numbers = [
       ...documents.map((row) => row.number),
@@ -75,6 +72,9 @@ class DayBookSmartCard {
   double get amount => type == DayBookCardType.dues
       ? groups.fold(0, (sum, group) => sum + group.due)
       : groups.fold(0, (sum, group) => sum + group.amount);
+  bool get hasUnknownDue =>
+      type == DayBookCardType.dues &&
+      groups.any((group) => group.hasUnknownDue);
 }
 
 /// Read-only source projection. Zero-activity cards remain in the layout.
@@ -90,8 +90,7 @@ class DayBookSmartSummary {
     final regular = docs(DayBookDocumentKind.regularInvoice);
     final gst = docs(DayBookDocumentKind.gstInvoice);
     final invoiceDues = [...regular, ...gst]
-        .where((row) =>
-            (row.outstanding ?? (row.amount - (row.collection ?? 0))) > 0)
+        .where((row) => row.outstanding == null || row.outstanding! > 0)
         .toList();
     final customerPurchases = docs(DayBookDocumentKind.purchaseVoucher)
         .where((row) => row.sourceType?.toUpperCase() == 'CUSTOMER')

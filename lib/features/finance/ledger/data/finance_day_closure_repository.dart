@@ -24,6 +24,7 @@ class FinanceDayClosureRepository {
       {required double closingCash,
       double? physicalBank,
       bool requireVerifiedOpening = false,
+      bool requireVerifiedMetal = false,
       required String closedBy,
       Map<String, num>? denominationCount}) async {
     if (!closingCash.isFinite ||
@@ -42,6 +43,7 @@ class FinanceDayClosureRepository {
         physicalCash: closingCash,
         physicalBank: physicalBank,
         requireVerifiedOpening: requireVerifiedOpening,
+        requireVerifiedMetal: requireVerifiedMetal,
         denominationCount: denominationCount,
       );
       final (start, end) = _bounds(date);

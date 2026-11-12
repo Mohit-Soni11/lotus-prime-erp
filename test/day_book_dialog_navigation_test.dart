@@ -5,12 +5,43 @@ import 'package:lotus_erp/models/finance/expense/expense_draft.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_balance_verification.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_metal_count.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_balance_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_eod_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_income_dialog.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_metal_count_dialog.dart';
 
 void main() {
-  testWidgets('Daily Closing shows carried balances without opening count',
+  testWidgets('closing opens item-wise physical metal count at narrow width',
+      (tester) async {
+    final controller = _MetalClosingController();
+    addTearDown(controller.dispose);
+    await tester.binding.setSurfaceSize(const Size(360, 780));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () => showDialog<ExpenseDraft>(
+              context: context,
+              builder: (_) => DayBookEodDialog(ctrl: controller),
+            ),
+            child: const Text('Open closing'),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('Open closing'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Count Owned Metal Stock'));
+    await tester.tap(find.text('Count Owned Metal Stock'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DayBookMetalCountDialog), findsOneWidget);
+    expect(find.text('Gold · Ring · 22K'), findsOneWidget);
+    expect(find.textContaining('System: 1 pieces'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Daily Closing shows balances and missing opening verification',
       (tester) async {
     final controller = _UnverifiedClosingController();
     addTearDown(controller.dispose);
@@ -33,7 +64,7 @@ void main() {
     expect(find.text('Cash Balance'), findsOneWidget);
     expect(find.text('Bank Balance'), findsOneWidget);
     expect(find.textContaining('Verify today’s opening cash and bank'),
-        findsNothing);
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -236,4 +267,20 @@ class _UnverifiedClosingController extends _EmptyClosingController {
     }
     super.dispose();
   }
+}
+
+class _MetalClosingController extends _UnverifiedClosingController {
+  @override
+  Future<List<DayBookMetalCountLine>> loadMetalCountLines() async => const [
+        DayBookMetalCountLine(
+          key: 'unit:1:91.6:Ring',
+          metal: 'Gold',
+          item: 'Ring',
+          purity: '22K',
+          pieces: 1,
+          grossGrams: 11,
+          netGrams: 10,
+          fineGrams: 9.16,
+        ),
+      ];
 }

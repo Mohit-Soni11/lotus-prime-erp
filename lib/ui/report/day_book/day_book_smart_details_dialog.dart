@@ -15,11 +15,9 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
   const DayBookSmartDetailsDialog({
     super.key,
     required this.card,
-    this.isDemo = false,
   });
 
   final DayBookSmartCard card;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -56,16 +54,6 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
               ),
             ]),
           ),
-          if (isDemo)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('DEMO PREVIEW · Sample records for layout review',
-                    style: DayBookStyles.labelStrong
-                        .copyWith(color: DayBookColors.warning, fontSize: 13)),
-              ),
-            ),
           const Divider(height: 1),
           Flexible(
             child: ListView.separated(
@@ -73,10 +61,8 @@ class DayBookSmartDetailsDialog extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               itemCount: card.groups.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, index) => _DetailGroup(
-                  cardType: card.type,
-                  group: card.groups[index],
-                  isDemo: isDemo),
+              itemBuilder: (_, index) =>
+                  _DetailGroup(cardType: card.type, group: card.groups[index]),
             ),
           ),
         ]),
@@ -89,12 +75,10 @@ class _DetailGroup extends StatelessWidget {
   const _DetailGroup({
     required this.cardType,
     required this.group,
-    required this.isDemo,
   });
 
   final DayBookCardType cardType;
   final DayBookSmartGroup group;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -131,23 +115,24 @@ class _DetailGroup extends StatelessWidget {
             _Metric(label: _valueLabel(), value: group.amount),
             if (isInvoice) ...[
               _Metric(label: 'Collected', value: group.collection),
-              _Metric(label: 'New due', value: group.due),
+              _Metric(
+                  label: 'New due',
+                  value: group.hasUnknownDue ? null : group.due),
               if (group.label == 'GST invoices')
                 _Metric(label: 'GST charged', value: group.tax),
             ],
             if (cardType == DayBookCardType.customerMetalPurchase)
               _Metric(label: 'Paid', value: group.collection),
             if (cardType == DayBookCardType.dues)
-              _Metric(label: 'Due', value: group.due),
+              _Metric(
+                  label: 'Due', value: group.hasUnknownDue ? null : group.due),
           ]),
           const Divider(height: 18),
           for (final document in group.documents)
             _DocumentRow(
-                document: document,
-                showDue: cardType == DayBookCardType.dues,
-                isDemo: isDemo),
+                document: document, showDue: cardType == DayBookCardType.dues),
           for (final entry in group.moneyEntries)
-            _ReceiptRow(entry: entry, group: group, isDemo: isDemo),
+            _ReceiptRow(entry: entry, group: group),
           for (final expense in group.expenses)
             _DetailRow(
               reference: expense.reference,
@@ -159,9 +144,7 @@ class _DetailGroup extends StatelessWidget {
                   expense.description!,
               ].join(' · '),
               amount: expense.amount,
-              onTap: isDemo
-                  ? null
-                  : () => _open(context, RoutePaths.financeExpense),
+              onTap: () => _open(context, RoutePaths.financeExpense),
             ),
         ],
       ]),
@@ -181,19 +164,15 @@ class _DetailGroup extends StatelessWidget {
 }
 
 class _ReceiptRow extends StatelessWidget {
-  const _ReceiptRow(
-      {required this.entry, required this.group, required this.isDemo});
+  const _ReceiptRow({required this.entry, required this.group});
 
   final DayBookMoneyEntry entry;
   final DayBookSmartGroup group;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
-    final target = isDemo
-        ? null
-        : dayBookReceiptDestination(
-            entry, group.sourceDocuments, group.sourceEvents);
+    final target = dayBookReceiptDestination(
+        entry, group.sourceDocuments, group.sourceEvents);
     return _DetailRow(
       reference: entry.referenceId?.split('#').first ?? entry.transactionId,
       detail:
@@ -219,33 +198,28 @@ class _Metric extends StatelessWidget {
   const _Metric({required this.label, required this.value});
 
   final String label;
-  final double value;
+  final double? value;
 
   @override
   Widget build(BuildContext context) => Text(
-        '$label ${dayBookSmartMoney(value)}',
+        '$label ${value == null ? '—' : dayBookSmartMoney(value!)}',
         style: DayBookStyles.labelStrong
             .copyWith(color: DayBookColors.textPrimary, fontSize: 13),
       );
 }
 
 class _DocumentRow extends StatelessWidget {
-  const _DocumentRow(
-      {required this.document, required this.showDue, required this.isDemo});
+  const _DocumentRow({required this.document, required this.showDue});
 
   final DayBookDocument document;
   final bool showDue;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
-    final target = isDemo ? null : dayBookDocumentDestination(document);
+    final target = dayBookDocumentDestination(document);
     return _DetailRow(
       reference: document.number,
-      amount: showDue
-          ? (document.outstanding ??
-              (document.amount - (document.collection ?? 0)))
-          : document.amount,
+      amount: showDue ? document.outstanding : document.amount,
       detail: switch (document.kind) {
         DayBookDocumentKind.regularInvoice ||
         DayBookDocumentKind.gstInvoice =>
@@ -271,7 +245,7 @@ class _DetailRow extends StatelessWidget {
   });
 
   final String reference;
-  final double amount;
+  final double? amount;
   final String? detail;
   final VoidCallback? onTap;
 
@@ -308,7 +282,7 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(dayBookSmartMoney(amount),
+          Text(amount == null ? '—' : dayBookSmartMoney(amount!),
               style: DayBookStyles.labelStrong
                   .copyWith(color: DayBookColors.textPrimary)),
         ]),

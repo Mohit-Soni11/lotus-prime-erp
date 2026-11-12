@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../models/reports/day_book/day_book_receipts_register.dart';
-import '../../../models/reports/day_book/day_book_receipts_register_preview.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_receipts_register_metrics.dart';
 import 'day_book_receipts_register_table.dart';
@@ -11,13 +10,13 @@ class DayBookReceiptsRegisterPanel extends StatefulWidget {
   const DayBookReceiptsRegisterPanel({
     super.key,
     required this.summary,
-    this.showDemoPreview = false,
+    this.register,
     this.initialTab = DayBookRegisterTab.due,
     this.showExpandAction = true,
   });
 
   final DayBookSummary summary;
-  final bool showDemoPreview;
+  final DayBookReceiptsRegister? register;
   final DayBookRegisterTab initialTab;
   final bool showExpandAction;
 
@@ -53,7 +52,7 @@ class _DayBookReceiptsRegisterPanelState
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: DayBookReceiptsRegisterPanel(
                 summary: widget.summary,
-                showDemoPreview: widget.showDemoPreview,
+                register: widget.register,
                 initialTab: _selected,
                 showExpandAction: false,
               ),
@@ -66,9 +65,8 @@ class _DayBookReceiptsRegisterPanelState
 
   @override
   Widget build(BuildContext context) {
-    final register = widget.showDemoPreview
-        ? DayBookReceiptsRegisterPreview.forDate(widget.summary.date)
-        : DayBookReceiptsRegister.fromSummary(widget.summary);
+    final register =
+        widget.register ?? DayBookReceiptsRegister.fromSummary(widget.summary);
     final count = switch (_selected) {
       DayBookRegisterTab.due => register.dues.length,
       DayBookRegisterTab.received => register.received.length,
@@ -94,13 +92,6 @@ class _DayBookReceiptsRegisterPanelState
           Expanded(
               child: Text('Receipts, Dues & Expenses',
                   style: DayBookStyles.sectionTitle.copyWith(fontSize: 18))),
-          if (widget.showDemoPreview)
-            Tooltip(
-              message: 'Sample records for design review.',
-              child: Text('DEMO PREVIEW',
-                  style: DayBookStyles.labelStrong
-                      .copyWith(color: DayBookColors.warning, fontSize: 13)),
-            ),
           if (widget.showExpandAction)
             IconButton(
               tooltip: 'Expand records',
@@ -133,7 +124,6 @@ class _DayBookReceiptsRegisterPanelState
             register: register,
             summary: widget.summary,
             tab: _selected,
-            isDemo: widget.showDemoPreview,
             visibleCount: _visibleCount,
           ),
         if (count > _visibleCount)

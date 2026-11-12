@@ -1,4 +1,4 @@
-import 'day_book_stock_added_batch.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_stock_added_batch.dart';
 
 /// Design-only batches; never used by repositories, balances or exports.
 class DayBookStockAddedPreview {

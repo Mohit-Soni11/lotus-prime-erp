@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +17,26 @@ void main() {
 
   tearDown(() async {
     await db.close();
+  });
+
+  test('selected historical day refreshes after a source ledger posting',
+      () async {
+    final date = DateTime(2026, 6, 25, 11);
+    final changes = StreamIterator<void>(repository.watchDayChanges(date));
+    addTearDown(changes.cancel);
+    expect(await changes.moveNext(), isTrue);
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'HISTORIC-RECEIPT',
+            txnDate: date,
+            type: 'INCOME',
+            category: 'GOLD_REPAIR_INCOME',
+            amount: const drift.Value(100),
+            paymentMode: const drift.Value('CASH'),
+          ),
+        );
+    expect(
+        await changes.moveNext().timeout(const Duration(seconds: 3)), isTrue);
   });
 
   test(

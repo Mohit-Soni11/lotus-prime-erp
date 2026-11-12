@@ -10,29 +10,27 @@ const financeDayClosureSchemaSql = <String>[
   '''CREATE TRIGGER IF NOT EXISTS cash_day_closed_insert
     BEFORE INSERT ON cash_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE NEW.txn_date >= start_epoch AND NEW.txn_date < end_epoch)
+      WHERE NEW.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
   '''CREATE TRIGGER IF NOT EXISTS cash_day_closed_update
     BEFORE UPDATE ON cash_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE (OLD.txn_date >= start_epoch AND OLD.txn_date < end_epoch)
-         OR (NEW.txn_date >= start_epoch AND NEW.txn_date < end_epoch))
+      WHERE OLD.txn_date < end_epoch OR NEW.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
   '''CREATE TRIGGER IF NOT EXISTS cash_day_closed_delete
     BEFORE DELETE ON cash_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE OLD.txn_date >= start_epoch AND OLD.txn_date < end_epoch)
+      WHERE OLD.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
   '''CREATE TRIGGER IF NOT EXISTS bank_day_closed_insert
     BEFORE INSERT ON bank_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE NEW.txn_date >= start_epoch AND NEW.txn_date < end_epoch)
+      WHERE NEW.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
   '''CREATE TRIGGER IF NOT EXISTS bank_day_closed_update
     BEFORE UPDATE ON bank_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE (OLD.txn_date >= start_epoch AND OLD.txn_date < end_epoch)
-         OR (NEW.txn_date >= start_epoch AND NEW.txn_date < end_epoch))
+      WHERE OLD.txn_date < end_epoch OR NEW.txn_date < end_epoch)
       AND (OLD.txn_date != NEW.txn_date
         OR OLD.account_id != NEW.account_id
         OR OLD.type != NEW.type
@@ -46,7 +44,7 @@ const financeDayClosureSchemaSql = <String>[
   '''CREATE TRIGGER IF NOT EXISTS bank_day_closed_delete
     BEFORE DELETE ON bank_transactions
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
-      WHERE OLD.txn_date >= start_epoch AND OLD.txn_date < end_epoch)
+      WHERE OLD.txn_date < end_epoch)
     BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''',
 ];
 

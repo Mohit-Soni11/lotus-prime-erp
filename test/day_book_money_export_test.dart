@@ -31,9 +31,11 @@ void main() {
     );
 
     final csv = DayBookExportService.buildCsv(summary);
-    expect(csv, contains('"Money Position","Money In","500.00"'));
-    expect(csv, contains('"Money In by Mode","UPI","500.00"'));
-    expect(csv, contains('"Transaction B-123","Reference","\'=1+1"'));
+    expect(csv,
+        contains('"Money Movement","Business Money In","Amount","500.00"'));
+    expect(csv, contains('"Money In by Payment Mode","UPI","Amount","500.00"'));
+    expect(csv,
+        contains('"Posted Transaction Register","B-123","Reference","\'=1+1"'));
 
     final pdf = await DayBookExportService.buildPdf(summary);
     expect(pdf.length, greaterThan(1000));
@@ -94,11 +96,19 @@ void main() {
     );
 
     final csv = DayBookExportService.buildCsv(summary);
-    expect(csv, contains('"Opening Position","Balance","300.00"'));
-    expect(csv, contains('"Closing Position","Balance","300.00"'));
-    expect(csv, contains('"Sales","Gold Sold to Customers (g)","12.000"'));
+    expect(csv,
+        contains('"Opening and Closing Balance","Opening","Total","300.00"'));
+    expect(csv,
+        contains('"Opening and Closing Balance","Closing","Total","300.00"'));
+    expect(csv,
+        contains('"Customer Metal Sold Today","Gold","Net Weight","12.000"'));
     expect(
-        csv, contains('"Metal Movement","Gold Owned Stock Out (g)","10.000"'));
-    expect(csv, contains('"Closing Position","Gold (g)","95.000"'));
+        csv,
+        contains(
+            '"Owned Gold and Silver Position","Gold","Sold Net","10.000"'));
+    expect(
+        csv,
+        contains(
+            '"Owned Gold and Silver Position","Gold","Closing Net","95.000"'));
   });
 }

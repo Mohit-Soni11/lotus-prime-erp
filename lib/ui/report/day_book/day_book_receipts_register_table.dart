@@ -14,14 +14,12 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
     required this.register,
     required this.summary,
     required this.tab,
-    required this.isDemo,
     required this.visibleCount,
   });
 
   final DayBookReceiptsRegister register;
   final DayBookSummary summary;
   final DayBookRegisterTab tab;
-  final bool isDemo;
   final int visibleCount;
 
   @override
@@ -94,13 +92,11 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
 
   Widget _dueRow(BuildContext context, DayBookDueRow row) {
     final due = row.dueAmount;
-    final target = isDemo
-        ? null
-        : row.document != null
-            ? dayBookDocumentDestination(row.document!)
-            : row.event != null
-                ? dayBookActivityDestination(row.event!)
-                : null;
+    final target = row.document != null
+        ? dayBookDocumentDestination(row.document!)
+        : row.event != null
+            ? dayBookActivityDestination(row.event!)
+            : null;
     return _clickable(
         context,
         target,
@@ -122,7 +118,7 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
   }
 
   Widget _receivedRow(BuildContext context, DayBookReceivedRow row) {
-    final target = isDemo || row.entry == null
+    final target = row.entry == null
         ? null
         : dayBookReceiptDestination(
             row.entry!, summary.documents, summary.activityEvents);
@@ -143,7 +139,7 @@ class DayBookReceiptsRegisterTable extends StatelessWidget {
   }
 
   Widget _expenseRow(BuildContext context, DayBookExpenseRecord row) {
-    final target = isDemo ? null : dayBookExpenseDestination(row, summary.date);
+    final target = dayBookExpenseDestination(row, summary.date);
     return _clickable(
         context,
         target,

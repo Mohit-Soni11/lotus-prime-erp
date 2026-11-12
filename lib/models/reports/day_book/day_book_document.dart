@@ -102,6 +102,6 @@ class DayBookDocument {
         savedDue: savedDue,
       );
 
-  bool get isVoided =>
-      status.toUpperCase() == 'VOID' || status.toUpperCase() == 'VOIDED';
+  bool get isVoided => const {'VOID', 'VOIDED', 'CANCELLED'}
+      .contains(status.trim().toUpperCase());
 }

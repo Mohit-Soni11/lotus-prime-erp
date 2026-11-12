@@ -84,10 +84,7 @@ void main() {
       expect(find.text('Money In by Source'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.ensureVisible(find.text('Posted Money Register (1)'));
-      await tester.tap(find.text('Posted Money Register (1)'));
-      await tester.pumpAndSettle();
-      expect(find.text('Sale Payment'), findsOneWidget);
+      expect(find.textContaining('Posted Money Register'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

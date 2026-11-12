@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_stock_added_batch.dart';
-import 'package:lotus_erp/models/reports/day_book/day_book_stock_added_preview.dart';
+import 'support/day_book_stock_added_preview.dart';
 import 'package:lotus_erp/theme/reports/day_book/day_book_theme.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_stock_added_panel.dart';
 
@@ -33,8 +33,9 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookStockAddedPanel(
-            summary: DayBookSummary(date: date),
-            showDemoPreview: true,
+            summary: DayBookSummary(
+                date: date,
+                stockAddedBatches: DayBookStockAddedPreview.forDate(date)),
           ),
         ),
       ),
@@ -61,8 +62,9 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: DayBookStockAddedPanel(
-              summary: DayBookSummary(date: date),
-              showDemoPreview: true,
+              summary: DayBookSummary(
+                  date: date,
+                  stockAddedBatches: DayBookStockAddedPreview.forDate(date)),
             ),
           ),
         ),

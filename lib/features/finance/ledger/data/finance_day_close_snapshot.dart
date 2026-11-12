@@ -9,6 +9,7 @@ import 'package:lotus_erp/repositories/reports/day_book_document_repository.dart
 import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_owned_stock_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_stock_movement_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_metal_verification_repository.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_verified_closing.dart';
 
 class FinanceDayCloseSnapshot {
@@ -30,6 +31,7 @@ class FinanceDayCloseSnapshotBuilder {
     required double physicalCash,
     double? physicalBank,
     bool requireVerifiedOpening = false,
+    bool requireVerifiedMetal = false,
     Map<String, num>? denominationCount,
   }) async {
     final start = DateTime(day.year, day.month, day.day);
@@ -89,6 +91,13 @@ class FinanceDayCloseSnapshotBuilder {
 
     final movements = await DayBookStockMovementRepository(db).fetch(start);
     final owned = await DayBookOwnedStockRepository(db).fetch(start, movements);
+    final metalVerification =
+        await DayBookMetalVerificationRepository(db).latest(start);
+    if (requireVerifiedMetal &&
+        !(await DayBookMetalVerificationRepository(db)
+            .isVerifiedForPosition(start, owned))) {
+      throw StateError('Physical owned-metal count is missing or stale.');
+    }
     final custody = await DayBookCustodyRepository(db).fetch(start);
     final documents = await DayBookDocumentRepository(db).fetch(start);
     final bankAccounts = await db.select(db.bankAccounts).get();
@@ -121,6 +130,13 @@ class FinanceDayCloseSnapshotBuilder {
     ]..sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));
 
     final sourceEvidence = {
+      if (metalVerification != null)
+        'physicalMetalCount': [
+          metalVerification.sourceHash,
+          metalVerification.verifiedAt.toIso8601String(),
+          metalVerification.verifiedBy,
+          for (final count in metalVerification.physicalCounts) count.toJson(),
+        ],
       if (openingVerification != null)
         'openingVerification': [
           openingVerification.verifiedAt.toIso8601String(),
@@ -185,7 +201,7 @@ class FinanceDayCloseSnapshotBuilder {
     final sourceHash =
         sha256.convert(utf8.encode(jsonEncode(sourceEvidence))).toString();
     final snapshot = {
-      'version': 1,
+      'version': 2,
       'day': '${start.year.toString().padLeft(4, '0')}-'
           '${start.month.toString().padLeft(2, '0')}-'
           '${start.day.toString().padLeft(2, '0')}',
@@ -218,6 +234,19 @@ class FinanceDayCloseSnapshotBuilder {
         'bankAccounts': bankPositions,
       },
       'ownedMetal': {
+        if (metalVerification != null)
+          'physicalVerification': {
+            'sourceHash': metalVerification.sourceHash,
+            'verifiedAt': metalVerification.verifiedAt.toIso8601String(),
+            'verifiedBy': metalVerification.verifiedBy,
+            'countedLines': [
+              for (final line in metalVerification.physicalCounts)
+                line.toJson(),
+            ],
+            'expectedLines': [
+              for (final line in metalVerification.expectedLines) line.toJson(),
+            ],
+          },
         'gold': {
           'openingGrams': owned.gold.openingGrams,
           'inwardGrams': owned.gold.inwardGrams,
@@ -244,7 +273,7 @@ class FinanceDayCloseSnapshotBuilder {
             custody.released.fold<int>(0, (n, line) => n + line.pieces),
         'closingPieces':
             custody.closing.fold<int>(0, (n, line) => n + line.pieces),
-        'verified': custody.closingVerified,
+        'handoverDatesComplete': custody.closingVerified,
       },
       'sourceHash': sourceHash,
     };

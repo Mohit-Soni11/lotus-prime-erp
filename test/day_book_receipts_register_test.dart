@@ -5,7 +5,8 @@ import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_receipts_register.dart';
-import 'package:lotus_erp/models/reports/day_book/day_book_receipts_register_preview.dart';
+import 'support/day_book_receipts_register_preview.dart';
+import 'support/day_book_demo_preview.dart';
 import 'package:lotus_erp/theme/reports/day_book/day_book_theme.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_receipts_register_panel.dart';
 
@@ -46,6 +47,7 @@ void main() {
           status: 'ACTIVE',
           savedPaid: 800,
           savedDue: 200,
+          outstanding: 350,
         ),
       ],
       activityEvents: [
@@ -113,8 +115,8 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookReceiptsRegisterPanel(
-            summary: DayBookSummary(date: date),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(date),
+            register: DayBookReceiptsRegisterPreview.forDate(date),
           ),
         ),
       ),
@@ -157,8 +159,8 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookReceiptsRegisterPanel(
-            summary: DayBookSummary(date: date),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(date),
+            register: DayBookReceiptsRegisterPreview.forDate(date),
           ),
         ),
       ),

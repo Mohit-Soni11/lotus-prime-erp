@@ -10,6 +10,36 @@ void main() {
   setUp(() => db = AppDatabase.forTesting(NativeDatabase.memory()));
   tearDown(() async => db.close());
 
+  test('later cheque clearing stays pending on its original Day Book date',
+      () async {
+    final day = DateTime(2026, 6, 25, 12);
+    final accountId = await db.into(db.bankAccounts).insert(
+          BankAccountsCompanion.insert(
+            accountName: 'Cheque Bank',
+            bankName: 'Bank',
+            accountNumber: 'CHEQUE-AS-OF',
+          ),
+        );
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'CHEQUE-LATE-CLEAR',
+            accountId: accountId,
+            txnDate: day,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(500),
+            paymentMode: const drift.Value('CHEQUE'),
+            chequeStatus: const drift.Value('CLEARED'),
+            valueDate: drift.Value(day.add(const Duration(days: 2))),
+          ),
+        );
+    final originalDay = await DayBookMoneyRepository(db).fetch(day, 0);
+    expect(originalDay.closingBank, 500);
+    expect(originalDay.unclearedChequeIn, 500);
+    expect(originalDay.byBankReconciliation(incoming: true),
+        {'Uncleared Cheque': 500});
+  });
+
   test('posted money flow separates sources, modes, balances and transfers',
       () async {
     final date = DateTime(2026, 6, 25, 12);

@@ -8,6 +8,48 @@ import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_repos
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
+  test('v75 upgrade replaces guards that permitted earlier backdated cash',
+      () async {
+    final directory = await Directory.systemTemp.createTemp('lotus-close-v75-');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}${Platform.pathSeparator}shop.sqlite');
+    final closedDate = DateTime(2026, 6, 25, 12);
+    final original = AppDatabase.forTesting(NativeDatabase(file));
+    expect(
+        await FinanceDayClosureRepository(original)
+            .closeDay(closedDate, closingCash: 0, closedBy: 'owner-1'),
+        isTrue);
+    await original.close();
+
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('DROP TRIGGER cash_day_closed_insert');
+      legacy.execute('''CREATE TRIGGER cash_day_closed_insert
+        BEFORE INSERT ON cash_transactions
+        WHEN EXISTS (SELECT 1 FROM finance_day_closures
+          WHERE NEW.txn_date >= start_epoch AND NEW.txn_date < end_epoch)
+        BEGIN SELECT RAISE(ABORT, 'Finance day is closed'); END''');
+      legacy.execute('PRAGMA user_version=75');
+    } finally {
+      legacy.dispose();
+    }
+
+    final migrated = AppDatabase.forTesting(NativeDatabase(file));
+    addTearDown(migrated.close);
+    await expectLater(
+      migrated.into(migrated.cashTransactions).insert(
+            CashTransactionsCompanion.insert(
+              txnId: 'BACKDATED-AFTER-MIGRATION',
+              txnDate: closedDate.subtract(const Duration(days: 1)),
+              type: 'INCOME',
+              category: 'OTHER_INCOME',
+              amount: const drift.Value(1),
+            ),
+          ),
+      throwsA(isA<Exception>()),
+    );
+  });
+
   test('v74 closure history survives additive snapshot migration', () async {
     final directory = await Directory.systemTemp.createTemp('lotus-close-v74-');
     addTearDown(() => directory.delete(recursive: true));

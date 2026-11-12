@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../models/reports/day_book/day_book_money_flow.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
-import 'day_book_transaction_register.dart';
 import 'day_book_money_summary.dart';
 
 final _currency =
@@ -151,10 +150,6 @@ class DayBookMoneyPanel extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-          if (flow.entries.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            DayBookTransactionRegister(entries: flow.entries),
           ],
         ],
       ),

@@ -86,10 +86,12 @@ class DayBookReceiptsRegister {
         continue;
       }
       final dueReceipts = receiptsByBill[document.number] ?? const [];
-      final due = document.savedDue ?? document.outstanding;
-      if ((due ?? 0) <= 0 && dueReceipts.isEmpty) {
+      final issuedDue = document.outstanding;
+      if (issuedDue != null && issuedDue <= 0 && dueReceipts.isEmpty) {
         continue;
       }
+      final collectedToday =
+          dueReceipts.fold<double>(0, (sum, event) => sum + event.amount);
       knownNumbers.add(document.number);
       dues.add(DayBookDueRow(
         reference: document.number,
@@ -98,10 +100,13 @@ class DayBookReceiptsRegister {
         phone: document.mobile,
         customerId: document.customerId,
         totalValue: document.amount,
-        amountPaid: document.savedPaid,
-        dueAmount: due,
-        paidAgainstDue:
-            dueReceipts.fold<double>(0, (sum, event) => sum + event.amount),
+        amountPaid: issuedDue == null
+            ? null
+            : document.amount - issuedDue + collectedToday,
+        dueAmount: issuedDue == null
+            ? null
+            : (issuedDue - collectedToday).clamp(0, double.infinity),
+        paidAgainstDue: collectedToday,
         document: document,
       ));
     }
@@ -115,8 +120,8 @@ class DayBookReceiptsRegister {
         phone: event.mobile,
         customerId: event.customerId,
         totalValue: event.invoiceValue,
-        amountPaid: event.savedPaid,
-        dueAmount: event.savedDue,
+        amountPaid: null,
+        dueAmount: null,
         paidAgainstDue:
             events.fold<double>(0, (sum, receipt) => sum + receipt.amount),
         event: event,

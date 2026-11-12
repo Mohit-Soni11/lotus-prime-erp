@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_document_summary_panel.dart';
+import 'support/day_book_demo_preview.dart';
 
 void main() {
   testWidgets('explorer stays usable at 320px', (tester) async {
@@ -13,8 +13,7 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookDocumentSummaryPanel(
-            summary: DayBookSummary(date: DateTime(2026, 11, 4)),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(DateTime(2026, 11, 4)),
           ),
         ),
       ),
@@ -34,15 +33,13 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookDocumentSummaryPanel(
-            summary: DayBookSummary(date: DateTime(2026, 11, 4)),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(DateTime(2026, 11, 4)),
           ),
         ),
       ),
     ));
     await tester.pumpAndSettle();
     expect(find.text('Source Documents'), findsOneWidget);
-    expect(find.text('DEMO PREVIEW'), findsOneWidget);
     expect(find.text('REG-025'), findsOneWidget);
     expect(find.text('Mr. Ramesh Shah'), findsOneWidget);
     expect(find.text('24.500 g'), findsOneWidget);
@@ -61,8 +58,7 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookDocumentSummaryPanel(
-            summary: DayBookSummary(date: DateTime(2026, 11, 4)),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(DateTime(2026, 11, 4)),
           ),
         ),
       ),
@@ -90,8 +86,7 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookDocumentSummaryPanel(
-            summary: DayBookSummary(date: DateTime(2026, 11, 4)),
-            showDemoPreview: true,
+            summary: DayBookDemoPreview.forDate(DateTime(2026, 11, 4)),
           ),
         ),
       ),

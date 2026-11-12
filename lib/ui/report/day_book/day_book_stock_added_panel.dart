@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
-import '../../../models/reports/day_book/day_book_stock_added_preview.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_smart_format.dart';
 import 'day_book_stock_added_row.dart';
@@ -10,17 +9,13 @@ class DayBookStockAddedPanel extends StatelessWidget {
   const DayBookStockAddedPanel({
     super.key,
     required this.summary,
-    this.showDemoPreview = false,
   });
 
   final DayBookSummary summary;
-  final bool showDemoPreview;
 
   @override
   Widget build(BuildContext context) {
-    final entries = showDemoPreview
-        ? DayBookStockAddedPreview.forDate(summary.date)
-        : summary.stockAddedBatches;
+    final entries = summary.stockAddedBatches;
     final totalValue =
         entries.fold<double>(0, (total, batch) => total + batch.purchaseValue);
     return Container(
@@ -54,7 +49,6 @@ class DayBookStockAddedPanel extends StatelessWidget {
           final summary = _SummaryBadge(
             count: entries.length,
             totalValue: totalValue,
-            isDemo: showDemoPreview,
           );
           return compact
               ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -79,7 +73,6 @@ class DayBookStockAddedPanel extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 4),
             itemBuilder: (context, index) => DayBookStockAddedRow(
               batch: entries[index],
-              isDemo: showDemoPreview,
             ),
           ),
       ]),
@@ -91,12 +84,10 @@ class _SummaryBadge extends StatelessWidget {
   const _SummaryBadge({
     required this.count,
     required this.totalValue,
-    required this.isDemo,
   });
 
   final int count;
   final double totalValue;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -120,10 +111,6 @@ class _SummaryBadge extends StatelessWidget {
                 style: DayBookStyles.label.copyWith(fontSize: 13)),
             Text(dayBookSmartMoney(totalValue),
                 style: DayBookStyles.labelStrong.copyWith(fontSize: 13)),
-            if (isDemo)
-              Text('DEMO',
-                  style: DayBookStyles.labelStrong
-                      .copyWith(color: DayBookColors.warning, fontSize: 13)),
           ],
         ),
       );

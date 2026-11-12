@@ -16,16 +16,14 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
     super.key,
     required this.entry,
     required this.summary,
-    required this.isDemo,
   });
 
   final DayBookExplorerEntry entry;
   final DayBookSummary summary;
-  final bool isDemo;
 
   @override
   Widget build(BuildContext context) {
-    final target = isDemo ? null : _destination();
+    final target = _destination();
     return Material(
       color: const Color(0xFFFFFEFC),
       borderRadius: BorderRadius.circular(10),

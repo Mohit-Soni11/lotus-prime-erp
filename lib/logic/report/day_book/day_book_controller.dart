@@ -21,6 +21,8 @@ import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../repositories/reports/day_book_manual_income_repository.dart';
 import '../../../repositories/reports/day_book_balance_verification_repository.dart';
 import '../../../repositories/reports/day_book_repository.dart';
+import '../../../repositories/reports/day_book_metal_verification_repository.dart';
+import '../../../models/reports/day_book/day_book_metal_count.dart';
 import '../../../database/db/app_database.dart';
 import '../../../features/finance/ledger/data/finance_day_closure_repository.dart';
 import '../../../core/logging/app_logger.dart';
@@ -38,6 +40,8 @@ class DayBookController extends ChangeNotifier {
       DayBookBalanceVerificationRepository(AppDatabase());
   final FinanceDayClosureRepository _closures =
       FinanceDayClosureRepository(AppDatabase());
+  final DayBookMetalVerificationRepository _metalVerifications =
+      DayBookMetalVerificationRepository(AppDatabase());
   final DayBookCloseAuthorization _closeAuthorization =
       DayBookCloseAuthorization();
   String? closeError;
@@ -74,17 +78,21 @@ class DayBookController extends ChangeNotifier {
   DayBookBalanceVerification? _balanceVerification;
   DayBookBalanceVerification? get balanceVerification => _balanceVerification;
 
-  // ── Section Expand/Collapse ───────────────────────────────────────────────
-  bool cashInExpanded = true;
-  bool cashOutExpanded = true;
-  bool metalInExpanded = false;
-  bool metalOutExpanded = false;
-  bool paymentExpanded = false;
-  bool gstExpanded = true;
-  bool nonGstExpanded = true;
-  // ✅ Sub-section toggles (used by _GstBillSubSection & _NonGstBillSubSection)
-  bool gstSectionExpanded = true;
-  bool nonGstSectionExpanded = true;
+  Future<List<DayBookMetalCountLine>> loadMetalCountLines() =>
+      _metalVerifications.expected();
+
+  Future<void> verifyPhysicalMetal(
+      List<DayBookPhysicalMetalCount> counts, bool emptyStockConfirmed) async {
+    final actorId = await _closeAuthorization.authorizedActorId(
+        action: 'verify physical metal stock');
+    await _metalVerifications.verify(
+      day: _selectedDate,
+      actor: actorId,
+      physical: counts,
+      emptyStockConfirmed: emptyStockConfirmed,
+    );
+    await loadData(silent: true);
+  }
 
   // ── EOD State ─────────────────────────────────────────────────────────────
   DenominationCount denomination = DenominationCount();
@@ -136,14 +144,19 @@ class DayBookController extends ChangeNotifier {
     }
   }
 
-  // Start watching CashTransactions for real-time UI updates
+  // Keep the selected date current as source modules post or correct records.
   void _startWatcher() {
     _watchSub?.cancel();
-    if (isToday) {
-      _watchSub = _repo.watchTodayChanges().listen((_) {
-        loadData(silent: true); // Reload without showing spinner
-      });
-    }
+    _watchSub = _repo.watchDayChanges(_selectedDate).listen(
+      (_) => loadData(silent: true),
+      onError: (Object error, StackTrace stackTrace) {
+        if (_disposed) return;
+        AppLogger.debug('Day Book source watcher failed: $error\n$stackTrace');
+        _errorMessage = error.toString();
+        _summary = null;
+        notifyListeners();
+      },
+    );
   }
 
   // ==========================================================================
@@ -298,66 +311,6 @@ class DayBookController extends ChangeNotifier {
   }
 
   // ==========================================================================
-  // SECTION TOGGLES
-  // ==========================================================================
-  void toggleCashIn() {
-    cashInExpanded = !cashInExpanded;
-    notifyListeners();
-  }
-
-  void toggleCashOut() {
-    cashOutExpanded = !cashOutExpanded;
-    notifyListeners();
-  }
-
-  void toggleMetalIn() {
-    metalInExpanded = !metalInExpanded;
-    notifyListeners();
-  }
-
-  void toggleMetalOut() {
-    metalOutExpanded = !metalOutExpanded;
-    notifyListeners();
-  }
-
-  void togglePayment() {
-    paymentExpanded = !paymentExpanded;
-    notifyListeners();
-  }
-
-  void toggleGst() {
-    gstExpanded = !gstExpanded;
-    notifyListeners();
-  }
-
-  void toggleNonGst() {
-    nonGstExpanded = !nonGstExpanded;
-    notifyListeners();
-  }
-
-  // ✅ Sub-section toggles for GST & Non-GST bill cards inside Cash In
-  void toggleGstSection() {
-    gstSectionExpanded = !gstSectionExpanded;
-    notifyListeners();
-  }
-
-  void toggleNonGstSection() {
-    nonGstSectionExpanded = !nonGstSectionExpanded;
-    notifyListeners();
-  }
-
-  // ==========================================================================
-  // ANOMALY DISMISS
-  // ==========================================================================
-  void dismissAnomaly(int index) {
-    if (_summary == null) return;
-    final updated = List<AnomalyAlert>.from(_summary!.anomalies)
-      ..removeAt(index);
-    _summary = _summary!.copyWith(anomalies: updated);
-    notifyListeners();
-  }
-
-  // ==========================================================================
   // EOD HELPERS
   // ==========================================================================
   double get systemCashAmount => _summary?.moneyFlow?.closingCash ?? 0.0;
@@ -403,6 +356,11 @@ class DayBookController extends ChangeNotifier {
           'The bank balance does not match the recorded closing balance.';
       return false;
     }
+    if (_balanceVerification == null) {
+      closeError =
+          'Verify today’s opening cash and bank before closing the day.';
+      return false;
+    }
     if (!isMetalPositionVerified) {
       closeError =
           'Owned metal opening and closing are not verified. Day closing is unavailable until stock reconciliation is complete.';
@@ -410,7 +368,7 @@ class DayBookController extends ChangeNotifier {
     }
     if (!isCustodyPositionVerified) {
       closeError =
-          'Girvi custody is not verified. Resolve missing handover dates before closing the day.';
+          'Girvi custody handover dates are incomplete. Resolve missing dates before closing the day.';
       return false;
     }
     if (!isCashMatched) {
@@ -424,6 +382,8 @@ class DayBookController extends ChangeNotifier {
         _selectedDate,
         closingCash: physicalCashAmount,
         physicalBank: physicalBank,
+        requireVerifiedOpening: true,
+        requireVerifiedMetal: true,
         closedBy: actorId,
         denominationCount: {
           '500': denomination.note500,

@@ -129,7 +129,10 @@ void main() {
     expect(entries, hasLength(1));
     expect(entries.single.category, ExpenseCategory.personalHousehold);
     expect(entries.single.expenseId, saved.cashAdjustmentTransactionId);
-    expect(await DayBookExpenseRepository(db).fetch(date), isEmpty);
+    final dayBookExpenses = await DayBookExpenseRepository(db).fetch(date);
+    expect(dayBookExpenses, hasLength(1));
+    expect(dayBookExpenses.single.amount, 20);
+    expect(dayBookExpenses.single.reference, saved.cashAdjustmentTransactionId);
   });
 
   test('bank-only shortage links Expense Entry and debits the bank once',

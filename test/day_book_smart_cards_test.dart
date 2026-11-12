@@ -6,6 +6,7 @@ import 'package:lotus_erp/models/reports/day_book/day_book_smart_summary.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_activity_card.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_card_presentation.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_smart_cards.dart';
+import 'support/day_book_demo_preview.dart';
 
 void main() {
   test('sales and receipts share green; dues is yellow; outflows are red', () {
@@ -72,7 +73,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('demo preview displays every activity without mixing real rows',
+  testWidgets('fixture displays every activity in two aligned rows',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
@@ -83,17 +84,7 @@ void main() {
       home: Scaffold(
         body: SingleChildScrollView(
           child: DayBookSmartCards(
-            showDemoPreview: true,
-            summary: DayBookSummary(date: date, documents: [
-              DayBookDocument(
-                kind: DayBookDocumentKind.regularInvoice,
-                sourceId: '1',
-                number: 'REAL-1',
-                date: date,
-                amount: 200,
-                status: 'ACTIVE',
-              ),
-            ]),
+            summary: DayBookDemoPreview.forDate(date),
           ),
         ),
       ),
@@ -123,8 +114,6 @@ void main() {
     ]) {
       expect(find.text(amount), findsOneWidget);
     }
-    expect(find.textContaining('DEMO PREVIEW'), findsOneWidget);
-    expect(find.text('REAL-1'), findsNothing);
     final firstRow = [
       'Total Sales',
       'Advance Received',
@@ -155,7 +144,6 @@ void main() {
     expect(find.text('Regular invoices'), findsOneWidget);
     expect(find.text('GST invoices'), findsOneWidget);
     expect(find.text('REG-025'), findsOneWidget);
-    expect(find.text('REAL-1'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

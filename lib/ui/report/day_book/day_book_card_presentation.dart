@@ -29,7 +29,7 @@ class DayBookCardPresentation {
   final Color valueColor;
 
   factory DayBookCardPresentation.fromCard(DayBookSmartCard card) {
-    final money = dayBookSmartMoney(card.amount);
+    final money = card.hasUnknownDue ? '—' : dayBookSmartMoney(card.amount);
     final count = card.count;
     final groups = card.groups;
     final collection =
@@ -105,7 +105,9 @@ class DayBookCardPresentation {
       DayBookCardType.dues => DayBookCardPresentation(
           label: card.title,
           value: money,
-          caption: '$count invoices · Newly outstanding',
+          caption: card.hasUnknownDue
+              ? '$count invoices · Issue due unavailable'
+              : '$count invoices · Newly outstanding',
           icon: Icons.schedule_rounded,
           accent: const Color(0xFFAD7800),
           iconBackground: const Color(0xFFFFEAB8),

@@ -31,6 +31,14 @@ void main() {
           expenseDate: date,
         ),
         isTrue);
+    expect(
+        await expenses.saveExpense(
+          category: ExpenseCategory.personalHousehold,
+          amount: 250,
+          paymentMode: PaymentMode.cash,
+          expenseDate: date,
+        ),
+        isTrue);
     await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
           txnId: 'EXP-PURCHASE',
           txnDate: date,
@@ -62,10 +70,16 @@ void main() {
         ));
 
     final result = await DayBookExpenseRepository(db).fetch(date);
-    expect(result, hasLength(3));
-    expect(result.map((row) => row.category),
-        containsAll(['Shop Rent', 'Personal expense', 'Personal Expense']));
-    expect(result.fold<double>(0, (sum, row) => sum + row.amount), 15400);
+    expect(result, hasLength(4));
+    expect(
+        result.map((row) => row.category),
+        containsAll([
+          'Shop Rent',
+          'Personal expense',
+          'Personal Expense',
+          'Household'
+        ]));
+    expect(result.fold<double>(0, (sum, row) => sum + row.amount), 15650);
     expect(result.every((row) => row.reference.startsWith('EXP-')), isTrue);
   });
 }

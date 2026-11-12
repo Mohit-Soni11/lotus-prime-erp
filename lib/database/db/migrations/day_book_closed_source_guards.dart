@@ -5,11 +5,9 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
         '''CREATE TRIGGER IF NOT EXISTS day_book_bill_closed_update
            BEFORE UPDATE ON bills
            WHEN (EXISTS (SELECT 1 FROM finance_day_closures c
-                        WHERE OLD.bill_date >= c.start_epoch
-                          AND OLD.bill_date < c.end_epoch)
+                        WHERE OLD.bill_date < c.end_epoch)
               OR EXISTS (SELECT 1 FROM finance_day_closures c
-                         WHERE NEW.bill_date >= c.start_epoch
-                           AND NEW.bill_date < c.end_epoch))
+                         WHERE NEW.bill_date < c.end_epoch))
              AND (NEW.bill_date IS NOT OLD.bill_date
                OR NEW.bill_no IS NOT OLD.bill_no
                OR NEW.customer_id IS NOT OLD.customer_id
@@ -53,14 +51,12 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
         '''CREATE TRIGGER IF NOT EXISTS day_book_bill_closed_insert
            BEFORE INSERT ON bills
            WHEN EXISTS (SELECT 1 FROM finance_day_closures c
-                        WHERE NEW.bill_date >= c.start_epoch
-                          AND NEW.bill_date < c.end_epoch)
+                        WHERE NEW.bill_date < c.end_epoch)
            BEGIN SELECT RAISE(ABORT, 'Day Book source day is closed'); END''',
         '''CREATE TRIGGER IF NOT EXISTS day_book_bill_closed_delete
            BEFORE DELETE ON bills
            WHEN EXISTS (SELECT 1 FROM finance_day_closures c
-                        WHERE OLD.bill_date >= c.start_epoch
-                          AND OLD.bill_date < c.end_epoch)
+                        WHERE OLD.bill_date < c.end_epoch)
            BEGIN SELECT RAISE(ABORT, 'Day Book source day is closed'); END''',
       ],
       'bill_items': [
@@ -92,17 +88,14 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
         '''CREATE TRIGGER IF NOT EXISTS day_book_girvi_closed_insert
            BEFORE INSERT ON girvi_loans
            WHEN EXISTS (SELECT 1 FROM finance_day_closures c
-                        WHERE NEW.start_date >= c.start_epoch
-                          AND NEW.start_date < c.end_epoch)
+                         WHERE NEW.start_date < c.end_epoch)
            BEGIN SELECT RAISE(ABORT, 'Day Book source day is closed'); END''',
         '''CREATE TRIGGER IF NOT EXISTS day_book_girvi_closed_update
            BEFORE UPDATE ON girvi_loans
            WHEN (EXISTS (SELECT 1 FROM finance_day_closures c
-                         WHERE OLD.start_date >= c.start_epoch
-                           AND OLD.start_date < c.end_epoch)
+                         WHERE OLD.start_date < c.end_epoch)
               OR EXISTS (SELECT 1 FROM finance_day_closures c
-                         WHERE NEW.start_date >= c.start_epoch
-                           AND NEW.start_date < c.end_epoch))
+                         WHERE NEW.start_date < c.end_epoch))
             AND (NEW.ticket_no IS NOT OLD.ticket_no
               OR NEW.customer_id IS NOT OLD.customer_id
               OR NEW.start_date IS NOT OLD.start_date
@@ -118,8 +111,7 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
         '''CREATE TRIGGER IF NOT EXISTS day_book_girvi_closed_delete
            BEFORE DELETE ON girvi_loans
            WHEN EXISTS (SELECT 1 FROM finance_day_closures c
-                        WHERE OLD.start_date >= c.start_epoch
-                          AND OLD.start_date < c.end_epoch)
+                        WHERE OLD.start_date < c.end_epoch)
            BEGIN SELECT RAISE(ABORT, 'Day Book source day is closed'); END''',
       ],
       'girvi_loan_items': [
@@ -170,7 +162,7 @@ Map<String, List<String>> get dayBookClosedSourceGuards => {
 String _billItemGuard(String action, String row, {String? also}) {
   String closed(String alias) => '''EXISTS (
       SELECT 1 FROM bills b JOIN finance_day_closures c
-      ON b.bill_date >= c.start_epoch AND b.bill_date < c.end_epoch
+      ON b.bill_date < c.end_epoch
       WHERE b.id = $alias.bill_id)''';
   return '''CREATE TRIGGER IF NOT EXISTS day_book_bill_item_closed_$action
     BEFORE ${action.toUpperCase()} ON bill_items
@@ -181,7 +173,7 @@ String _billItemGuard(String action, String row, {String? also}) {
 String _girviItemGuard(String action, String row, {String? also}) {
   String closed(String alias) => '''EXISTS (
       SELECT 1 FROM girvi_loans l JOIN finance_day_closures c
-      ON l.start_date >= c.start_epoch AND l.start_date < c.end_epoch
+      ON l.start_date < c.end_epoch
       WHERE l.id = $alias.girvi_id)''';
   final immutableFields = action == 'update'
       ? '''AND (NEW.girvi_id IS NOT OLD.girvi_id
@@ -209,8 +201,8 @@ List<String> _childTimestampGuards(
 ) {
   String closed(String alias) => '''EXISTS (
     SELECT 1 FROM $parentTable p JOIN finance_day_closures c
-      ON (p.$parentDate >= c.start_epoch AND p.$parentDate < c.end_epoch)
-      OR (p.$parentDate >= c.start_epoch * 1000
+      ON (p.$parentDate < 100000000000 AND p.$parentDate < c.end_epoch)
+      OR (p.$parentDate >= 100000000000
           AND p.$parentDate < c.end_epoch * 1000)
     WHERE p.id = $alias.$foreignKey)''';
   return [
@@ -276,8 +268,9 @@ List<String> _timestampGuards(String table, String column,
       .join(' OR ');
   String closed(String alias) => '''EXISTS (
     SELECT 1 FROM finance_day_closures c
-    WHERE ($alias.$column >= c.start_epoch AND $alias.$column < c.end_epoch)
-       OR ($alias.$column >= c.start_epoch * 1000
+    WHERE ($alias.$column < 100000000000
+           AND $alias.$column < c.end_epoch)
+       OR ($alias.$column >= 100000000000
            AND $alias.$column < c.end_epoch * 1000))''';
   return [
     '''CREATE TRIGGER IF NOT EXISTS day_book_${table}_closed_insert

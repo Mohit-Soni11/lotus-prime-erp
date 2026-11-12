@@ -1,9 +1,9 @@
-import 'day_book_activity_event.dart';
-import 'day_book_document.dart';
-import 'day_book_document_item.dart';
-import 'day_book_expense_record.dart';
-import 'day_book_models.dart';
-import 'day_book_money_flow.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_activity_event.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_document.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_document_item.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_expense_record.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
 
 /// Presentation-only sample records for reviewing the Day Book card design.
 /// No repository or ledger reads this data.
