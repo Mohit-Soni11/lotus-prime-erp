@@ -10,6 +10,25 @@ import 'package:lotus_erp/repositories/reports/day_book_bill_issue_snapshot_repo
 import 'package:lotus_erp/repositories/reports/day_book_repository.dart';
 
 void main() {
+  test('reissued invoice refreshes its certified financial snapshot', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final date = DateTime(2026, 6, 25, 12);
+    final billId = await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'INV-REISSUED-1',
+          billDate: drift.Value(date),
+          finalAmount: const drift.Value(1000),
+        ));
+    final snapshots = DayBookBillIssueSnapshotRepository(db);
+    await snapshots.capture(billId);
+    await (db.update(db.bills)..where((row) => row.id.equals(billId)))
+        .write(const BillsCompanion(finalAmount: drift.Value(1200)));
+    await snapshots.capture(billId);
+    final document = (await DayBookDocumentRepository(db).fetch(date)).single;
+    expect(document.issueSnapshotAvailable, isTrue);
+    expect(document.amount, 1200);
+  });
+
   test('later due settlement cannot rewrite issue-day sales or new due',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -34,6 +53,7 @@ void main() {
 
     final document = (await DayBookDocumentRepository(db).fetch(date)).single;
     expect(document.amount, 1000);
+    expect(document.issueSnapshotAvailable, isTrue);
     expect(document.outstanding, 300);
     expect(document.savedDue, 0);
     final day = await DayBookRepository(db: db).fetchDayBook(date);
@@ -75,6 +95,7 @@ void main() {
     expect(document.items.map((item) => item.netWeightGrams), [24.5, 100.25]);
     expect(document.savedPaid, 72000);
     expect(document.savedDue, 10000);
+    expect(document.issueSnapshotAvailable, isFalse);
 
     final withCollection = DayBookDocumentCollectionMapper.apply(
         [
@@ -96,6 +117,7 @@ void main() {
     expect(withCollection.collection, 30000);
     expect(withCollection.items, hasLength(2));
     expect(withCollection.savedPaid, 72000);
+    expect(withCollection.issueSnapshotAvailable, isFalse);
   });
 
   test(

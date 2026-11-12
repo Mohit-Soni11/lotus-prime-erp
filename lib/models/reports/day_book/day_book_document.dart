@@ -34,6 +34,7 @@ class DayBookDocument {
     this.items = const [],
     this.savedPaid,
     this.savedDue,
+    this.issueSnapshotAvailable = true,
   });
 
   final DayBookDocumentKind kind;
@@ -58,6 +59,9 @@ class DayBookDocument {
   final double? savedPaid;
   final double? savedDue;
 
+  /// False for a legacy invoice whose original issue values were not archived.
+  final bool issueSnapshotAvailable;
+
   DayBookDocument withCollection(double value) => DayBookDocument(
         kind: kind,
         sourceId: sourceId,
@@ -78,6 +82,7 @@ class DayBookDocument {
         items: items,
         savedPaid: savedPaid,
         savedDue: savedDue,
+        issueSnapshotAvailable: issueSnapshotAvailable,
       );
 
   DayBookDocument withParty({String? name, String? phone}) => DayBookDocument(
@@ -100,6 +105,7 @@ class DayBookDocument {
         items: items,
         savedPaid: savedPaid,
         savedDue: savedDue,
+        issueSnapshotAvailable: issueSnapshotAvailable,
       );
 
   bool get isVoided => const {'VOID', 'VOIDED', 'CANCELLED'}

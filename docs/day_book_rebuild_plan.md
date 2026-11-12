@@ -161,6 +161,24 @@ remaining reconciliation flows prevent certified metal and day-close figures.
 
 ### Remaining blockers for the stated completion condition
 
+#### Read-only live database audit (12 November 2026)
+
+The SQLite integrity check passed and the database is at schema v77. The
+aggregate audit found 3 bills and 0 bill issue snapshots, 0 configured bank
+accounts, 5 stock items and units, 10 stock movements, 2 Girvi loans, and 0
+physical metal verifications or day closes. No live rows were changed.
+
+Legacy invoice amounts and tax are now visibly marked unverified in the Day
+Book and export. A certified day close refuses a date containing invoices
+without issue evidence. Revised invoices update their issue snapshot through
+the existing sale edit flow. The archived invoice metadata does not contain
+enough original financial fields to rebuild these snapshots automatically. Reconcile against
+the original issued documents before treating historical sales and GST as
+certified. The bank account and physical metal count require real shop inputs.
+
+Bank Book balance reads now surface database failures instead of showing a
+fabricated zero or empty transaction history.
+
 - Actual shop physical inventory count and correction of any missing legacy
   purity or stock variance. The count workflow exists, but no physical count
   has been supplied, so the current shop position remains unverified.

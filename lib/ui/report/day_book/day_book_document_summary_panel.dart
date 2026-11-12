@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/reports/day_book/day_book_document_explorer.dart';
+import '../../../models/reports/day_book/day_book_document.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_document_explorer_card.dart';
@@ -53,6 +54,16 @@ class _DayBookDocumentSummaryPanelState
         const SizedBox(height: 13),
         _ExplorerTabs(selected: _selected, onSelected: _select),
         const SizedBox(height: 10),
+        if (entries.any((entry) =>
+            entry.document is DayBookDocument &&
+            !entry.document!.issueSnapshotAvailable)) ...[
+          const Text(
+            'Historical invoice issue values are unverified. Reconcile the original saved invoices before certifying this day.',
+            style: TextStyle(
+                color: DayBookColors.negative, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+        ],
         DayBookDocumentExplorerSummary(tab: _selected, entries: entries),
         const SizedBox(height: 11),
         if (entries.isEmpty)

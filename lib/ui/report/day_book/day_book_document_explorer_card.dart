@@ -201,6 +201,12 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: DayBookStyles.label.copyWith(fontSize: 13)),
       ],
+      if (!document.issueSnapshotAvailable) ...[
+        const SizedBox(height: 5),
+        Text('Original issue values unverified',
+            style: DayBookStyles.labelStrong
+                .copyWith(fontSize: 13, color: DayBookColors.negative)),
+      ],
     ]);
   }
 

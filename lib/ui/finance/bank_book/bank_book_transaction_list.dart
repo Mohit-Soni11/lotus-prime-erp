@@ -38,13 +38,15 @@ class BankBookTransactionList extends StatelessWidget {
 
             // â”€â”€ Transaction List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Expanded(
-              child: ctrl.selectedAccount == null
-                  ? _buildNoAccountState()
-                  : ctrl.isLoading
-                      ? _buildLoadingState()
-                      : ctrl.groups.isEmpty
-                          ? _buildEmptyState(ctrl)
-                          : _buildGroupedList(context),
+              child: ctrl.errorMessage != null
+                  ? Center(child: Text(ctrl.errorMessage!))
+                  : ctrl.selectedAccount == null
+                      ? _buildNoAccountState()
+                      : ctrl.isLoading
+                          ? _buildLoadingState()
+                          : ctrl.groups.isEmpty
+                              ? _buildEmptyState(ctrl)
+                              : _buildGroupedList(context),
             ),
           ],
         );

@@ -100,6 +100,11 @@ class FinanceDayCloseSnapshotBuilder {
     }
     final custody = await DayBookCustodyRepository(db).fetch(start);
     final documents = await DayBookDocumentRepository(db).fetch(start);
+    if (requireVerifiedOpening &&
+        documents.any((document) => !document.issueSnapshotAvailable)) {
+      throw StateError(
+          'Invoice issue values are unverified. Reconcile original invoices before closing this day.');
+    }
     final bankAccounts = await db.select(db.bankAccounts).get();
     final end = DateTime(start.year, start.month, start.day + 1);
     final accountMovements = await db.customSelect(

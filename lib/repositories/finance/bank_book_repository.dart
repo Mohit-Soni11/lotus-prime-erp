@@ -71,7 +71,7 @@ class BankBookRepository {
       return models;
     } catch (e) {
       AppLogger.debug('❌ BankBookRepository.fetchAccounts: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -210,7 +210,7 @@ class BankBookRepository {
       return models;
     } catch (e) {
       AppLogger.debug('❌ BankBookRepository.fetchTransactions: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -248,7 +248,10 @@ class BankBookRepository {
             ..where((t) => t.id.equals(accountId)))
           .getSingleOrNull();
 
-      final openingBalance = account?.openingBalance ?? 0.0;
+      if (account == null) {
+        throw StateError('Bank account is unavailable.');
+      }
+      final openingBalance = account.openingBalance;
 
       // All non-voided transactions in range
       final rows = await (_db.select(_db.bankTransactions)
@@ -350,7 +353,7 @@ class BankBookRepository {
       );
     } catch (e) {
       AppLogger.debug('❌ BankBookRepository.computeSummary: $e');
-      return BankBookSummaryModel.zero();
+      rethrow;
     }
   }
 
@@ -616,8 +619,9 @@ class BankBookRepository {
         }
       }
       return opening + credit - debit;
-    } catch (_) {
-      return opening;
+    } catch (error) {
+      AppLogger.debug('Bank account balance failed: $error');
+      rethrow;
     }
   }
 
@@ -626,9 +630,11 @@ class BankBookRepository {
       final account = await (_db.select(_db.bankAccounts)
             ..where((t) => t.id.equals(accountId)))
           .getSingleOrNull();
-      return account?.accountName ?? 'Unknown Account';
-    } catch (_) {
-      return 'Unknown Account';
+      if (account == null) throw StateError('Bank account is unavailable.');
+      return account.accountName;
+    } catch (error) {
+      AppLogger.debug('Bank account lookup failed: $error');
+      rethrow;
     }
   }
 

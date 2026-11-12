@@ -47,6 +47,11 @@ class BankBookLeftPanel extends StatelessWidget {
                 _AccountSelector(ctrl: ctrl, onAddAccount: onAddAccount),
                 const SizedBox(height: 16),
 
+                if (ctrl.errorMessage != null) ...[
+                  _BankSummaryError(message: ctrl.errorMessage!),
+                  const SizedBox(height: 12),
+                ],
+
                 if (ctrl.selectedAccount != null) ...[
                   // 2. View Mode Toggle
                   _ViewModeToggle(ctrl: ctrl),
@@ -56,52 +61,54 @@ class BankBookLeftPanel extends StatelessWidget {
                   _DateNavigator(ctrl: ctrl),
                   const SizedBox(height: 16),
 
-                  // 4. Opening Balance
-                  _OpeningBalanceCard(ctrl: ctrl),
-                  const SizedBox(height: 12),
-
-                  // 5. Credit / Debit split
-                  _CreditDebitRow(ctrl: ctrl),
-                  const SizedBox(height: 12),
-
-                  // 6. Closing Balance
-                  _ClosingBalanceCard(ctrl: ctrl),
-                  const SizedBox(height: 12),
-
-                  // 7. Transaction count pills
-                  _CountRow(ctrl: ctrl),
-                  const SizedBox(height: 16),
-
-                  // 8. Reconciliation Status
-                  _ReconciliationCard(ctrl: ctrl),
-                  const SizedBox(height: 12),
-
-                  // 9. Cheque Summary
-                  if (ctrl.summary.chequeSummary.totalIssued > 0) ...[
-                    _ChequeSummaryCard(ctrl: ctrl),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // 10. Credit Breakdown
-                  if (ctrl.summary.creditBreakdown.isNotEmpty)
-                    _BreakdownSection(
-                      title: BankBookStrings.creditBreakdown,
-                      items: ctrl.summary.creditBreakdown,
-                      color: BankBookColors.creditAccent,
-                      bgColor: BankBookColors.creditBg,
-                    ),
-
-                  if (ctrl.summary.creditBreakdown.isNotEmpty)
+                  if (ctrl.errorMessage == null) ...[
+                    // 4. Opening Balance
+                    _OpeningBalanceCard(ctrl: ctrl),
                     const SizedBox(height: 12),
 
-                  // 11. Debit Breakdown
-                  if (ctrl.summary.debitBreakdown.isNotEmpty)
-                    _BreakdownSection(
-                      title: BankBookStrings.debitBreakdown,
-                      items: ctrl.summary.debitBreakdown,
-                      color: BankBookColors.debitAccent,
-                      bgColor: BankBookColors.debitBg,
-                    ),
+                    // 5. Credit / Debit split
+                    _CreditDebitRow(ctrl: ctrl),
+                    const SizedBox(height: 12),
+
+                    // 6. Closing Balance
+                    _ClosingBalanceCard(ctrl: ctrl),
+                    const SizedBox(height: 12),
+
+                    // 7. Transaction count pills
+                    _CountRow(ctrl: ctrl),
+                    const SizedBox(height: 16),
+
+                    // 8. Reconciliation Status
+                    _ReconciliationCard(ctrl: ctrl),
+                    const SizedBox(height: 12),
+
+                    // 9. Cheque Summary
+                    if (ctrl.summary.chequeSummary.totalIssued > 0) ...[
+                      _ChequeSummaryCard(ctrl: ctrl),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // 10. Credit Breakdown
+                    if (ctrl.summary.creditBreakdown.isNotEmpty)
+                      _BreakdownSection(
+                        title: BankBookStrings.creditBreakdown,
+                        items: ctrl.summary.creditBreakdown,
+                        color: BankBookColors.creditAccent,
+                        bgColor: BankBookColors.creditBg,
+                      ),
+
+                    if (ctrl.summary.creditBreakdown.isNotEmpty)
+                      const SizedBox(height: 12),
+
+                    // 11. Debit Breakdown
+                    if (ctrl.summary.debitBreakdown.isNotEmpty)
+                      _BreakdownSection(
+                        title: BankBookStrings.debitBreakdown,
+                        items: ctrl.summary.debitBreakdown,
+                        color: BankBookColors.debitAccent,
+                        bgColor: BankBookColors.debitBg,
+                      ),
+                  ],
 
                   const SizedBox(height: 24),
                 ],
@@ -112,6 +119,24 @@ class BankBookLeftPanel extends StatelessWidget {
       },
     );
   }
+}
+
+class _BankSummaryError extends StatelessWidget {
+  const _BankSummaryError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.red),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ]),
+        ),
+      );
 }
 
 // â”€â”€ Account Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

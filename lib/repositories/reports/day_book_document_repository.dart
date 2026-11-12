@@ -64,6 +64,7 @@ class DayBookDocumentRepository {
         items: List.unmodifiable(itemsByBill[bill.id] ?? const []),
         savedPaid: bill.paidAmount,
         savedDue: bill.dueAmount,
+        issueSnapshotAvailable: issue != null,
       ));
     }
 

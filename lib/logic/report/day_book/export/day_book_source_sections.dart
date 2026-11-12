@@ -80,6 +80,7 @@ class DayBookSourceSections {
           'Face Value',
           'Saved Paid',
           'Current Due',
+          'Issue Evidence',
         ],
         rows: [
           for (final doc in docs)
@@ -92,6 +93,7 @@ class DayBookSourceSections {
               Cell.money(doc.amount),
               Cell.money(doc.savedPaid),
               Cell.money(doc.savedDue ?? doc.outstanding),
+              Cell(doc.issueSnapshotAvailable ? 'Archived' : 'Unverified'),
             ],
         ],
       );

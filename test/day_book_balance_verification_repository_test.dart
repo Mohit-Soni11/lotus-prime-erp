@@ -60,6 +60,35 @@ void main() {
     );
   });
 
+  test('certified closing rejects invoices without original issue evidence',
+      () async {
+    final db = await _database();
+    addTearDown(db.close);
+    await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'LEGACY-UNVERIFIED',
+          billDate: drift.Value(date),
+          finalAmount: const drift.Value(100),
+        ));
+    await DayBookBalanceVerificationRepository(db).verify(
+      date: date,
+      expectedCash: 100,
+      actualCash: 100,
+      expectedBank: 50,
+      actualBank: 50,
+      verifiedBy: 'tester',
+    );
+    await expectLater(
+      FinanceDayClosureRepository(db).closeDay(date,
+          closingCash: 100,
+          physicalBank: 50,
+          requireVerifiedOpening: true,
+          closedBy: 'tester'),
+      throwsA(isA<StateError>().having((error) => error.message, 'message',
+          contains('issue values are unverified'))),
+    );
+    expect(await FinanceDayClosureRepository(db).isClosed(date), isFalse);
+  });
+
   test('cash and bank shortages post classified Expense Entry sources',
       () async {
     final db = await _database();

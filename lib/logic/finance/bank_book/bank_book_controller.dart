@@ -107,22 +107,30 @@ class BankBookController extends ChangeNotifier {
   Future<void> _loadAccounts() async {
     _accountsLoading = true;
     notifyListeners();
-
-    _accounts = await _repository.fetchAccounts();
-    _accountsLoading = false;
-
-    if (_accounts.isNotEmpty) {
-      // Auto-select primary, else first
-      _selectedAccount = _accounts.firstWhere(
-        (a) => a.isPrimary,
-        orElse: () => _accounts.first,
-      );
-      _startWatch();
-    } else {
+    try {
+      _accounts = await _repository.fetchAccounts();
+      _errorMessage = null;
+      if (_accounts.isNotEmpty) {
+        _selectedAccount = _accounts.firstWhere(
+          (account) => account.isPrimary,
+          orElse: () => _accounts.first,
+        );
+        _startWatch();
+      } else {
+        _selectedAccount = null;
+        _isLoading = false;
+      }
+    } catch (error, stackTrace) {
+      AppLogger.debug('Bank account load failed: $error\n$stackTrace');
+      _accounts = [];
+      _selectedAccount = null;
+      _summary = BankBookSummaryModel.loading();
+      _errorMessage = 'Bank accounts could not be loaded. Retry this screen.';
       _isLoading = false;
+    } finally {
+      _accountsLoading = false;
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
   void selectAccount(BankAccountModel account) {
@@ -218,13 +226,22 @@ class BankBookController extends ChangeNotifier {
     }
 
     final range = _dateRange;
-    _summary = await _repository.computeSummary(
-      accountId: accId,
-      from: range.start,
-      to: range.end,
-    );
-    _isLoading = false;
-    _errorMessage = null;
+    try {
+      _summary = await _repository.computeSummary(
+        accountId: accId,
+        from: range.start,
+        to: range.end,
+      );
+      _errorMessage = null;
+    } catch (error, stackTrace) {
+      AppLogger.debug('Bank Book summary failed: $error\n$stackTrace');
+      _summary = BankBookSummaryModel.loading();
+      _errorMessage =
+          'Bank balance could not be loaded. Retry the date or account.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   // ==========================================================================
