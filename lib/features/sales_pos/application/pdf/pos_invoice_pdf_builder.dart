@@ -16,6 +16,7 @@ import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_tax_display_policy.dart';
@@ -729,7 +730,7 @@ class _PosInvoicePdfDocumentBuilder {
                       ),
                     ),
                     pw.Text(
-                      'Section Total: Rs ${sectionTotal.toStringAsFixed(2)}',
+                      'Section Total: ${PosInvoicePdfValueFormatter.rupees(sectionTotal)}',
                       style: pw.TextStyle(
                         fontSize: _pdfLabelSize,
                         fontWeight: pw.FontWeight.bold,
@@ -806,7 +807,8 @@ class _PosInvoicePdfDocumentBuilder {
                             includeUnit: false,
                           )),
                         if (activeConfig.showRate)
-                          _cell(item.rate.toStringAsFixed(0)),
+                          _cell(PosInvoicePdfValueFormatter.ratePerGram(
+                              item.rate)),
                         if (activeConfig.showMaking ||
                             activeConfig.showMakingType)
                           _cell(
@@ -817,7 +819,8 @@ class _PosInvoicePdfDocumentBuilder {
                             ),
                           ),
                         if (activeConfig.showAmount)
-                          _cell(item.totalValue.toStringAsFixed(2)),
+                          _cell(PosInvoicePdfValueFormatter.rupees(
+                              item.totalValue)),
                       ],
                     );
                   }),
@@ -869,20 +872,11 @@ class _PosInvoicePdfDocumentBuilder {
     BillSettings config, {
     required bool isWholesale,
   }) {
-    final input = double.tryParse(
-          item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-        ) ??
-        0.0;
-    final inputLabel = input <= 0
-        ? '-'
-        : '${_formatCompactNumber(input)}${item.makingChargeType.symbol}';
-    final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
-    final amountLabel = 'Rs ${amount.toStringAsFixed(0)}';
-
-    if (config.showMakingType) {
-      return inputLabel;
-    }
-    return amountLabel;
+    return PosInvoicePdfValueFormatter.making(
+      item,
+      config,
+      isWholesale: isWholesale,
+    );
   }
 
   String _formatCompactNumber(double value) {
@@ -905,7 +899,7 @@ class _PosInvoicePdfDocumentBuilder {
     final parsed = clean.isEmpty
         ? fallback
         : double.tryParse(clean.replaceAll(RegExp(r'[^0-9.]'), '')) ?? fallback;
-    final formatted = parsed.toStringAsFixed(3);
+    final formatted = PosInvoicePdfValueFormatter.grams(parsed);
     return includeUnit ? '$formatted g' : formatted;
   }
 
@@ -943,7 +937,7 @@ class _PosInvoicePdfDocumentBuilder {
 
       case MetalType.diamond:
         if (text.isNotEmpty) return text;
-        if (tunch > 0) return '${tunch.toStringAsFixed(2)}ct';
+        if (tunch > 0) return '${_formatCompactNumber(tunch)}ct';
         return '-';
     }
   }
@@ -1058,7 +1052,7 @@ class _PosInvoicePdfDocumentBuilder {
             ),
           ),
           pw.Text(
-            "${isDeduction ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}",
+            "${isDeduction ? '- ' : ''}${PosInvoicePdfValueFormatter.rupees(amount.abs())}",
             style: pw.TextStyle(
               fontSize: isGrand ? _pdfGrandValueSize : _pdfTotalSize,
               color: _pdfTextColor,
@@ -1159,8 +1153,9 @@ class _PosInvoicePdfDocumentBuilder {
                           ),
                         ),
                         pw.TextSpan(
-                          text:
-                              "Rs ${(payment['amount'] as double).toStringAsFixed(2)}",
+                          text: PosInvoicePdfValueFormatter.rupees(
+                            payment['amount'] as double,
+                          ),
                           style: pw.TextStyle(
                             fontSize: _pdfBodySize,
                             fontWeight: pw.FontWeight.bold,
@@ -1212,7 +1207,7 @@ class _PosInvoicePdfDocumentBuilder {
                   ),
                 ),
                 pw.Text(
-                  'Rs ${totalCashPaid.toStringAsFixed(2)}',
+                  PosInvoicePdfValueFormatter.rupees(totalCashPaid),
                   style: pw.TextStyle(
                     fontSize: _pdfBodySize,
                     fontWeight: pw.FontWeight.bold,
@@ -1251,7 +1246,7 @@ class _PosInvoicePdfDocumentBuilder {
                   ],
                 ),
                 pw.Text(
-                  'Rs ${invoice.balanceDue.toStringAsFixed(2)}',
+                  PosInvoicePdfValueFormatter.rupees(invoice.balanceDue),
                   style: pw.TextStyle(
                     fontSize: _pdfGrandValueSize,
                     fontWeight: pw.FontWeight.bold,
@@ -1298,7 +1293,7 @@ class _PosInvoicePdfDocumentBuilder {
           pw.SizedBox(height: 5),
           _pdfMiniSettlementRow(
             'Excess Amount',
-            'Rs ${amount.toStringAsFixed(2)}',
+            PosInvoicePdfValueFormatter.rupees(amount),
           ),
           _pdfMiniSettlementRow('Settlement', settlementLabel),
           if (sourceLabel.isNotEmpty)
@@ -1848,7 +1843,11 @@ class _PosInvoicePdfDocumentBuilder {
             fontSize,
           ),
         if (config.showRate)
-          _thermalKeyValue('Rate', _thermalMoney(item.rate), fontSize),
+          _thermalKeyValue(
+            'Rate',
+            PosInvoicePdfValueFormatter.ratePerGram(item.rate),
+            fontSize,
+          ),
         if (config.showMaking || config.showMakingType)
           _thermalKeyValue(
             isWholesale ? 'Labour' : 'Making',
@@ -1929,10 +1928,14 @@ class _PosInvoicePdfDocumentBuilder {
         ),
         _thermalKeyValue(
           'Purity / Fine',
-          '${item.purityPercent.toStringAsFixed(2)}% / ${_formatWeightText(item.fineWt.toStringAsFixed(3))}',
+          '${_formatCompactNumber(item.purityPercent)}% / ${_formatWeightText(item.fineWt.toStringAsFixed(3))}',
           fontSize,
         ),
-        _thermalKeyValue('Rate', _thermalMoney(item.rate), fontSize),
+        _thermalKeyValue(
+          'Rate',
+          PosInvoicePdfValueFormatter.ratePerGram(item.rate),
+          fontSize,
+        ),
         _thermalKeyValue(
           'Value',
           _thermalMoney(item.totalValue),
@@ -2180,7 +2183,7 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   String _thermalMoney(double amount) {
-    return 'Rs ${amount.toStringAsFixed(2)}';
+    return PosInvoicePdfValueFormatter.rupees(amount);
   }
 
   String _invoiceTypeLabel(PosInvoiceModel invoice) {

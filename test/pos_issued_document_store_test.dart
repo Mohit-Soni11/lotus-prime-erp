@@ -33,7 +33,10 @@ void main() {
     );
     expect(
       await archive.readMetadata(IssuedInvoiceKind.sales, 21, 'AJ-26-021'),
-      containsPair('templateId', 'lotus-classic'),
+      allOf(
+        containsPair('templateId', 'lotus-classic'),
+        containsPair('pdfFormatVersion', 2),
+      ),
     );
   });
 }

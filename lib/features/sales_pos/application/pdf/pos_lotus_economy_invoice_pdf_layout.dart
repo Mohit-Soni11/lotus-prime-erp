@@ -9,13 +9,13 @@ import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusEconomyInvoicePdfLayout {
-  static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
 
   static const _ink = PdfColors.black;
@@ -289,7 +289,7 @@ class PosLotusEconomyInvoicePdfLayout {
                 ? item.fineWt.toStringAsFixed(3)
                 : item.netWt.toStringAsFixed(3),
           ),
-        if (config.showRate) _amount(item.rate),
+        if (config.showRate) PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         if (config.showMaking || config.showMakingType)
           _making(item, config, isWholesale: isWholesale),
         if (config.showAmount) _amount(item.totalValue),
@@ -309,7 +309,7 @@ class PosLotusEconomyInvoicePdfLayout {
         _weight(item.grossCtrl.text),
         _weight(item.lessCtrl.text),
         _weight(item.fineWt.toStringAsFixed(3)),
-        _amount(item.rate),
+        PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         _amount(item.totalValue),
       ];
     }).toList(growable: false);
@@ -812,32 +812,20 @@ class PosLotusEconomyInvoicePdfLayout {
     BillSettings config, {
     required bool isWholesale,
   }) {
-    final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
-    if (!config.showMakingType) return _amount(amount);
-    final unit = _makingUnit(item.makingChargeType);
-    return '${_amount(amount)} ($unit)';
-  }
-
-  String _makingUnit(MakingChargeType type) {
-    switch (type) {
-      case MakingChargeType.perGram:
-        return '/g';
-      case MakingChargeType.perKg:
-        return '/kg';
-      case MakingChargeType.perPiece:
-        return '/pc';
-      case MakingChargeType.percentage:
-        return '%';
-    }
+    return PosInvoicePdfValueFormatter.making(
+      item,
+      config,
+      isWholesale: isWholesale,
+    );
   }
 
   String _weight(String value) {
     final number = double.tryParse(value.trim());
     if (number == null) return _fallback(value, '-');
-    return number.toStringAsFixed(3);
+    return PosInvoicePdfValueFormatter.grams(number);
   }
 
-  String _amount(double value) => 'Rs ${_amountFormat.format(value)}';
+  String _amount(double value) => PosInvoicePdfValueFormatter.rupees(value);
 
   String _summaryAmount(PosInvoiceAmountSummaryEntry row) {
     final prefix = row.isDeduction ? '- ' : '';

@@ -12,13 +12,13 @@ import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusClassicInvoicePdfLayout {
-  static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
 
   static const _navy = PdfColor.fromInt(0xFF172437);
@@ -615,7 +615,7 @@ class PosLotusClassicInvoicePdfLayout {
           ),
         if (config.showFineWeight && !isWholesale)
           _weightText(item.fineWt.toStringAsFixed(3)),
-        if (config.showRate) _amount(item.rate),
+        if (config.showRate) PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         if (config.showMaking || config.showMakingType)
           _formatMakingCharge(item, config, isWholesale: isWholesale),
         if (config.showAmount) _amount(item.totalValue),
@@ -648,7 +648,7 @@ class PosLotusClassicInvoicePdfLayout {
         _weightText(item.grossCtrl.text),
         _weightText(item.lessCtrl.text),
         _weightText(item.fineWt.toStringAsFixed(3)),
-        _amount(item.rate),
+        PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         _amount(item.totalValue),
       ];
     }).toList();
@@ -1235,17 +1235,11 @@ class PosLotusClassicInvoicePdfLayout {
     BillSettings config, {
     required bool isWholesale,
   }) {
-    final input = double.tryParse(
-          item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-        ) ??
-        0.0;
-    final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
-
-    if (config.showMakingType) {
-      if (input <= 0) return '-';
-      return '${_compact(input)}${item.makingChargeType.symbol}';
-    }
-    return _amount(amount);
+    return PosInvoicePdfValueFormatter.making(
+      item,
+      config,
+      isWholesale: isWholesale,
+    );
   }
 
   String _formatPurity(SaleItemModel item) {
@@ -1341,16 +1335,16 @@ class PosLotusClassicInvoicePdfLayout {
   String _weightText(String value) {
     final clean = value.trim();
     if (clean.isEmpty) {
-      return '0.000 g';
+      return '0 g';
     }
     final parsed = double.tryParse(clean.replaceAll(RegExp(r'[^0-9.]'), ''));
     if (parsed == null) {
       return '$clean g';
     }
-    return '${parsed.toStringAsFixed(3)} g';
+    return '${PosInvoicePdfValueFormatter.grams(parsed)} g';
   }
 
-  String _amount(double value) => 'Rs ${_amountFormat.format(value)}';
+  String _amount(double value) => PosInvoicePdfValueFormatter.rupees(value);
 
   String _signedAmount(double value) {
     if (value < -0.5) return _amount(value.abs());

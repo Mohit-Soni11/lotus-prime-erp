@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
 
+import '../pdf/pos_invoice_pdf_format_version.dart';
+
 /// The issued sales document is the PDF snapshot approved in the POS preview.
 class PosIssuedDocumentStore {
   const PosIssuedDocumentStore({
@@ -44,6 +46,7 @@ class PosIssuedDocumentStore {
         'format': format,
         'paidAmount': paidAmount,
         'dueAmount': dueAmount,
+        'pdfFormatVersion': posInvoicePdfFormatVersion,
       },
     );
     return require(billId: billId, billNo: billNo);

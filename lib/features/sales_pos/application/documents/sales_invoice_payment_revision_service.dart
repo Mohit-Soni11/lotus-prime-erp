@@ -4,20 +4,28 @@ import '../../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../repositories/sales_orders/pos/pos_metal_settlement_repository.dart';
+import '../../../settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
 import 'sales_invoice_due_payment_date_repository.dart';
 import '../pdf/pos_invoice_pdf_builder.dart';
+import '../pdf/pos_invoice_pdf_format_version.dart';
 
-/// Saves a new issued PDF when a later due collection changes the bill.
+/// Saves a new issued PDF after payment changes or a PDF format update.
 /// The original issued file remains untouched in the archive.
 class SalesInvoicePaymentRevisionService {
   SalesInvoicePaymentRevisionService({
     AppDatabase? database,
     IssuedInvoiceArchive archive = const IssuedInvoiceArchive(),
+    Future<Map<String, dynamic>?> Function(String)? shopSetupLoader,
+    ShopPrintInformationRepository? shopPrintRepository,
   })  : _database = database ?? AppDatabase(),
-        _archive = archive;
+        _archive = archive,
+        _shopSetupLoader = shopSetupLoader,
+        _shopPrintRepository = shopPrintRepository;
 
   final AppDatabase _database;
   final IssuedInvoiceArchive _archive;
+  final Future<Map<String, dynamic>?> Function(String)? _shopSetupLoader;
+  final ShopPrintInformationRepository? _shopPrintRepository;
 
   Future<bool> synchronize(int billId, String billNo) async {
     final bill = await (_database.select(_database.bills)
@@ -39,6 +47,8 @@ class SalesInvoicePaymentRevisionService {
     final recordedPaymentDate = metadata?['lastDuePaymentAt'] as String?;
     final revisionVersion =
         (metadata?['paymentRevisionVersion'] as num?)?.toInt() ?? 0;
+    final pdfFormatVersion =
+        (metadata?['pdfFormatVersion'] as num?)?.toInt() ?? 0;
     final issuedPayment =
         bill.cashPaid + bill.upiPaid + bill.cardPaid + bill.advancePaid;
     final laterCollection = (bill.paidAmount - issuedPayment)
@@ -49,11 +59,10 @@ class SalesInvoicePaymentRevisionService {
         (recordedPaid - bill.paidAmount).abs() < 0.005 &&
         (recordedDue - bill.dueAmount).abs() < 0.005 &&
         (revisionVersion >= 3 || laterCollection < 0.005) &&
+        pdfFormatVersion >= posInvoicePdfFormatVersion &&
         recordedPaymentDate == paymentDateText) {
       return false;
     }
-
-    if (metadata == null && laterCollection < 0.005) return false;
 
     final issuedPdf = await _archive.read(
       IssuedInvoiceKind.sales,
@@ -70,6 +79,8 @@ class SalesInvoicePaymentRevisionService {
       billing: billing,
       database: _database,
       issuedInvoiceArchive: _archive,
+      shopSetupLoader: _shopSetupLoader,
+      shopPrintRepository: _shopPrintRepository,
     );
     try {
       if (!await billing.initializeForEdit(billId)) {
@@ -135,6 +146,7 @@ class SalesInvoicePaymentRevisionService {
           'dueAmount': bill.dueAmount,
           'lastDuePaymentAt': paymentDateText,
           'paymentRevisionVersion': 3,
+          'pdfFormatVersion': posInvoicePdfFormatVersion,
         },
       );
       return true;

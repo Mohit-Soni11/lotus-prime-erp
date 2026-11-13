@@ -13,11 +13,11 @@ import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusSignatureInvoicePdfLayout {
-  static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
 
   static const _gold = PdfColor(0.72, 0.47, 0.10);
@@ -472,7 +472,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 ? item.fineWt.toStringAsFixed(3)
                 : item.netWt.toStringAsFixed(3),
           ),
-        if (config.showRate) _plainAmount(item.rate),
+        if (config.showRate) PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         if (config.showMaking || config.showMakingType)
           _making(item, config, isWholesale: isWholesale),
         if (config.showAmount) _plainAmount(item.totalValue),
@@ -508,7 +508,7 @@ class PosLotusSignatureInvoicePdfLayout {
         _weight(item.grossCtrl.text),
         _weight(item.lessCtrl.text),
         _weight(item.fineWt.toStringAsFixed(3)),
-        _plainAmount(item.rate),
+        PosInvoicePdfValueFormatter.ratePerGram(item.rate),
         _plainAmount(item.totalValue),
       ];
     }).toList(growable: false);
@@ -1898,62 +1898,23 @@ class PosLotusSignatureInvoicePdfLayout {
     BillSettings config, {
     required bool isWholesale,
   }) {
-    final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
-
-    // Making Rate Type has priority when enabled: show the entered rate
-    // (for example 12%, 15%, 120/g) instead of the calculated amount.
-    if (config.showMakingType) {
-      final input = double.tryParse(
-            item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
-          ) ??
-          0.0;
-      if (input > 0) {
-        return '${_formatMakingInput(input)}${_makingUnit(item.makingChargeType)}';
-      }
-    }
-
-    // Making Rate Type OFF -> show the calculated Making Amount only.
-    // This prevents values such as 534.36% when the amount is 534.36.
-    if (config.showMaking) {
-      return _plainAmount(amount);
-    }
-
-    return '';
-  }
-
-  String _formatMakingInput(double value) {
-    final rounded = value.roundToDouble();
-    if ((value - rounded).abs() < 0.0001) {
-      return rounded.toStringAsFixed(0);
-    }
-    return value
-        .toStringAsFixed(2)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
-  }
-
-  String _makingUnit(MakingChargeType type) {
-    switch (type) {
-      case MakingChargeType.perGram:
-        return '/g';
-      case MakingChargeType.perKg:
-        return '/kg';
-      case MakingChargeType.perPiece:
-        return '/pc';
-      case MakingChargeType.percentage:
-        return '%';
-    }
+    return PosInvoicePdfValueFormatter.making(
+      item,
+      config,
+      isWholesale: isWholesale,
+    );
   }
 
   String _weight(String value) {
     final number = double.tryParse(value.trim());
     if (number == null) return _fallback(value, '-');
-    return '${number.toStringAsFixed(3)} g';
+    return '${PosInvoicePdfValueFormatter.grams(number)} g';
   }
 
-  String _amount(double value) => 'Rs ${_amountFormat.format(value)}';
+  String _amount(double value) => PosInvoicePdfValueFormatter.rupees(value);
 
-  String _plainAmount(double value) => _amountFormat.format(value);
+  String _plainAmount(double value) =>
+      PosInvoicePdfValueFormatter.amount(value);
 
   String _summaryAmount(PosInvoiceAmountSummaryEntry row) {
     final prefix = row.isDeduction ? '- ' : '';

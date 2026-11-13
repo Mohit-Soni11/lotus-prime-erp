@@ -140,6 +140,55 @@ void main() {
     expect(await service.synchronize(billId, 'AJ-26-099'), isTrue);
     expect(await service.synchronize(billId, 'AJ-26-099'), isFalse);
 
+    final formatBillId = await db.into(db.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'AJ-26-097',
+            customerName: const drift.Value('Test Customer'),
+            billType: const drift.Value('NORMAL'),
+            totalAmount: const drift.Value(1000),
+            finalAmount: const drift.Value(1000),
+            paidAmount: const drift.Value(1000),
+            cashPaid: const drift.Value(1000),
+            dueAmount: const drift.Value(0),
+            paymentStatus: const drift.Value('PAID'),
+          ),
+        );
+    await db.into(db.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: formatBillId,
+            itemName: 'Gold ring',
+            itemTotal: const drift.Value(1000),
+            rate: const drift.Value(1000),
+            netWeight: const drift.Value(1),
+          ),
+        );
+    await archive.saveIfAbsent(
+      IssuedInvoiceKind.sales,
+      formatBillId,
+      'AJ-26-097',
+      original,
+    );
+    await archive.saveMetadata(
+      IssuedInvoiceKind.sales,
+      formatBillId,
+      'AJ-26-097',
+      {
+        'templateId': 'lotus-classic',
+        'format': 'a4',
+        'paidAmount': 1000,
+        'dueAmount': 0,
+        'paymentRevisionVersion': 3,
+      },
+    );
+    expect(await service.synchronize(formatBillId, 'AJ-26-097'), isTrue);
+    expect(await service.synchronize(formatBillId, 'AJ-26-097'), isFalse);
+    final formatMetadata = await archive.readMetadata(
+      IssuedInvoiceKind.sales,
+      formatBillId,
+      'AJ-26-097',
+    );
+    expect(formatMetadata, containsPair('pdfFormatVersion', 2));
+
     final legacyBillId = await db.into(db.bills).insert(
           BillsCompanion.insert(
             billNo: 'AJ-26-098',

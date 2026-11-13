@@ -45,9 +45,8 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   final PosBillingController billing;
-  final ShopSetupRepository _shopRepo = ShopSetupRepository();
-  final ShopPrintInformationRepository _shopPrintRepo =
-      ShopPrintInformationRepository();
+  final Future<Map<String, dynamic>?> Function(String) _shopSetupLoader;
+  final ShopPrintInformationRepository _shopPrintRepo;
   final SalesBillingRepo _salesBillingRepo;
   final PosInvoiceScopeService _scopeService = const PosInvoiceScopeService();
   final PosInvoicePdfBuilder _pdfBuilder = const PosInvoicePdfBuilder();
@@ -64,7 +63,13 @@ class PosInvoiceController extends ChangeNotifier {
     SalesBillingRepo? salesBillingRepo,
     PosCheckoutRepository? checkoutRepository,
     IssuedInvoiceArchive issuedInvoiceArchive = const IssuedInvoiceArchive(),
+    Future<Map<String, dynamic>?> Function(String)? shopSetupLoader,
+    ShopPrintInformationRepository? shopPrintRepository,
   })  : _db = database ?? AppDatabase(),
+        _shopSetupLoader =
+            shopSetupLoader ?? ShopSetupRepository().fetchExistingSetup,
+        _shopPrintRepo =
+            shopPrintRepository ?? ShopPrintInformationRepository(),
         _issuedDocumentStore =
             PosIssuedDocumentStore(archive: issuedInvoiceArchive),
         _salesBillingRepo = salesBillingRepo ?? SalesBillingRepo(db: database),
@@ -603,7 +608,7 @@ class PosInvoiceController extends ChangeNotifier {
     try {
       final String activeTenantId =
           await ShopSessionManager.getPermanentTenantId();
-      final shopData = await _shopRepo.fetchExistingSetup(activeTenantId);
+      final shopData = await _shopSetupLoader(activeTenantId);
 
       if (shopData != null) {
         final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
