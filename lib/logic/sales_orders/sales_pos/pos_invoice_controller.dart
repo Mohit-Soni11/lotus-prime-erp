@@ -82,6 +82,7 @@ class PosInvoiceController extends ChangeNotifier {
   int? savedBillDbId;
   bool _newSaleAwaitingArchive = false;
   bool _saleRevisionAwaitingArchive = false;
+  Future<void>? _finalizationFuture;
   final AppDatabase _db;
   final PosCheckoutRepository _checkoutRepo;
 
@@ -887,7 +888,6 @@ class PosInvoiceController extends ChangeNotifier {
       invoice = inv;
     }
     await _syncPrintableInvoiceLinesFromDatabase();
-    await _refreshActivePreviewPdf();
 
     isSavedToDb = true;
   }
@@ -907,7 +907,17 @@ class PosInvoiceController extends ChangeNotifier {
     invoice = _copyInvoiceWithSaleItems(currentInvoice, persistedItems);
   }
 
-  Future<void> finalizeInvoiceIfNeeded() async {
+  Future<void> finalizeInvoiceIfNeeded() {
+    final inProgress = _finalizationFuture;
+    if (inProgress != null) return inProgress;
+
+    final future = _finalizeInvoiceIfNeeded();
+    _finalizationFuture = future.whenComplete(() => _finalizationFuture = null);
+    return _finalizationFuture!;
+  }
+
+  Future<void> _finalizeInvoiceIfNeeded() async {
+    if (isSavedToDb && isIssuedPdfSaved && pdfBytes != null) return;
     if (invoice == null) {
       await generateInvoice();
     }

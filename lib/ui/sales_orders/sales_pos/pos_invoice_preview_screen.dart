@@ -60,6 +60,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   bool _isPdfSaved = false;
   bool _isPrintingInvoice = false;
   bool _hasPrintedInvoice = false;
+  bool _isFinalizingSale = false;
 
   @override
   void initState() {
@@ -90,6 +91,11 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       if (isPrinting != null) _isPrintingInvoice = isPrinting;
       if (hasPrinted != null) _hasPrintedInvoice = hasPrinted;
     });
+  }
+
+  void _setSaleFinalizing(bool value) {
+    if (!mounted) return;
+    setState(() => _isFinalizingSale = value);
   }
 
   @override

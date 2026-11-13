@@ -40,8 +40,9 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
                   child: _InvoiceActionButton(
                     label: isFinalized ? 'Share PDF' : 'Finalize & Share',
                     icon: Icons.chat_bubble_rounded,
-                    onPressed:
-                        isReady && hasPhone ? () => _shareInvoice() : null,
+                    onPressed: isReady && hasPhone && !_isFinalizingSale
+                        ? () => _shareInvoice()
+                        : null,
                     accentColor: const Color(0xFF25D366),
                     filled: true,
                   ),
@@ -57,8 +58,9 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
                     icon: _isPdfSaved
                         ? Icons.check_circle_rounded
                         : Icons.download_rounded,
-                    onPressed:
-                        isReady && !_isSavingPdf ? () => _exportPdf() : null,
+                    onPressed: isReady && !_isSavingPdf && !_isFinalizingSale
+                        ? () => _exportPdf()
+                        : null,
                     isBusy: _isSavingPdf,
                     accentColor: _isPdfSaved
                         ? SalesPosColors.success
@@ -75,8 +77,9 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
                       ? 'Print & New Sale'
                       : 'Finalize, Print & New Sale',
               icon: Icons.print_rounded,
-              onPressed:
-                  isReady && !_isPrintingInvoice ? () => _printInvoice() : null,
+              onPressed: isReady && !_isPrintingInvoice && !_isFinalizingSale
+                  ? () => _printInvoice()
+                  : null,
               accentColor: SalesPosColors.brandGold,
               filled: true,
               isPrimary: true,
@@ -84,11 +87,18 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
             ),
             const SizedBox(height: 8),
             _InvoiceActionButton(
-              label: isFinalized ? 'Start New Sale' : 'Save & New Sale',
+              label: _isFinalizingSale
+                  ? 'Saving Sale...'
+                  : isFinalized
+                      ? 'Start New Sale'
+                      : 'Save & New Sale',
               icon: Icons.done_all_rounded,
-              onPressed: isReady ? () => _completeAndNewSale() : null,
+              onPressed: isReady && !_isFinalizingSale
+                  ? () => _completeAndNewSale()
+                  : null,
               accentColor: SalesPosColors.success,
               isPrimary: true,
+              isBusy: _isFinalizingSale,
             ),
           ],
         ),
@@ -144,6 +154,8 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
   }
 
   Future<void> _completeAndNewSale() async {
+    if (_isFinalizingSale) return;
+    _setSaleFinalizing(true);
     try {
       await _invCtrl.finalizeInvoiceIfNeeded();
       if (!mounted) return;
@@ -169,6 +181,8 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
             ? error.message.toString()
             : 'Could not close this sale. Please try again.',
       );
+    } finally {
+      _setSaleFinalizing(false);
     }
   }
 }

@@ -301,7 +301,10 @@ void main() {
     expect(controller.genState, InvoiceGenState.ready);
 
     failArchive = false;
-    await controller.finalizeInvoiceIfNeeded();
+    await Future.wait([
+      controller.finalizeInvoiceIfNeeded(),
+      controller.finalizeInvoiceIfNeeded(),
+    ]);
 
     expect(controller.savedBillDbId, isNotNull);
     expect(controller.isIssuedPdfSaved, isTrue);
