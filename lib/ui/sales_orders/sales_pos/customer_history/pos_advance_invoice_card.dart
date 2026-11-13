@@ -11,6 +11,7 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
     required this.width,
     required this.onViewBooking,
     required this.onUseInSale,
+    required this.onCancelSaleDraft,
     this.isSelected = false,
     this.isLoaded = false,
   });
@@ -21,6 +22,7 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
   final bool isLoaded;
   final VoidCallback onViewBooking;
   final VoidCallback onUseInSale;
+  final VoidCallback onCancelSaleDraft;
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +150,29 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Divider(height: 1, color: Color(0xFFF0E8D9)),
+          if (isLoaded) ...[
+            const SizedBox(height: 7),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCF5E8),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      size: 14, color: Color(0xFF087D51)),
+                  SizedBox(width: 5),
+                  Text('Sale Draft Loaded',
+                      style: TextStyle(
+                          color: Color(0xFF087D51),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 9),
           _buildActions(),
         ],
@@ -179,11 +204,28 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _SaleActionButton(
-            isLoaded: isLoaded,
-            showArrow: width >= 330,
-            onTap: onUseInSale,
-          ),
+          child: isLoaded
+              ? OutlinedButton.icon(
+                  onPressed: onCancelSaleDraft,
+                  icon: const Icon(Icons.close_rounded, size: 17),
+                  label: const Text('Cancel Draft',
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFBD3A32),
+                    side: const BorderSide(color: Color(0xFFE59E97)),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: const Size(0, 38),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w800),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9)),
+                  ),
+                )
+              : _SaleActionButton(
+                  showArrow: width >= 330,
+                  onTap: onUseInSale,
+                ),
         ),
       ],
     );
@@ -192,12 +234,10 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
 
 class _SaleActionButton extends StatelessWidget {
   const _SaleActionButton({
-    required this.isLoaded,
     required this.showArrow,
     required this.onTap,
   });
 
-  final bool isLoaded;
   final bool showArrow;
   final VoidCallback onTap;
 
@@ -208,43 +248,37 @@ class _SaleActionButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(9),
       child: Ink(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isLoaded
-                ? const [Color(0xFF1BBD79), Color(0xFF08855A)]
-                : const [Color(0xFFE5AD21), Color(0xFFA96B00)],
+            colors: [Color(0xFFE5AD21), Color(0xFFA96B00)],
           ),
           borderRadius: BorderRadius.circular(9),
         ),
         child: InkWell(
-          onTap: isLoaded ? null : onTap,
+          onTap: onTap,
           borderRadius: BorderRadius.circular(9),
           child: SizedBox(
             height: 38,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                    isLoaded
-                        ? Icons.check_circle_rounded
-                        : Icons.shopping_cart_outlined,
-                    size: 17,
-                    color: Colors.white),
+                const Icon(Icons.shopping_cart_outlined,
+                    size: 17, color: Colors.white),
                 const SizedBox(width: 5),
-                Flexible(
+                const Flexible(
                   child: Text(
-                    isLoaded ? 'Sale Draft Loaded' : 'Use in Sale',
+                    'Use in Sale',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w800),
                   ),
                 ),
-                if (showArrow && !isLoaded) ...[
+                if (showArrow) ...[
                   const SizedBox(width: 4),
                   const Icon(Icons.arrow_forward_rounded,
                       size: 15, color: Colors.white),

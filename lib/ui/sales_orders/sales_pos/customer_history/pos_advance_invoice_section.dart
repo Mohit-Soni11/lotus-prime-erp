@@ -18,6 +18,7 @@ class PosAdvanceInvoiceSection extends StatefulWidget {
     required this.orders,
     this.onViewBooking,
     this.onUseInSale,
+    this.onCancelSaleDraft,
     this.pdfLoader = const BookingIssuedPdfLoader(),
   });
 
@@ -25,6 +26,7 @@ class PosAdvanceInvoiceSection extends StatefulWidget {
   final List<CustomerAdvanceOrderModel> orders;
   final Future<void> Function(CustomerAdvanceOrderModel)? onViewBooking;
   final Future<void> Function(CustomerAdvanceOrderModel)? onUseInSale;
+  final Future<void> Function(CustomerAdvanceOrderModel)? onCancelSaleDraft;
   final BookingIssuedPdfLoader pdfLoader;
 
   @override
@@ -179,6 +181,8 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
                         widget.orders[index].id,
                     onViewBooking: () => _runAction(index, _viewBooking),
                     onUseInSale: () => _runAction(index, _useInSale),
+                    onCancelSaleDraft: () =>
+                        _runAction(index, _cancelSaleDraft),
                   ),
                   if (index != widget.orders.length - 1)
                     const SizedBox(width: _gap),
@@ -306,5 +310,18 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
           : widget.controller.advanceConversionError ??
               'Advance booking could not be loaded for conversion.',
     );
+  }
+
+  Future<void> _cancelSaleDraft(CustomerAdvanceOrderModel order) async {
+    final handler = widget.onCancelSaleDraft;
+    if (handler != null) return handler(order);
+    final cancelled = await widget.controller.cancelAdvanceSaleDraft();
+    if (!cancelled && mounted) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: 'This sale draft could not be cancelled.',
+      );
+    }
   }
 }

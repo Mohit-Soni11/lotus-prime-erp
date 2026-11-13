@@ -5,7 +5,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
 
 void main() {
-  test('Use in Sale loads booking details and preserves pending status',
+  test('booking draft can be removed or cancelled without changing advance',
       () async {
     final database = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
@@ -48,5 +48,21 @@ void main() {
     expect(controller.advCtrl.text, '8000');
     expect((await database.select(database.salesOrders).get()).single.status,
         'PENDING');
+
+    controller.removeSaleItem(0);
+    expect(controller.convertedAdvanceOrderId, isNull);
+    expect(controller.advCtrl.text, isEmpty);
+
+    expect(await controller.initializeFromAdvanceOrder(orderId), isTrue);
+    expect(await controller.cancelAdvanceSaleDraft(), isTrue);
+    expect(controller.convertedAdvanceOrderId, isNull);
+    expect(controller.saleItems, isEmpty);
+    expect(controller.advCtrl.text, isEmpty);
+    expect(controller.selectedCustomer?.id, customerId);
+    expect((await database.select(database.salesOrders).get()).single.status,
+        'PENDING');
+    expect(
+        (await database.select(database.orderAdvances).get()).single.amountPaid,
+        8000);
   });
 }

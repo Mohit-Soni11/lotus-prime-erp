@@ -160,6 +160,7 @@ void main() {
     );
     var pdfOpens = 0;
     var saleLoads = 0;
+    var saleCancels = 0;
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -173,6 +174,11 @@ void main() {
             onUseInSale: (_) async {
               saleLoads++;
               controller.convertedAdvanceOrderId = order.id;
+            },
+            onCancelSaleDraft: (_) async {
+              saleCancels++;
+              controller.clearEntirePOS(
+                  isHolding: false, refreshInvoicePreview: false);
             },
           ),
         ),
@@ -204,10 +210,13 @@ void main() {
     expect(saleLoads, 1);
     expect(find.text('Sale Draft Loaded'), findsOneWidget);
     expect(find.text('Use in Sale'), findsNothing);
+    expect(find.text('Cancel Draft'), findsOneWidget);
 
-    controller.clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
+    await tester.tap(find.text('Cancel Draft'));
     await tester.pump();
+    expect(saleCancels, 1);
     expect(find.text('Use in Sale'), findsOneWidget);
+    expect(find.text('Sale Draft Loaded'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

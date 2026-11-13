@@ -1181,6 +1181,7 @@ class PosBillingController extends ChangeNotifier {
 
   int? convertedAdvanceOrderId;
   String? convertedAdvanceOrderNo;
+  SaleItemModel? _convertedAdvanceSaleItem;
   bool isLoadingAdvanceConversion = false;
   String? advanceConversionError;
   bool get isConvertingAdvance => convertedAdvanceOrderId != null;
@@ -1343,6 +1344,7 @@ class PosBillingController extends ChangeNotifier {
       item.lessCtrl.clear();
       item.rateCtrl.text = _formatEditNumber(order.lockedRate);
       saleItems.add(item);
+      _convertedAdvanceSaleItem = item;
       activeRowIndex = 0;
 
       final totalAdvance =
@@ -1361,6 +1363,17 @@ class PosBillingController extends ChangeNotifier {
     }
   }
 
+  Future<bool> cancelAdvanceSaleDraft() async {
+    if (convertedAdvanceOrderId == null || isCurrentSaleCommitted) {
+      return false;
+    }
+
+    final customerId = selectedCustomer?.id ?? customerHistory?.id;
+    clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
+    await _restoreSelectedCustomer(customerId);
+    return true;
+  }
+
   Future<void> markConvertedAdvanceDeliveredIfNeeded(
     String invoiceNumber,
   ) async {
@@ -1376,6 +1389,7 @@ class PosBillingController extends ChangeNotifier {
       if (success) {
         convertedAdvanceOrderId = null;
         convertedAdvanceOrderNo = null;
+        _convertedAdvanceSaleItem = null;
         advanceConversionError = null;
       } else {
         advanceConversionError =
@@ -2129,6 +2143,13 @@ class PosBillingController extends ChangeNotifier {
 
   void removeSaleItem(int index) {
     if (index < 0 || index >= saleItems.length) return;
+    if (identical(saleItems[index], _convertedAdvanceSaleItem)) {
+      convertedAdvanceOrderId = null;
+      convertedAdvanceOrderNo = null;
+      _convertedAdvanceSaleItem = null;
+      advanceConversionError = null;
+      advCtrl.clear();
+    }
     saleItems[index].removeListener(_onChildItemChanged);
     saleItems[index].dispose();
     saleItems.removeAt(index);
@@ -2446,6 +2467,7 @@ class PosBillingController extends ChangeNotifier {
     editLoadError = null;
     convertedAdvanceOrderId = null;
     convertedAdvanceOrderNo = null;
+    _convertedAdvanceSaleItem = null;
     advanceConversionError = null;
     _committedInvoiceNumber = null;
     changeReturnMethod = null;
