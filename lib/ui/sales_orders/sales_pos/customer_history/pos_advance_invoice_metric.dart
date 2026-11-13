@@ -22,11 +22,11 @@ class PosAdvanceInvoiceMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: width,
-      constraints: const BoxConstraints(minHeight: 75),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 66),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFCF8),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(13),
         border: Border.all(color: const Color(0xFFF0DFCA)),
         boxShadow: [
           BoxShadow(
@@ -38,8 +38,8 @@ class PosAdvanceInvoiceMetric extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 28, color: const Color(0xFFCE8700)),
-          const SizedBox(width: 18),
+          Icon(icon, size: 25, color: const Color(0xFFCE8700)),
+          const SizedBox(width: 13),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -50,7 +50,7 @@ class PosAdvanceInvoiceMetric extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     color: Color(0xFF263953),
                   ),
                 ),
@@ -59,7 +59,7 @@ class PosAdvanceInvoiceMetric extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 23,
+                    fontSize: 21,
                     height: 1.1,
                     fontWeight: FontWeight.w900,
                     color: valueColor,

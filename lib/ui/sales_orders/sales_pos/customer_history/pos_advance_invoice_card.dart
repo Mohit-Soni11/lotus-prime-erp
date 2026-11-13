@@ -12,11 +12,13 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
     required this.onViewBooking,
     required this.onUseInSale,
     this.isSelected = false,
+    this.isLoaded = false,
   });
 
   final CustomerAdvanceOrderModel order;
   final double width;
   final bool isSelected;
+  final bool isLoaded;
   final VoidCallback onViewBooking;
   final VoidCallback onUseInSale;
 
@@ -29,16 +31,18 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
 
     return Container(
       width: width,
-      constraints: const BoxConstraints(minHeight: 294),
-      padding: const EdgeInsets.fromLTRB(16, 17, 16, 18),
+      constraints: const BoxConstraints(minHeight: 216),
+      padding: const EdgeInsets.fromLTRB(13, 10, 13, 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isSelected
-              ? SalesPosColors.brandGold.withValues(alpha: 0.80)
-              : const Color(0xFFEBD7B8),
-          width: isSelected ? 1.5 : 1,
+          color: isLoaded
+              ? const Color(0xFF65C695)
+              : isSelected
+                  ? SalesPosColors.brandGold.withValues(alpha: 0.80)
+                  : const Color(0xFFEBD7B8),
+          width: isLoaded || isSelected ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
@@ -76,19 +80,19 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
               _RateBadge(isLocked: rateLocked),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 7),
           Text(
             order.itemName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: SalesPosColors.textDark,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: 6),
           Text.rich(
             TextSpan(
               children: [
@@ -108,12 +112,12 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF263953),
-              fontSize: 15,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const Divider(height: 1, color: Color(0xFFF0E8D9)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -126,7 +130,7 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
                 ),
               ),
               Container(
-                height: 48,
+                height: 40,
                 width: 1,
                 color: const Color(0xFFE8D4B3),
               ),
@@ -142,90 +146,113 @@ class PosAdvanceInvoiceCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 13),
+          const SizedBox(height: 8),
           const Divider(height: 1, color: Color(0xFFF0E8D9)),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onViewBooking,
-                  icon: const Icon(Icons.visibility_outlined, size: 20),
-                  label: const Text('View Booking'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: SalesPosColors.textDark,
-                    side: const BorderSide(color: Color(0xFFD38C00)),
-                    padding: const EdgeInsets.symmetric(horizontal: 7),
-                    minimumSize: const Size(0, 44),
-                    textStyle: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFFE5AD21), Color(0xFFA96B00)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: InkWell(
-                      onTap: onUseInSale,
-                      borderRadius: BorderRadius.circular(10),
-                      child: SizedBox(
-                        height: 44,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 5),
-                            const Flexible(
-                              child: Text(
-                                'Use in Sale',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            if (width >= 330) ...[
-                              const SizedBox(width: 5),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 17,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 9),
+          _buildActions(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onViewBooking,
+            icon: const Icon(Icons.visibility_outlined, size: 18),
+            label: const Text('View Booking',
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SalesPosColors.textDark,
+              side: const BorderSide(color: Color(0xFFD38C00)),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              minimumSize: const Size(0, 38),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _SaleActionButton(
+            isLoaded: isLoaded,
+            showArrow: width >= 330,
+            onTap: onUseInSale,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SaleActionButton extends StatelessWidget {
+  const _SaleActionButton({
+    required this.isLoaded,
+    required this.showArrow,
+    required this.onTap,
+  });
+
+  final bool isLoaded;
+  final bool showArrow;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(9),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isLoaded
+                ? const [Color(0xFF1BBD79), Color(0xFF08855A)]
+                : const [Color(0xFFE5AD21), Color(0xFFA96B00)],
+          ),
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: InkWell(
+          onTap: isLoaded ? null : onTap,
+          borderRadius: BorderRadius.circular(9),
+          child: SizedBox(
+            height: 38,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                    isLoaded
+                        ? Icons.check_circle_rounded
+                        : Icons.shopping_cart_outlined,
+                    size: 17,
+                    color: Colors.white),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    isLoaded ? 'Sale Draft Loaded' : 'Use in Sale',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ),
+                if (showArrow && !isLoaded) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_rounded,
+                      size: 15, color: Colors.white),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -288,16 +315,16 @@ class _AmountDetail extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Color(0xFF263953), fontSize: 14),
+          style: const TextStyle(color: Color(0xFF263953), fontSize: 12),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: valueColor,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w900,
           ),
         ),

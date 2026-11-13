@@ -41,8 +41,22 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
   int? _busyOrderId;
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void didUpdateWidget(covariant PosAdvanceInvoiceSection oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
     if (oldWidget.orders.firstOrNull?.id != widget.orders.firstOrNull?.id) {
       _activeIndex = 0;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,6 +73,7 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
     _focusNode.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -87,55 +102,66 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
-              child: PosAdvanceInvoiceHeader(
-                bookingCount: widget.orders.length,
-                advanceTotal: advanceTotal,
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFF0E8D9)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 18, 12, 23),
-              child: LayoutBuilder(
-                builder: (context, constraints) =>
-                    _buildCarousel(constraints.maxWidth),
-              ),
-            ),
-          ],
-        ),
+        child: _buildStandardContent(advanceTotal),
       ),
+    );
+  }
+
+  Widget _buildStandardContent(double advanceTotal) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 18, 10),
+          child: PosAdvanceInvoiceHeader(
+            bookingCount: widget.orders.length,
+            advanceTotal: advanceTotal,
+          ),
+        ),
+        const Divider(height: 1, color: Color(0xFFF0E8D9)),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) =>
+                _buildCarousel(constraints.maxWidth),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildCarousel(double width) {
     const arrowWidth = 36.0;
     const arrowGap = 10.0;
-    final viewportWidth =
-        (width - 2 * (arrowWidth + arrowGap)).clamp(1.0, width);
-    final visibleCount = viewportWidth >= 1480
+    final visibleCount = width >= 1480
         ? 4
-        : viewportWidth >= 1040
+        : width >= 1040
             ? 3
-            : viewportWidth >= 660
+            : width >= 660
                 ? 2
                 : 1;
-    final cardWidth = visibleCount == 1
-        ? viewportWidth.clamp(280.0, 390.0)
-        : (viewportWidth - _gap * (visibleCount - 1)) / visibleCount;
     final canNavigate = widget.orders.length > visibleCount;
+    final viewportWidth = canNavigate
+        ? (width - 2 * (arrowWidth + arrowGap)).clamp(1.0, width)
+        : width;
+    final displayCount = widget.orders.length < visibleCount
+        ? widget.orders.length
+        : visibleCount;
+    final cardWidth = displayCount <= 1
+        ? viewportWidth.clamp(280.0, 330.0)
+        : ((viewportWidth - _gap * (displayCount - 1)) / displayCount)
+            .clamp(280.0, 360.0);
 
     return Row(
       children: [
-        PosAdvanceCarouselArrow(
-          icon: Icons.chevron_left_rounded,
-          enabled: canNavigate && _activeIndex > 0,
-          onTap: () => _moveSelection(-1, cardWidth),
-        ),
-        const SizedBox(width: arrowGap),
+        if (canNavigate) ...[
+          PosAdvanceCarouselArrow(
+            icon: Icons.chevron_left_rounded,
+            enabled: _activeIndex > 0,
+            onTap: () => _moveSelection(-1, cardWidth),
+          ),
+          const SizedBox(width: arrowGap),
+        ],
         Expanded(
           child: SingleChildScrollView(
             controller: _scrollController,
@@ -149,6 +175,8 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
                     order: widget.orders[index],
                     width: cardWidth,
                     isSelected: index == _activeIndex,
+                    isLoaded: widget.controller.convertedAdvanceOrderId ==
+                        widget.orders[index].id,
                     onViewBooking: () => _runAction(index, _viewBooking),
                     onUseInSale: () => _runAction(index, _useInSale),
                   ),
@@ -159,12 +187,14 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
             ),
           ),
         ),
-        const SizedBox(width: arrowGap),
-        PosAdvanceCarouselArrow(
-          icon: Icons.chevron_right_rounded,
-          enabled: canNavigate && _activeIndex < widget.orders.length - 1,
-          onTap: () => _moveSelection(1, cardWidth),
-        ),
+        if (canNavigate) ...[
+          const SizedBox(width: arrowGap),
+          PosAdvanceCarouselArrow(
+            icon: Icons.chevron_right_rounded,
+            enabled: _activeIndex < widget.orders.length - 1,
+            onTap: () => _moveSelection(1, cardWidth),
+          ),
+        ],
       ],
     );
   }
@@ -183,18 +213,22 @@ class _PosAdvanceInvoiceSectionState extends State<PosAdvanceInvoiceSection> {
   }
 
   double _currentCardWidth() {
-    final width = context.size?.width ?? 0;
-    final viewport = (width - 2 * (36 + 10) - 24).clamp(1.0, width);
-    final count = viewport >= 1480
+    final width = (context.size?.width ?? 0) - 24;
+    final count = width >= 1480
         ? 4
-        : viewport >= 1040
+        : width >= 1040
             ? 3
-            : viewport >= 660
+            : width >= 660
                 ? 2
                 : 1;
-    return count == 1
-        ? viewport.clamp(280.0, 390.0)
-        : (viewport - _gap * (count - 1)) / count;
+    final canNavigate = widget.orders.length > count;
+    final viewport = canNavigate ? (width - 92).clamp(1.0, width) : width;
+    final displayCount =
+        widget.orders.length < count ? widget.orders.length : count;
+    return displayCount <= 1
+        ? viewport.clamp(280.0, 330.0)
+        : ((viewport - _gap * (displayCount - 1)) / displayCount)
+            .clamp(280.0, 360.0);
   }
 
   void _moveSelection(int direction, double cardWidth) {

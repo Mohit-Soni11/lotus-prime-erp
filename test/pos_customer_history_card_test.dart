@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'package:lotus_erp/models/customer/customer_profile/customer_profile_model.dart';
 import 'package:lotus_erp/ui/sales_orders/sales_pos/customer_history/pos_customer_history_card.dart';
+import 'package:lotus_erp/ui/sales_orders/sales_pos/customer_history/pos_advance_invoice_card.dart';
 import 'package:lotus_erp/ui/sales_orders/sales_pos/customer_history/pos_advance_invoice_section.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -127,6 +128,10 @@ void main() {
     expect(find.text('₹12,000'), findsOneWidget);
     expect(find.text('View Booking'), findsNWidgets(3));
     expect(find.text('Use in Sale'), findsNWidgets(3));
+    expect(
+      tester.getSize(find.byType(PosAdvanceInvoiceCard).first).height,
+      lessThan(250),
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -158,18 +163,35 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: PosAdvanceInvoiceSection(
-          controller: controller,
-          orders: [order],
-          onViewBooking: (_) async {
-            pdfOpens++;
-          },
-          onUseInSale: (_) async {
-            saleLoads++;
-          },
+        body: SingleChildScrollView(
+          child: PosAdvanceInvoiceSection(
+            controller: controller,
+            orders: [order],
+            onViewBooking: (_) async {
+              pdfOpens++;
+            },
+            onUseInSale: (_) async {
+              saleLoads++;
+              controller.convertedAdvanceOrderId = order.id;
+            },
+          ),
         ),
       ),
     ));
+
+    expect(
+      tester.getSize(find.byType(PosAdvanceInvoiceSection)).height,
+      lessThan(390),
+    );
+    final bookingCard = tester.getSize(find.byType(PosAdvanceInvoiceCard));
+    expect(bookingCard.width, 330);
+    expect(bookingCard.height, greaterThan(200));
+    expect(
+      tester.getTopLeft(find.byType(PosAdvanceInvoiceCard)).dy,
+      greaterThan(
+        tester.getBottomRight(find.text('Booking Advance Invoices')).dy,
+      ),
+    );
 
     await tester.tap(find.text('View Booking'));
     await tester.pump();
@@ -180,6 +202,12 @@ void main() {
     await tester.pump();
     expect(pdfOpens, 1);
     expect(saleLoads, 1);
+    expect(find.text('Sale Draft Loaded'), findsOneWidget);
+    expect(find.text('Use in Sale'), findsNothing);
+
+    controller.clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
+    await tester.pump();
+    expect(find.text('Use in Sale'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

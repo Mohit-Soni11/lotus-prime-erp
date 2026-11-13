@@ -23,23 +23,23 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 68,
-              height: 68,
+              width: 62,
+              height: 62,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [Color(0xFFFFC52F), Color(0xFFB87A00)],
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: const Icon(
                 Icons.bookmark_rounded,
-                size: 37,
+                size: 34,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 20),
+            const SizedBox(width: 16),
             Flexible(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +51,7 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: SalesPosColors.textDark,
-                      fontSize: 26,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       height: 1.1,
                     ),
@@ -64,7 +64,7 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
                     style: TextStyle(
                       color:
                           SalesPosColors.bodyTextMain.withValues(alpha: 0.85),
-                      fontSize: 16,
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -74,14 +74,14 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
         );
 
         final metrics = Wrap(
-          spacing: 14,
-          runSpacing: 10,
+          spacing: 12,
+          runSpacing: 8,
           children: [
             PosAdvanceInvoiceMetric(
               icon: Icons.description_outlined,
               label: 'Total Bookings',
               value: '$bookingCount',
-              width: width >= 900 ? 220 : 202,
+              width: width >= 900 ? 205 : 190,
             ),
             PosAdvanceInvoiceMetric(
               icon: Icons.stacked_bar_chart_rounded,
@@ -90,7 +90,7 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
                 advanceTotal,
                 alwaysShowPaise: true,
               ),
-              width: width >= 900 ? 270 : 240,
+              width: width >= 900 ? 250 : 230,
               valueColor: SalesPosColors.goldHoverDark,
             ),
           ],
@@ -101,7 +101,7 @@ class PosAdvanceInvoiceHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               heading,
-              const SizedBox(height: 15),
+              const SizedBox(height: 13),
               metrics,
             ],
           );
