@@ -2151,6 +2151,15 @@ class AppDatabase extends _$AppDatabase {
                 'DROP TRIGGER IF EXISTS bank_day_closed_update');
             await customStatement(financeDayClosureSchemaSql[5]);
           }
+          if (from < 79 &&
+              await _tableExists('bill_items') &&
+              !((await _tableColumns('bill_items'))
+                  .contains('quantity_unit_display_name'))) {
+            await m.addColumn(
+              billItems,
+              billItems.quantityUnitDisplayName,
+            );
+          }
           await _ensureReturnReversalSchemaInternal();
           if (from < 71) await _ensureDayBookClosedSourceGuards();
         },

@@ -68,6 +68,27 @@ void main() {
     expect(await db.customSelect('SELECT id FROM stock_item_units').get(),
         isEmpty);
   });
+
+  test('direct Add Stock persists the selected saleable unit', () async {
+    final row = _row('Diamond Earrings', quantity: 2, netWeight: 3.5)
+      ..quantityMode = 'PAIR'
+      ..piecesPerPacket = 2;
+    await DirectStockIntakeRepository(db).save(
+      metal: StockCategory.diamond,
+      rows: [row],
+      purityLabel: (_) => 'Diamond',
+      fallbackTouch: 100,
+      defaultHsnCode: '7113',
+    );
+
+    final saved = await db.customSelect('''
+      SELECT quantity, quantity_mode, pieces_per_packet
+      FROM stock_items
+    ''').getSingle();
+    expect(saved.read<int>('quantity'), 2);
+    expect(saved.read<String>('quantity_mode'), 'PAIR');
+    expect(saved.read<int>('pieces_per_packet'), 2);
+  });
 }
 
 StockRowEntry _row(String name,

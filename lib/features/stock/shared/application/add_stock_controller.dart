@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_models.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_purity_utils.dart';
@@ -647,7 +648,9 @@ class AddStockController extends ChangeNotifier {
   }
 
   void updateItemName(String rowId, String value) {
-    _rows.firstWhere((row) => row.id == rowId).itemName = value;
+    final row = _rows.firstWhere((row) => row.id == rowId);
+    row.itemName = value;
+    _inferRowUnit(row);
     _emitChange();
   }
 
@@ -657,8 +660,51 @@ class AddStockController extends ChangeNotifier {
   }
 
   void updateSubCategory(String rowId, StockSubCategory value) {
-    _rows.firstWhere((row) => row.id == rowId).subCategory = value;
+    final row = _rows.firstWhere((row) => row.id == rowId);
+    row.subCategory = value;
+    _inferRowUnit(row);
     _emitChange();
+  }
+
+  void updateQuantityUnit(String rowId, JewelleryUnit unit) {
+    final row = _rows.firstWhere((row) => row.id == rowId);
+    if (row.unit == unit && row.quantityModeManuallySet) return;
+    if (row.unit == unit) {
+      row.quantityModeManuallySet = true;
+      _emitChange();
+      return;
+    }
+    row.quantityMode = unit.storageCode;
+    row.quantityModeManuallySet = true;
+    row.packetCount = unit == JewelleryUnit.packet ? row.quantity : 0;
+    row.piecesPerPacket = unit == JewelleryUnit.pair
+        ? 2
+        : unit == JewelleryUnit.packet
+            ? 0
+            : 1;
+    _emitChange();
+  }
+
+  void updatePiecesPerPacket(String rowId, String value) {
+    final row = _rows.firstWhere((row) => row.id == rowId);
+    row.piecesPerPacket = int.tryParse(value) ?? 0;
+    _emitChange();
+  }
+
+  void _inferRowUnit(StockRowEntry row) {
+    if (row.quantityModeManuallySet) return;
+    final unit = JewelleryUnitResolver.infer(
+      itemName: row.itemName,
+      category: row.subCategory.label,
+    );
+    if (unit == row.unit) return;
+    row.quantityMode = unit.storageCode;
+    row.packetCount = unit == JewelleryUnit.packet ? row.quantity : 0;
+    row.piecesPerPacket = unit == JewelleryUnit.pair
+        ? 2
+        : unit == JewelleryUnit.packet
+            ? 0
+            : 1;
   }
 
   void updateHuid(String rowId, String value) {
@@ -742,8 +788,9 @@ class AddStockController extends ChangeNotifier {
   }
 
   void updateQuantity(String rowId, String value) {
-    _rows.firstWhere((row) => row.id == rowId).quantity =
-        int.tryParse(value) ?? 0;
+    final row = _rows.firstWhere((row) => row.id == rowId);
+    row.quantity = int.tryParse(value) ?? 0;
+    row.packetCount = row.unit == JewelleryUnit.packet ? row.quantity : 0;
     _emitChange();
   }
 

@@ -19,6 +19,7 @@ class BillItems extends Table with BaseTable {
   IntColumn get quantity => integer().withDefault(const Constant(1))();
   TextColumn get quantityUnitCode =>
       text().withDefault(const Constant('PCS'))();
+  TextColumn get quantityUnitDisplayName => text().nullable()();
   RealColumn get grossWeight => real().withDefault(const Constant(0.0))();
   RealColumn get lessWeight => real().withDefault(const Constant(0.0))();
   BoolColumn get lessWeightPerPiece =>

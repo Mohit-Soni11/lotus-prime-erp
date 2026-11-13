@@ -444,6 +444,21 @@ String valuationUnitName({
   required bool plural,
 }) {
   final mode = quantityMode.trim().toLowerCase();
+  if (mode == 'pair' || mode == 'pairs') {
+    return plural ? 'pairs' : 'pair';
+  }
+  if (mode == 'set' || mode == 'sets') {
+    return plural ? 'sets' : 'set';
+  }
+  if (mode == 'pack' || mode == 'packs' || mode == 'packet') {
+    return plural ? 'packets' : 'packet';
+  }
+  if (mode == 'lot' || mode == 'bulk') {
+    return plural ? 'lots' : 'lot';
+  }
+  if (mode == 'pieces' || mode == 'piece' || mode == 'pcs') {
+    return plural ? 'pcs' : 'pc';
+  }
   final normalizedItem = itemName.trim().toLowerCase();
   final inferredPair = _containsAny(normalizedItem, const [
         'jhumka',

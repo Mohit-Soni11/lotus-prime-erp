@@ -110,6 +110,13 @@ class _QuantityUnitButton extends StatelessWidget {
       waitDuration: const Duration(milliseconds: 400),
       child: PopupMenuButton<GoldQuantityUnit>(
         tooltip: 'Select quantity unit',
+        color: GoldStockColors.cardBg,
+        position: PopupMenuPosition.under,
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+          side: const BorderSide(color: GoldStockColors.cardBorder),
+        ),
         onSelected: (unit) => model.setQuantityUnit(unit),
         itemBuilder: (context) => GoldQuantityUnit.values
             .map(

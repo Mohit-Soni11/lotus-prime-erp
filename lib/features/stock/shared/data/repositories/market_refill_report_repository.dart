@@ -641,6 +641,8 @@ class MarketRefillReportRepository {
     if (mode.contains('set')) return 'set';
     if (mode.contains('pair')) return 'pair';
     if (mode.contains('bulk')) return 'bulk';
+    if (mode.contains('lot')) return 'bulk';
+    if (mode.isNotEmpty) return 'pcs';
     if (item.contains('payal') ||
         item.contains('bichhiya') ||
         item.contains('bali') ||

@@ -78,6 +78,7 @@ void main() {
       itemName: 'Dulhan Payal',
       subCategory: 'Payal',
       metal: 'Silver',
+      quantityMode: 'PAIR',
       createdAt: now,
     );
     final secondItemId = await _insertStockItem(
@@ -86,6 +87,7 @@ void main() {
       itemName: 'Fancy Payal',
       subCategory: 'Payal',
       metal: 'Silver',
+      quantityMode: 'PAIR',
       createdAt: now,
     );
     await _insertStockUnit(
@@ -265,6 +267,7 @@ void main() {
       subCategory: 'Payal',
       metal: 'Silver',
       quantity: 50,
+      quantityMode: 'LOT',
       createdAt: now,
     );
     await _insertStockUnit(
@@ -288,7 +291,7 @@ void main() {
         'Payal');
     expect(
         controller.inventoryRuleGroupCardsForMetal('Silver').single.unitLabel,
-        'pair');
+        'bulk');
     expect(
         controller
             .inventoryRuleGroupCardsForMetal('Silver')
@@ -306,6 +309,7 @@ void main() {
       itemName: 'Gold Jhumka',
       subCategory: 'Jhumka',
       metal: 'Gold',
+      quantityMode: 'PAIR',
       createdAt: now,
     );
     final haarId = await _insertStockItem(
@@ -314,6 +318,7 @@ void main() {
       itemName: 'Gold Haar',
       subCategory: 'Haar',
       metal: 'Gold',
+      quantityMode: 'SET',
       createdAt: now,
     );
     final nosePinId = await _insertStockItem(
@@ -659,9 +664,10 @@ Future<int> _insertStockItem(
   required String subCategory,
   required String metal,
   int quantity = 1,
+  String quantityMode = 'PIECES',
   required DateTime createdAt,
-}) {
-  return database.into(database.stockItems).insert(
+}) async {
+  final stockId = await database.into(database.stockItems).insert(
         StockItemsCompanion.insert(
           createdAt: drift.Value(createdAt),
           sku: sku,
@@ -677,6 +683,12 @@ Future<int> _insertStockItem(
           isActive: const drift.Value(true),
         ),
       );
+  await database.ensureStockInventorySchema();
+  await database.customStatement(
+    'UPDATE stock_items SET quantity_mode = ? WHERE id = ?',
+    [quantityMode, stockId],
+  );
+  return stockId;
 }
 
 Future<void> _insertStockUnit(

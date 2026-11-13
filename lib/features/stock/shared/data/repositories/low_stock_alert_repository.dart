@@ -676,6 +676,17 @@ class LowStockAlertRepository {
   }) {
     final item = itemType.trim().toLowerCase();
     final modes = quantityModes.trim().toLowerCase();
+    final savedModes = modes.split(',').map((mode) => mode.trim()).toSet()
+      ..remove('');
+    if (savedModes.length > 1) return 'item';
+    if (savedModes.length == 1) {
+      final mode = savedModes.single;
+      if (mode == 'pair') return 'pair';
+      if (mode == 'set') return 'set';
+      if (mode == 'packet' || mode == 'pack') return 'packet';
+      if (mode == 'lot' || mode == 'bulk') return 'bulk';
+      return 'pcs';
+    }
     if (item.contains('payal') ||
         item.contains('anklet') ||
         item.contains('bichhiya') ||

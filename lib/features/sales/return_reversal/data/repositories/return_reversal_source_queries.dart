@@ -184,6 +184,7 @@ extension _ReturnReversalSourceQueries on ReturnReversalDriftRepository {
             metalType: item.metalType,
             itemName: item.itemName,
           ),
+          quantityUnitDisplayName: item.quantityUnitDisplayName ?? '',
           grossWeight: item.grossWeight,
           lessWeight: item.lessWeight,
           lessWeightPerPiece: item.lessWeightPerPiece,

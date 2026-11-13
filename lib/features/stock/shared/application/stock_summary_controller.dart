@@ -608,6 +608,7 @@ class StockSummaryController extends ChangeNotifier {
             metal: _readString(row, 'metal'),
             itemName: _readString(row, 'item_name'),
             quantity: _readInt(row, 'quantity'),
+            unitLabel: _readString(row, 'unit_label'),
             netWeight: _readDouble(row, 'net_weight'),
             occurredAt: _readDate(row, 'occurred_at'),
           ),
@@ -622,17 +623,35 @@ class StockSummaryController extends ChangeNotifier {
     return _db.customSelect(
       '''
       SELECT
-        id,
-        movement_type,
-        COALESCE(source_number, '') AS source_number,
-        COALESCE(metal_type_snapshot, '') AS metal,
-        COALESCE(item_name_snapshot, '') AS item_name,
-        ABS(quantity_delta) AS quantity,
-        ABS(net_weight_delta) AS net_weight,
-        occurred_at
-      FROM stock_movements
-      WHERE movement_type = ?
-      ORDER BY occurred_at DESC, id DESC
+        m.id,
+        m.movement_type,
+        COALESCE(m.source_number, '') AS source_number,
+        COALESCE(m.metal_type_snapshot, '') AS metal,
+        COALESCE(m.item_name_snapshot, '') AS item_name,
+        ABS(m.quantity_delta) AS quantity,
+        ABS(m.net_weight_delta) AS net_weight,
+        COALESCE(
+          NULLIF(TRIM(bi.quantity_unit_display_name), ''),
+          CASE LOWER(COALESCE(s.quantity_mode, 'pieces'))
+            WHEN 'pair' THEN 'PAIR'
+            WHEN 'set' THEN 'SET'
+            WHEN 'packet' THEN 'PACK'
+            WHEN 'pack' THEN 'PACK'
+            WHEN 'lot' THEN 'LOT'
+            WHEN 'bulk' THEN 'LOT'
+            ELSE 'PCS'
+          END
+        ) AS unit_label,
+        m.occurred_at
+      FROM stock_movements m
+      LEFT JOIN stock_items s ON s.id = m.stock_item_id
+      LEFT JOIN bill_items bi
+        ON m.movement_type = 'SALE'
+        AND m.source_type = 'SALE'
+        AND bi.bill_id = CAST(m.source_id AS INTEGER)
+        AND bi.line_no = m.source_line_no
+      WHERE m.movement_type = ?
+      ORDER BY m.occurred_at DESC, m.id DESC
       LIMIT ?
       ''',
       variables: [

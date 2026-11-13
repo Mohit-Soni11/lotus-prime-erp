@@ -536,7 +536,7 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'PCS',
+        'UNITS',
         ctrl.totalQuantity.toString(),
         SilverStockColors.accentPricing,
       ),

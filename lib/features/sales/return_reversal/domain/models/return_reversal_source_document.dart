@@ -17,6 +17,7 @@ class ReturnReversalSourceLineItem {
   final String purity;
   final int quantity;
   final String quantityUnitCode;
+  final String quantityUnitDisplayName;
   final double grossWeight;
   final double lessWeight;
   final bool lessWeightPerPiece;
@@ -57,6 +58,7 @@ class ReturnReversalSourceLineItem {
     this.purity = '-',
     required this.quantity,
     this.quantityUnitCode = '',
+    this.quantityUnitDisplayName = '',
     required this.grossWeight,
     this.lessWeight = 0,
     this.lessWeightPerPiece = false,

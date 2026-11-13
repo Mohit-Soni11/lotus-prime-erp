@@ -11,6 +11,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_quantity_text.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_shop_print_blocks.dart';
@@ -1219,8 +1220,8 @@ class PosLotusClassicInvoicePdfLayout {
     if (config.showHuid && item.huidText.trim().isNotEmpty) {
       parts.add('HUID: ${item.huidText.trim()}');
     }
-    if (config.showPcs && item.pcs > 1) {
-      parts.add('${item.pcs} pcs');
+    if (PosInvoiceQuantityText.showInDescription(item, config.showPcs)) {
+      parts.add(PosInvoiceQuantityText.format(item));
     }
     return parts.join('\n');
   }

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 enum SilverQuantityMode {
   pieces('PIECES', 'PCS', 'Pieces', 1),
   packet('PACKET', 'PACK', 'Packet', 1),
   pair('PAIR', 'PAIR', 'Pair', 2),
-  set('SET', 'SET', 'Set', 1);
+  set('SET', 'SET', 'Set', 1),
+  lot('LOT', 'LOT', 'Lot', 1);
 
   final String modeCode;
   final String shortCode;
@@ -23,45 +25,17 @@ enum SilverQuantityMode {
     required String category,
     required String itemName,
   }) {
-    final text = '${category.trim()} ${itemName.trim()}'.toLowerCase();
-    if (_containsAny(text, const [
-      'payal',
-      'anklet',
-      'bichhiya',
-      'bichiya',
-      'toe ring',
-      'jhumka',
-      'earring',
-      'ear ring',
-      'tops',
-      'bali',
-      'kundal',
-    ])) {
-      return SilverQuantityMode.pair;
-    }
-    if (_containsAny(text, const [
-      'necklace set',
-      'bridal set',
-      'jewellery set',
-      'jewelry set',
-      'haar',
-      'har',
-      'chudi set',
-    ])) {
-      return SilverQuantityMode.set;
-    }
-    if (_containsAny(text, const [
-      'packet',
-      'pack',
-    ])) {
-      return SilverQuantityMode.packet;
-    }
-    return SilverQuantityMode.pieces;
+    return switch (JewelleryUnitResolver.infer(
+      category: category,
+      itemName: itemName,
+    )) {
+      JewelleryUnit.pair => SilverQuantityMode.pair,
+      JewelleryUnit.set => SilverQuantityMode.set,
+      JewelleryUnit.packet => SilverQuantityMode.packet,
+      JewelleryUnit.lot => SilverQuantityMode.lot,
+      JewelleryUnit.pieces => SilverQuantityMode.pieces,
+    };
   }
-}
-
-bool _containsAny(String text, List<String> keywords) {
-  return keywords.any(text.contains);
 }
 
 class SilverItemModel extends ChangeNotifier {
@@ -246,6 +220,7 @@ class SilverItemModel extends ChangeNotifier {
       SilverQuantityMode.packet => 'Packets',
       SilverQuantityMode.pair => 'Pairs',
       SilverQuantityMode.set => 'Sets',
+      SilverQuantityMode.lot => 'Lots',
     };
   }
 
@@ -456,7 +431,9 @@ class SilverItemModel extends ChangeNotifier {
       return;
     }
     huidTrackingEnabled = enabled;
-    if (enabled && quantityMode == SilverQuantityMode.packet) {
+    if (enabled &&
+        (quantityMode == SilverQuantityMode.packet ||
+            quantityMode == SilverQuantityMode.lot)) {
       setQuantityMode(SilverQuantityMode.pieces, notify: false, manual: false);
     }
     if (!enabled) {
@@ -475,7 +452,8 @@ class SilverItemModel extends ChangeNotifier {
     bool notify = true,
     bool manual = true,
   }) {
-    if (huidTrackingEnabled && mode == SilverQuantityMode.packet) {
+    if (huidTrackingEnabled &&
+        (mode == SilverQuantityMode.packet || mode == SilverQuantityMode.lot)) {
       return;
     }
     if (quantityMode == mode && _quantityModeManuallySet == manual) {
@@ -572,7 +550,9 @@ class SilverItemModel extends ChangeNotifier {
       category: categoryLabel,
       itemName: itemName,
     );
-    if (huidTrackingEnabled && inferred == SilverQuantityMode.packet) {
+    if (huidTrackingEnabled &&
+        (inferred == SilverQuantityMode.packet ||
+            inferred == SilverQuantityMode.lot)) {
       return;
     }
     if (quantityMode == inferred) {

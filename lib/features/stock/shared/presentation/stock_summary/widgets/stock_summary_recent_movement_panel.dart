@@ -231,7 +231,10 @@ class _MovementSummaryRow extends StatelessWidget {
         _summaryDate(record.occurredAt),
       ].join(' | '),
       metrics: [
-        _InlineMetric(label: 'PCS', value: record.quantity.toString()),
+        _InlineMetric(
+          label: 'Qty',
+          value: '${record.quantity} ${record.unitLabel}',
+        ),
         _InlineMetric(
           label: 'Net',
           value: '${_summaryWeight(record.netWeight)} g',

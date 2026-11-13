@@ -51,6 +51,7 @@ class GoldItemModel extends ChangeNotifier {
   final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController piecesCtrl = TextEditingController();
+  final TextEditingController piecesPerPacketCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
   final List<TextEditingController> _extraHuidCtrls = [];
   final TextEditingController grossCtrl = TextEditingController();
@@ -64,6 +65,7 @@ class GoldItemModel extends ChangeNotifier {
   final FocusNode segmentFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
+  final FocusNode piecesPerPacketFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final List<FocusNode> _extraHuidFocusNodes = [];
   final FocusNode grossFocus = FocusNode();
@@ -88,6 +90,7 @@ class GoldItemModel extends ChangeNotifier {
     segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
     piecesCtrl.addListener(_piecesFieldChanged);
+    piecesPerPacketCtrl.addListener(_piecesFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
     lessCtrl.addListener(_weightPurityFieldChanged);
@@ -128,8 +131,7 @@ class GoldItemModel extends ChangeNotifier {
   int get enteredQuantity => pieces;
 
   int get stockPieces {
-    final value = enteredQuantity * quantityUnit.stockPiecesPerUnit;
-    return value <= 0 ? 1 : value;
+    return enteredQuantity * piecesPerPacket;
   }
 
   String get quantityModeCode => quantityUnit.modeCode;
@@ -140,6 +142,7 @@ class GoldItemModel extends ChangeNotifier {
       GoldQuantityUnit.pieces => 'Pieces',
       GoldQuantityUnit.pair => 'Pairs',
       GoldQuantityUnit.set => 'Sets',
+      GoldQuantityUnit.packet => 'Packets',
       GoldQuantityUnit.bulk => 'Lots',
     };
   }
@@ -148,7 +151,9 @@ class GoldItemModel extends ChangeNotifier {
       ? 0
       : (enteredQuantity <= 0 ? 1 : enteredQuantity);
 
-  int get piecesPerPacket => quantityUnit.stockPiecesPerUnit;
+  int get piecesPerPacket => quantityUnit == GoldQuantityUnit.packet
+      ? (_parseWholeNumber(piecesPerPacketCtrl.text)).clamp(0, 9999)
+      : quantityUnit.stockPiecesPerUnit;
 
   String get huid =>
       huidTrackingEnabled ? huidCtrl.text.trim().toUpperCase() : '';
@@ -275,11 +280,13 @@ class GoldItemModel extends ChangeNotifier {
   }
 
   void setQuantityUnit(GoldQuantityUnit unit, {bool manual = true}) {
+    if (huidTrackingEnabled && unit == GoldQuantityUnit.packet) return;
     if (quantityUnit == unit && _quantityUnitManuallySet == manual) {
       return;
     }
     quantityUnit = unit;
     _quantityUnitManuallySet = manual;
+    if (unit != GoldQuantityUnit.packet) piecesPerPacketCtrl.clear();
     syncHuidInputsWithPieces();
     notifyListeners();
   }
@@ -311,6 +318,11 @@ class GoldItemModel extends ChangeNotifier {
       return;
     }
     huidTrackingEnabled = enabled;
+    if (enabled && quantityUnit == GoldQuantityUnit.packet) {
+      quantityUnit = GoldQuantityUnit.pieces;
+      _quantityUnitManuallySet = false;
+      piecesPerPacketCtrl.clear();
+    }
     if (!enabled) {
       huidCtrl.clear();
       for (final controller in _extraHuidCtrls) {
@@ -342,6 +354,7 @@ class GoldItemModel extends ChangeNotifier {
     segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
     piecesCtrl.removeListener(_piecesFieldChanged);
+    piecesPerPacketCtrl.removeListener(_piecesFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
     for (final controller in _extraHuidCtrls) {
       controller.removeListener(_fieldChanged);
@@ -357,6 +370,7 @@ class GoldItemModel extends ChangeNotifier {
     segmentCtrl.dispose();
     itemNameCtrl.dispose();
     piecesCtrl.dispose();
+    piecesPerPacketCtrl.dispose();
     huidCtrl.dispose();
     for (final controller in _extraHuidCtrls) {
       controller.dispose();
@@ -372,6 +386,7 @@ class GoldItemModel extends ChangeNotifier {
     segmentFocus.dispose();
     itemNameFocus.dispose();
     piecesFocus.dispose();
+    piecesPerPacketFocus.dispose();
     huidFocus.dispose();
     for (final focusNode in _extraHuidFocusNodes) {
       focusNode.dispose();
@@ -403,10 +418,12 @@ class GoldItemModel extends ChangeNotifier {
       category: categoryLabel,
       itemName: itemName,
     );
+    if (huidTrackingEnabled && inferred == GoldQuantityUnit.packet) return;
     if (inferred == quantityUnit) {
       return;
     }
     quantityUnit = inferred;
+    if (inferred != GoldQuantityUnit.packet) piecesPerPacketCtrl.clear();
     syncHuidInputsWithPieces();
   }
 

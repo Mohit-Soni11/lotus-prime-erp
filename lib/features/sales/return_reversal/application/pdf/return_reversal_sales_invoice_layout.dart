@@ -220,7 +220,9 @@ String _shopName(ShopPrintDocumentProfile profile) {
 }
 
 String _quantity(ReturnReversalSourceLineItem line) {
-  final unit = line.quantityUnitCode.trim();
+  final unit = line.quantityUnitDisplayName.trim().isNotEmpty
+      ? line.quantityUnitDisplayName.trim()
+      : line.quantityUnitCode.trim();
   if (unit.isEmpty) return '${line.quantity}';
   return '${line.quantity} $unit';
 }

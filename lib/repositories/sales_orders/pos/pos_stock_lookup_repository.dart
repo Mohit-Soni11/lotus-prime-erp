@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../../helpers/search/fuzzy_search_helper.dart';
@@ -14,8 +15,13 @@ LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
 
 const String _packetBalanceUnitExpression = '''
 LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
-  OR LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%packet%'
-  OR LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%pack%'
+  OR (
+    TRIM(COALESCE(s.quantity_mode, '')) = ''
+    AND (
+      LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%packet%'
+      OR LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%pack%'
+    )
+  )
 ''';
 
 const String _stockBalanceUnitExpression = '''
@@ -169,7 +175,7 @@ class PosStockLookupRepository {
         u.unit_cost AS unit_cost,
         u.status AS unit_status,
         COALESCE(s.quantity, 0) AS stock_quantity,
-        COALESCE(NULLIF(TRIM(s.quantity_mode), ''), 'PIECES') AS quantity_mode,
+        TRIM(COALESCE(s.quantity_mode, '')) AS quantity_mode,
         COALESCE(s.packet_count, 0) AS packet_count,
         COALESCE(s.pieces_per_packet, 1) AS pieces_per_packet,
         COALESCE(NULLIF(TRIM(u.company_name), ''), NULLIF(TRIM(s.company_name), '')) AS company_name,
@@ -436,6 +442,7 @@ class PosStockLookupRepository {
   bool _isPacketUnit(_StockUnitLookupRow row) {
     final mode = row.quantityMode.trim().toLowerCase();
     if (mode == 'packet' || mode == 'pack') return true;
+    if (mode.isNotEmpty) return false;
     final text = '${row.itemType} ${row.itemName}'.toLowerCase();
     return text.contains('packet') || text.contains('pack');
   }
@@ -452,27 +459,14 @@ class PosStockLookupRepository {
     if (mode == 'set') return 'set';
     if (mode == 'lot' || mode == 'bulk') return 'lot';
 
-    final text = '${row.itemType} ${row.itemName}'.toLowerCase();
-    if (text.contains('packet') || text.contains('pack')) return 'packet';
-    if (text.contains('payal') ||
-        text.contains('anklet') ||
-        text.contains('jhumka') ||
-        text.contains('earring') ||
-        text.contains('tops') ||
-        text.contains('bali') ||
-        text.contains('kundal') ||
-        text.contains('bichhiya') ||
-        text.contains('toe ring')) {
-      return 'pair';
-    }
-    if (text.contains('set') ||
-        text.contains('necklace') ||
-        text.contains('haar') ||
-        text.contains('har') ||
-        text.contains('chudi')) {
-      return 'set';
-    }
-    return 'pcs';
+    if (mode.isNotEmpty) return 'pcs';
+    return switch (JewelleryUnitResolver.infer(itemName: row.itemName)) {
+      JewelleryUnit.pieces => 'pcs',
+      JewelleryUnit.pair => 'pair',
+      JewelleryUnit.set => 'set',
+      JewelleryUnit.packet => 'packet',
+      JewelleryUnit.lot => 'lot',
+    };
   }
 
   double _availableDisplayQuantity({

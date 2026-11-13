@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_summary_controller.dart';
 import 'package:lotus_erp/models/finance/bank_book/bank_book_enums.dart'
     as bank_book;
 import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart'
@@ -570,6 +571,43 @@ void main() {
       _disposeItems(saleItems: [saleItem, ...printableItems]);
     },
   );
+
+  test('invoice unit name survives save and printable reload', () async {
+    final stockId = await _insertStockItem(db, sku: 'GOLD-UNIT-NAME-001');
+    final saleItem = _saleItem(
+      stockItemId: stockId,
+      sku: 'GOLD-UNIT-NAME-001',
+      grossWeight: 5,
+      rate: 1000,
+    );
+    saleItem.setInvoiceUnitLabel('Custom Jodi');
+
+    final result = await repository.finalizeSale(
+      invoice: _invoice(
+        invoiceNumber: 'INV-LJ-2026-UNIT',
+        saleItems: [saleItem],
+        cashPaid: 5000,
+      ),
+      customerId: null,
+    );
+    final saved = await repository.fetchEditableBill(result.billId);
+    final printable = await repository.fetchPrintableSaleItems(result.billId);
+
+    expect(saved!.items.single.quantityUnitCode, 'PCS');
+    expect(saved.items.single.quantityUnitDisplayName, 'Custom Jodi');
+    expect(printable.single.unitShortName, 'PCS');
+    expect(printable.single.invoiceUnitLabel, 'Custom Jodi');
+
+    final stockSummary = StockSummaryController(db);
+    await stockSummary.load();
+    expect(
+      stockSummary.recentMovements.singleWhere((row) => row.isSold).unitLabel,
+      'Custom Jodi',
+    );
+    stockSummary.dispose();
+
+    _disposeItems(saleItems: [saleItem, ...printable]);
+  });
 
   test(
     'fetchPrintableSaleItems preserves three decimal jewellery weights',

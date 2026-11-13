@@ -1,3 +1,4 @@
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 class StockRowEntry {
@@ -35,8 +36,12 @@ class StockRowEntry {
 
   int quantity = 1;
   String quantityMode = 'PIECES';
+  bool quantityModeManuallySet = false;
   int packetCount = 0;
   int piecesPerPacket = 1;
+
+  JewelleryUnit get unit =>
+      JewelleryUnitStorage.fromStorage(quantityMode);
   String location = '';
 
   int? supplierId;

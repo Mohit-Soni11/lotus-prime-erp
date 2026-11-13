@@ -4,8 +4,14 @@ String valuationQuantityUnitLabelExpression({
 }) {
   final itemText =
       "lower(COALESCE($unitAlias.item_type, '') || ' ' || COALESCE($unitAlias.item_name, '') || ' ' || COALESCE($stockAlias.sub_category, '') || ' ' || COALESCE($stockAlias.item_name, ''))";
+  final mode = "lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), ''))";
   return '''
     CASE
+      WHEN $mode IN ('packet', 'pack') THEN 'packet'
+      WHEN $mode = 'pair' THEN 'pair'
+      WHEN $mode = 'set' THEN 'set'
+      WHEN $mode IN ('lot', 'bulk') THEN 'lot'
+      WHEN $mode IN ('pieces', 'piece', 'pcs') THEN 'pcs'
       WHEN $itemText LIKE '%payal%' THEN 'pair'
       WHEN $itemText LIKE '%anklet%' THEN 'pair'
       WHEN $itemText LIKE '%jhumka%' THEN 'pair'
@@ -16,17 +22,13 @@ String valuationQuantityUnitLabelExpression({
       WHEN $itemText LIKE '%bichhiya%' THEN 'pair'
       WHEN $itemText LIKE '%bichiya%' THEN 'pair'
       WHEN $itemText LIKE '%toe ring%' THEN 'pair'
-      WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'pair' THEN 'pair'
       WHEN $itemText LIKE '%set%' THEN 'set'
       WHEN $itemText LIKE '%necklace%' THEN 'set'
       WHEN $itemText LIKE '%haar%' THEN 'set'
       WHEN $itemText LIKE '%har%' THEN 'set'
       WHEN $itemText LIKE '%chudi%' THEN 'set'
-      WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'set' THEN 'set'
-      WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack') THEN 'packet'
       WHEN $itemText LIKE '%packet%' THEN 'packet'
       WHEN $itemText LIKE '%pack%' THEN 'packet'
-      WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('lot', 'bulk') THEN 'lot'
       ELSE 'pcs'
     END
   ''';

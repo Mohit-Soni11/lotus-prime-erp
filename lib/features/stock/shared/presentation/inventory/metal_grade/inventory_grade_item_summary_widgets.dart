@@ -206,6 +206,7 @@ String _inventoryQuantityUnitLabel(_InventoryGradeUnit unit) {
   if (mode == 'pair') return 'pair';
   if (mode == 'set') return 'set';
   if (mode == 'lot' || mode == 'bulk') return 'lot';
+  if (mode.isNotEmpty) return 'pcs';
 
   final item = '${unit.itemType} ${unit.itemName}'.toLowerCase();
   if (item.contains('packet') || item.contains('pack')) return 'packet';

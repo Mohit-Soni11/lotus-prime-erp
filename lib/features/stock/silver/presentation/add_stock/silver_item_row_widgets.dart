@@ -8,7 +8,7 @@ class _QuantityModeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Choose Pieces, Packet, Pair or Set quantity mode.',
+      message: 'Choose Pieces, Packet, Pair, Set or Lot quantity mode.',
       waitDuration: const Duration(milliseconds: 400),
       child: PopupMenuButton<SilverQuantityMode>(
         tooltip: '',

@@ -485,15 +485,11 @@ PosItemUnitProfile _unitProfileFor(ReturnReversalSourceLineItem lineItem) {
   final storedUnit = PosItemUnitProfile.fromStorageValue(
     lineItem.quantityUnitCode,
   );
+  if (storedUnit != null) return storedUnit;
   final inferredUnit = PosItemUnitProfile.infer(
     metal: _metalTypeFromLabel(lineItem.metalType),
     itemName: lineItem.description,
   );
-  if (storedUnit != null &&
-      (storedUnit.code != PosItemUnitCode.pieces ||
-          inferredUnit.code == PosItemUnitCode.pieces)) {
-    return storedUnit;
-  }
   return inferredUnit;
 }
 

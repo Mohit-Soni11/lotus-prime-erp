@@ -17,6 +17,7 @@ import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.dart';
 
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
+import 'package:lotus_erp/features/stock/gold/domain/models/gold_quantity_unit.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 
 class GoldStockController extends AddStockController {
@@ -377,6 +378,10 @@ class GoldStockController extends AddStockController {
     }
     if (row.enteredQuantity < 1) {
       return '${row.quantityUnitLabel} quantity must be at least 1';
+    }
+    if (row.quantityUnit == GoldQuantityUnit.packet &&
+        row.piecesPerPacket < 1) {
+      return 'Pieces per packet must be at least 1';
     }
     if (row.grossWeight <= 0) {
       return 'Gross weight must be greater than 0';

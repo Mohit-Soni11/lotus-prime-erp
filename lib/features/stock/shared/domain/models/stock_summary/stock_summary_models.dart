@@ -197,6 +197,7 @@ class StockSummaryMovement {
   final String metal;
   final String itemName;
   final int quantity;
+  final String unitLabel;
   final double netWeight;
   final DateTime? occurredAt;
 
@@ -206,6 +207,7 @@ class StockSummaryMovement {
     required this.metal,
     required this.itemName,
     required this.quantity,
+    this.unitLabel = 'PCS',
     required this.netWeight,
     required this.occurredAt,
   });

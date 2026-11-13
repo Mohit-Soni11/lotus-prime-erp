@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart' as drift;
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 
 import '../../../../../database/db/app_database.dart';
 import '../../application/add_stock_models.dart';
@@ -45,6 +46,17 @@ class DirectStockIntakeRepository {
             .toList();
         if (huids.isEmpty && row.huid.trim().isNotEmpty) {
           huids.add(row.huid.trim().toUpperCase());
+        }
+        if (row.unit == JewelleryUnit.packet && row.piecesPerPacket < 1) {
+          throw StateError('Enter pieces per packet for $sku.');
+        }
+        if (huids.isNotEmpty &&
+            (row.unit == JewelleryUnit.pair ||
+                row.unit == JewelleryUnit.packet ||
+                row.unit == JewelleryUnit.lot)) {
+          throw StateError(
+            'HUID tracking for ${row.unit.label} is not supported in this stock form. Use Pieces for HUID items.',
+          );
         }
         if (huids.length > quantity) {
           throw StateError('More HUIDs than pieces in $sku.');
@@ -102,6 +114,15 @@ class DirectStockIntakeRepository {
                 status: drift.Value(StockStatus.available.label),
               ),
             );
+
+        await _db.customStatement(
+          '''
+          UPDATE stock_items
+          SET quantity_mode = ?, packet_count = ?, pieces_per_packet = ?
+          WHERE id = ?
+          ''',
+          [row.quantityMode, row.packetCount, row.piecesPerPacket, stockItemId],
+        );
 
         if (huids.isEmpty) {
           await _insertUnit(

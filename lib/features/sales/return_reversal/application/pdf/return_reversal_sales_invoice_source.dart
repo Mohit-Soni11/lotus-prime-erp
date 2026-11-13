@@ -264,8 +264,9 @@ SaleItemModel _saleItemFromSourceLine(
     line.quantityUnitCode,
   );
   if (unitProfile != null) {
-    item.setUnitProfile(unitProfile);
+    item.setStoredUnitProfile(unitProfile);
   }
+  item.setInvoiceUnitLabel(line.quantityUnitDisplayName);
   if (line.linkedStockItemId != null) {
     item.attachStockReference(
       stockItemId: line.linkedStockItemId!,

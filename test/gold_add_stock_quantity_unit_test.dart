@@ -34,4 +34,18 @@ void main() {
     expect(item.stockPieces, 1);
     expect(item.huidControllers.length, 1);
   });
+
+  test('gold packet name asks for its physical pieces per packet', () {
+    final item = GoldItemModel(id: 'gold-packet');
+    addTearDown(item.disposeAll);
+
+    item.itemNameCtrl.text = 'Gold Earring Packet';
+    item.piecesCtrl.text = '3';
+    expect(item.quantityUnit, GoldQuantityUnit.packet);
+    expect(item.stockPieces, 0);
+
+    item.piecesPerPacketCtrl.text = '2';
+    expect(item.stockPieces, 6);
+    expect(item.quantityModeCode, 'PACKET');
+  });
 }

@@ -233,6 +233,29 @@ void main() {
     expect(matches.single.netWeight, closeTo(458.2, 0.001));
   });
 
+  test('saved pieces unit overrides packet words in the item name', () async {
+    await _insertLookupStock(
+      db,
+      sku: 'GOLD-PACKET-NAMED-001',
+      itemName: 'Packet Design Chain',
+      purityLabel: '22KT',
+      grossWeight: 18,
+      huid: '',
+      quantityMode: 'PIECES',
+      quantity: 4,
+      unitCode: 'GOLD-PACKET-NAMED-001-LOT001',
+    );
+
+    final matches = await repository.searchByDescription(
+      query: 'packet',
+      metal: MetalType.gold,
+    );
+
+    expect(matches, hasLength(1));
+    expect(matches.single.quantityUnitLabel, 'pcs');
+    expect(matches.single.availableQuantity, 4);
+  });
+
   test('gold lot lookup shows current available balance after partial sale',
       () async {
     await _insertLookupStock(

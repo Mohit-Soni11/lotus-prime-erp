@@ -11,13 +11,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'pos_stock_lookup_field.dart'; //  Stock lookup field is used by this row.
 import 'shared_pos_components.dart';
+import 'pos_invoice_unit_editor.dart';
 // Note: Make sure PosStockLookupModel is exported in sales_pos_models.dart
 // ya usko explicitly import kar lena agar zaroorat ho.
 
@@ -385,7 +385,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     return SizedBox(
       height: 38,
       child: Tooltip(
-        message: widget.item.unitDisplayName,
+        message: '${widget.item.unitDisplayName} · Invoice: ${widget.item.invoiceUnitLabel}',
         waitDuration: const Duration(milliseconds: 400),
         child: TextFormField(
           controller: widget.item.pcsCtrl,
@@ -403,7 +403,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           ),
           decoration: InputDecoration(
             hintText: '1',
-            suffixIcon: _UnitSelector(
+            suffixIcon: PosInvoiceUnitEditor(
               item: widget.item,
               color: SalesPosColors.brandGold,
             ),
@@ -758,79 +758,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
             ),
             child: const Icon(SalesPosIcons.deleteItem,
                 color: SalesPosColors.danger, size: 20),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _UnitSelector extends StatelessWidget {
-  final SaleItemModel item;
-  final Color color;
-
-  const _UnitSelector({
-    required this.item,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<PosItemUnitProfile>(
-      tooltip: 'Select unit',
-      padding: EdgeInsets.zero,
-      position: PopupMenuPosition.under,
-      color: SalesPosColors.bodyPanelBg,
-      onSelected: item.setUnitProfile,
-      itemBuilder: (context) => [
-        for (final profile in item.availableUnitProfiles)
-          PopupMenuItem<PosItemUnitProfile>(
-            value: profile,
-            height: 34,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 42,
-                  child: Text(
-                    profile.shortName,
-                    style: SalesPosStyles.caption.copyWith(
-                      color: profile.code == item.unitProfile.code
-                          ? color
-                          : SalesPosColors.bodyTextMain,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    profile.displayName,
-                    style: SalesPosStyles.caption.copyWith(
-                      color: SalesPosColors.bodyTextMuted,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-      child: Container(
-        height: 26,
-        margin: const EdgeInsets.only(right: 4),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withValues(alpha: 0.24)),
-        ),
-        child: Text(
-          item.unitShortName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: SalesPosStyles.caption.copyWith(
-            color: color,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lotus_erp/core/domain/units/jewellery_unit_resolver.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
@@ -38,6 +39,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
   late final TextEditingController _mrpCtrl;
   late final TextEditingController _gstCtrl;
   late final TextEditingController _qtyCtrl;
+  late final TextEditingController _packetSizeCtrl;
   late final TextEditingController _locationCtrl;
   late final TextEditingController _hsnCtrl;
 
@@ -57,6 +59,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     _mrpCtrl = TextEditingController();
     _gstCtrl = TextEditingController();
     _qtyCtrl = TextEditingController();
+    _packetSizeCtrl = TextEditingController();
     _locationCtrl = TextEditingController();
     _hsnCtrl = TextEditingController();
     _syncControllers();
@@ -83,6 +86,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     _mrpCtrl.dispose();
     _gstCtrl.dispose();
     _qtyCtrl.dispose();
+    _packetSizeCtrl.dispose();
     _locationCtrl.dispose();
     _hsnCtrl.dispose();
     super.dispose();
@@ -103,6 +107,8 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     _setIfNeeded(_mrpCtrl, _decimalText(row.mrp));
     _setIfNeeded(_gstCtrl, _decimalText(row.gstRate));
     _setIfNeeded(_qtyCtrl, row.quantity == 1 ? '1' : '${row.quantity}');
+    _setIfNeeded(_packetSizeCtrl,
+        row.piecesPerPacket < 1 ? '' : '${row.piecesPerPacket}');
     _setIfNeeded(_locationCtrl, row.location);
     _setIfNeeded(_hsnCtrl, row.hsnCode);
   }
@@ -217,7 +223,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
                         runSpacing: 8,
                         children: [
                           _summaryChip(
-                            '${row.quantity} ${AddStockStrings.overviewPieces}',
+                            '${row.quantity} ${row.unit.label}',
                           ),
                           _summaryChip(
                             '${row.grossWeight.toStringAsFixed(3)}g',
@@ -310,6 +316,23 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
                     onChanged: (value) => ctrl.updateItemName(row.id, value),
                     hintText: AddStockStrings.hintItemName,
                   ),
+                  _dropdownField<JewelleryUnit>(
+                    label: 'Stock unit',
+                    value: row.unit,
+                    items: JewelleryUnit.values,
+                    labelBuilder: (unit) => unit.label,
+                    onChanged: (unit) {
+                      if (unit != null) ctrl.updateQuantityUnit(row.id, unit);
+                    },
+                  ),
+                  if (row.unit == JewelleryUnit.packet)
+                    _numberField(
+                      label: 'Pieces per packet',
+                      controller: _packetSizeCtrl,
+                      onChanged: (value) =>
+                          ctrl.updatePiecesPerPacket(row.id, value),
+                      decimals: false,
+                    ),
                   _dropdownField<StockSubCategory>(
                     label: AddStockStrings.lblSubCategory,
                     value: row.subCategory,
@@ -492,7 +515,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
                 width: constraints.maxWidth,
                 children: [
                   _numberField(
-                    label: AddStockStrings.lblQuantity,
+                    label: 'Quantity (${row.unit.label})',
                     controller: _qtyCtrl,
                     onChanged: (value) => ctrl.updateQuantity(row.id, value),
                     decimals: false,
@@ -805,6 +828,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     return DropdownButtonFormField<T>(
       initialValue: value,
       isExpanded: true,
+      dropdownColor: AddStockColors.cardBg,
       onChanged: onChanged,
       style: AddStockStyles.fieldInput,
       decoration: _inputDecoration(label: label),

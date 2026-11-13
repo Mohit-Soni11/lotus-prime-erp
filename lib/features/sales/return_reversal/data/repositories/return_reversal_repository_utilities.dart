@@ -114,15 +114,11 @@ extension _ReturnReversalRepositoryUtilities on ReturnReversalDriftRepository {
     required String itemName,
   }) {
     final stored = PosItemUnitProfile.fromStorageValue(storedUnit);
+    if (stored != null) return stored.shortName;
     final inferred = PosItemUnitProfile.infer(
       metal: _metalTypeFromLabel(metalType),
       itemName: itemName,
     );
-    if (stored != null &&
-        (stored.code != PosItemUnitCode.pieces ||
-            inferred.code == PosItemUnitCode.pieces)) {
-      return stored.shortName;
-    }
     return inferred.shortName;
   }
 

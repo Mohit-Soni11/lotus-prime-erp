@@ -835,7 +835,8 @@ class PosBillingController extends ChangeNotifier {
     _isApplyingStockSuggestion = true;
     try {
       item.updateMetal(suggestion.metal);
-      item.setUnitProfile(_unitProfileForStockSuggestion(suggestion));
+      item.setStoredUnitProfile(_unitProfileForStockSuggestion(suggestion));
+      item.setInvoiceUnitLabel(null);
       item.descCtrl.text = suggestion.itemName.trim().isEmpty
           ? suggestion.sku
           : suggestion.itemName;
@@ -1251,8 +1252,9 @@ class PosBillingController extends ChangeNotifier {
           row.quantityUnitCode,
         );
         if (unitProfile != null) {
-          item.setUnitProfile(unitProfile);
+          item.setStoredUnitProfile(unitProfile);
         }
+        item.setInvoiceUnitLabel(row.quantityUnitDisplayName);
         item.descCtrl.text = row.itemName;
         item.pcsCtrl.text = row.quantity.toString();
         item.setHuidText(row.huid ?? '');

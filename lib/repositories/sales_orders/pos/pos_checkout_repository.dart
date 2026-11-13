@@ -205,6 +205,8 @@ class PosCheckoutRepository {
                 ),
                 quantity: Value(item.pcs),
                 quantityUnitCode: Value(item.unitShortName),
+                quantityUnitDisplayName:
+                    Value(item.invoiceUnitLabelOverride),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -518,6 +520,8 @@ class PosCheckoutRepository {
                 ),
                 quantity: Value(item.pcs),
                 quantityUnitCode: Value(item.unitShortName),
+                quantityUnitDisplayName:
+                    Value(item.invoiceUnitLabelOverride),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -2645,8 +2649,9 @@ class PosCheckoutRepository {
       row.quantityUnitCode,
     );
     if (unitProfile != null) {
-      item.setUnitProfile(unitProfile);
+      item.setStoredUnitProfile(unitProfile);
     }
+    item.setInvoiceUnitLabel(row.quantityUnitDisplayName);
     item.descCtrl.text = row.itemName;
     item.setInvoiceHsnCode(row.hsnCode);
     item.pcsCtrl.text = row.quantity.toString();

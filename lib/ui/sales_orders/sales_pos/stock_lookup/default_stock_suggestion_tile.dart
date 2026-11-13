@@ -41,7 +41,6 @@ class DefaultStockSuggestionTile extends StatelessWidget {
       if (type.isNotEmpty) type,
       if (company.isNotEmpty) company,
       if (segment.isNotEmpty) segment,
-      if (item.quantity > 1) '${item.quantity} pcs',
     ];
   }
 

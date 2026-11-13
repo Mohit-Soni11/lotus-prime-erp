@@ -14,6 +14,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_quantity_text.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_pdf_value_formatter.dart';
@@ -772,8 +773,9 @@ class _PosInvoicePdfDocumentBuilder {
                     if (activeConfig.showHuid && item.huidText.isNotEmpty) {
                       desc += '\n[HUID: ${item.huidText}]';
                     }
-                    if (activeConfig.showPcs && item.pcs > 1) {
-                      desc += ' (${item.pcs} pcs)';
+                    if (PosInvoiceQuantityText.showInDescription(
+                        item, activeConfig.showPcs)) {
+                      desc += ' (${PosInvoiceQuantityText.format(item)})';
                     }
 
                     return pw.TableRow(
@@ -1813,7 +1815,9 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue('HUID', item.huidText.trim(), fontSize),
         if (_showHsnCode(invoice, config))
           _thermalKeyValue('HSN', _hsnCode(item), fontSize),
-        if (config.showPcs) _thermalKeyValue('Pcs', '${item.pcs}', fontSize),
+        if (config.showPcs)
+          _thermalKeyValue(
+              'Qty', PosInvoiceQuantityText.format(item), fontSize),
         if (config.showPurity)
           _thermalKeyValue('Purity', _formatPurity(item), fontSize),
         if (config.showGrossWt)

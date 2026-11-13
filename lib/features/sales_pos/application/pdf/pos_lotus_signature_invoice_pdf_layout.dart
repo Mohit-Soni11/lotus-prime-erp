@@ -11,6 +11,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_quantity_text.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_pdf_value_formatter.dart';
@@ -1884,6 +1885,8 @@ class PosLotusSignatureInvoicePdfLayout {
       _fallback(item.descCtrl.text, item.metal.displayName),
       if (config.showHuid && item.huidText.trim().isNotEmpty)
         'HUID ${item.huidText.trim()}',
+      if (PosInvoiceQuantityText.showInDescription(item, config.showPcs))
+        PosInvoiceQuantityText.format(item),
     ];
     return parts.join(' | ');
   }

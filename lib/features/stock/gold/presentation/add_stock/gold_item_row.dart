@@ -283,15 +283,39 @@ class _GoldItemRowState extends State<GoldItemRow> {
   }
 
   Widget _buildQuantityFields() {
-    return Row(
+    final isPacket = widget.model.quantityUnit == GoldQuantityUnit.packet;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _QuantityUnitButton(model: widget.model),
-        const SizedBox(width: 6),
-        Expanded(
-          child: _GoldTextField(
-            controller: widget.model.piecesCtrl,
-            focusNode: widget.model.piecesFocus,
-            hint: widget.model.quantityInputHint,
+        Row(
+          children: [
+            _QuantityUnitButton(model: widget.model),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _GoldTextField(
+                controller: widget.model.piecesCtrl,
+                focusNode: widget.model.piecesFocus,
+                hint: widget.model.quantityInputHint,
+                isNumber: true,
+                textAlign: TextAlign.center,
+                textInputAction: TextInputAction.next,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(3),
+                ],
+                onSubmitted: (_) => isPacket
+                    ? widget.model.piecesPerPacketFocus.requestFocus()
+                    : widget.model.grossFocus.requestFocus(),
+              ),
+            ),
+          ],
+        ),
+        if (isPacket) ...[
+          const SizedBox(height: 6),
+          _GoldTextField(
+            controller: widget.model.piecesPerPacketCtrl,
+            focusNode: widget.model.piecesPerPacketFocus,
+            hint: 'PCS / PACK',
             isNumber: true,
             textAlign: TextAlign.center,
             textInputAction: TextInputAction.next,
@@ -299,15 +323,9 @@ class _GoldItemRowState extends State<GoldItemRow> {
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(3),
             ],
-            onSubmitted: (_) {
-              if (widget.model.huidTrackingEnabled) {
-                widget.model.huidFocusNodes.first.requestFocus();
-                return;
-              }
-              widget.model.grossFocus.requestFocus();
-            },
+            onSubmitted: (_) => widget.model.grossFocus.requestFocus(),
           ),
-        ),
+        ],
       ],
     );
   }

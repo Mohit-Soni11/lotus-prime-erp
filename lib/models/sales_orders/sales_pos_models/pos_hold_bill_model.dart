@@ -7,6 +7,7 @@
 // ==========================================
 
 import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
+import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 
@@ -245,6 +246,8 @@ class PosHoldSaleItemSnapshot {
   final double stockUnitCost;
   final double stockSnapshotNetWeight;
   final String description;
+  final String unitCode;
+  final String unitDisplayName;
   final String pcsInput;
   final String huid;
   final String purity;
@@ -263,6 +266,8 @@ class PosHoldSaleItemSnapshot {
     required this.stockUnitCost,
     required this.stockSnapshotNetWeight,
     required this.description,
+    required this.unitCode,
+    required this.unitDisplayName,
     required this.pcsInput,
     required this.huid,
     required this.purity,
@@ -283,6 +288,8 @@ class PosHoldSaleItemSnapshot {
       stockUnitCost: item.linkedStockUnitCost,
       stockSnapshotNetWeight: item.linkedStockSnapshotNetWeight,
       description: item.descCtrl.text,
+      unitCode: item.unitShortName,
+      unitDisplayName: item.invoiceUnitLabelOverride ?? '',
       pcsInput: item.pcsCtrl.text,
       huid: item.huidText,
       purity: item.purityCtrl.text,
@@ -304,6 +311,8 @@ class PosHoldSaleItemSnapshot {
       'stockUnitCost': stockUnitCost,
       'stockSnapshotNetWeight': stockSnapshotNetWeight,
       'description': description,
+      'unitCode': unitCode,
+      'unitDisplayName': unitDisplayName,
       'pcsInput': pcsInput,
       'huid': huid,
       'purity': purity,
@@ -332,6 +341,8 @@ class PosHoldSaleItemSnapshot {
       stockSnapshotNetWeight:
           (json['stockSnapshotNetWeight'] as num?)?.toDouble() ?? 0.0,
       description: (json['description'] ?? '').toString(),
+      unitCode: (json['unitCode'] ?? '').toString(),
+      unitDisplayName: (json['unitDisplayName'] ?? '').toString(),
       pcsInput: (json['pcsInput'] ?? '1').toString(),
       huid: (json['huid'] ?? '').toString(),
       purity: (json['purity'] ?? '').toString(),
@@ -348,7 +359,10 @@ class PosHoldSaleItemSnapshot {
       makingChargeType: makingChargeType,
       isLessPerPiece: isLessPerPiece,
     );
+    final savedUnit = PosItemUnitProfile.fromStorageValue(unitCode);
+    if (savedUnit != null) item.setStoredUnitProfile(savedUnit);
     item.descCtrl.text = description;
+    item.setInvoiceUnitLabel(unitDisplayName);
     item.pcsCtrl.text = pcsInput.isEmpty ? '1' : pcsInput;
     item.setHuidText(huid);
     item.purityCtrl.text = purity;

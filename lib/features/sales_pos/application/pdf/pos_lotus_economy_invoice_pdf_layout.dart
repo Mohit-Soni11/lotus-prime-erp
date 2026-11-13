@@ -8,6 +8,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_quantity_text.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_pdf_value_formatter.dart';
 import 'pos_invoice_print_config.dart';
@@ -263,7 +264,7 @@ class PosLotusEconomyInvoicePdfLayout {
       'Description',
       if (_showHsnCode(invoice, config)) 'HSN',
       if (config.showPurity) 'Purity',
-      if (config.showPcs) 'Pcs',
+      if (config.showPcs) 'Qty',
       if (config.showGrossWt) 'Gross',
       if (config.showLessWt) 'Less',
       if (config.showNetWt) isWholesale ? 'Fine' : 'Net',
@@ -280,7 +281,7 @@ class PosLotusEconomyInvoicePdfLayout {
         _description(item, config),
         if (_showHsnCode(invoice, config)) _hsn(item),
         if (config.showPurity) _clean(item.purityCtrl.text),
-        if (config.showPcs) item.pcs.toString(),
+        if (config.showPcs) PosInvoiceQuantityText.format(item),
         if (config.showGrossWt) _weight(item.grossCtrl.text),
         if (config.showLessWt) _weight(item.totalLessWt.toStringAsFixed(3)),
         if (config.showNetWt)
@@ -798,6 +799,8 @@ class PosLotusEconomyInvoicePdfLayout {
       _fallback(item.descCtrl.text, item.metal.displayName),
       if (config.showHuid && item.huidText.trim().isNotEmpty)
         'HUID ${item.huidText.trim()}',
+      if (!config.showPcs && item.invoiceUnitLabelOverride != null)
+        PosInvoiceQuantityText.format(item),
     ];
     return parts.join(' | ');
   }

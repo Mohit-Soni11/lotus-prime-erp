@@ -419,7 +419,8 @@ class SilverStockController extends AddStockController {
       return 'Making charge cannot be negative';
     }
     if (row.huidTrackingEnabled &&
-        row.quantityMode == SilverQuantityMode.packet) {
+        (row.quantityMode == SilverQuantityMode.packet ||
+            row.quantityMode == SilverQuantityMode.lot)) {
       return 'Use Pieces, Pair or Set mode for HUID tracked silver items';
     }
     if (row.huidTrackingEnabled && row.pieces > 12) {

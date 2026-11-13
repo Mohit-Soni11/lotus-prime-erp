@@ -54,6 +54,7 @@ class SaleItemModel extends ChangeNotifier {
   MakingChargeType _makingChargeType;
   bool _isLessPerPiece;
   PosItemUnitProfile _unitProfile = PosItemUnitProfile.pieces;
+  String? _invoiceUnitLabelOverride;
   int? _linkedStockItemId;
   int? _linkedStockUnitId;
   String? _linkedStockSku;
@@ -185,6 +186,8 @@ class SaleItemModel extends ChangeNotifier {
   PosItemUnitProfile get unitProfile => _unitProfile;
   String get unitDisplayName => _unitProfile.displayName;
   String get unitShortName => _unitProfile.shortName;
+  String get invoiceUnitLabel => _invoiceUnitLabelOverride ?? _unitProfile.shortName;
+  String? get invoiceUnitLabelOverride => _invoiceUnitLabelOverride;
   List<PosItemUnitProfile> get availableUnitProfiles =>
       PosItemUnitProfile.invoiceOptionsForMetal(_metal);
   int? get linkedStockItemId => _linkedStockItemId;
@@ -308,6 +311,22 @@ class SaleItemModel extends ChangeNotifier {
     }
     _unitProfileManuallySet = true;
     _applyUnitProfile(profile);
+  }
+
+  void setStoredUnitProfile(PosItemUnitProfile profile) {
+    _unitProfileManuallySet = true;
+    _applyUnitProfile(profile);
+  }
+
+  void setInvoiceUnitLabel(String? label) {
+    final normalized = label?.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final next = normalized == null || normalized.isEmpty ||
+            normalized.toUpperCase() == _unitProfile.shortName
+        ? null
+        : normalized;
+    if (_invoiceUnitLabelOverride == next) return;
+    _invoiceUnitLabelOverride = next;
+    notifyListeners();
   }
 
   void setInvoiceHsnCode(String? value) {

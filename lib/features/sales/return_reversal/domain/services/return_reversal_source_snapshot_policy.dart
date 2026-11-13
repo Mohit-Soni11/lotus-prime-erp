@@ -56,6 +56,7 @@ class ReturnReversalSourceSnapshotPolicy {
           oldLine.huidNumber != newLine.huidNumber ||
           oldLine.quantity != newLine.quantity ||
           oldLine.quantityUnitCode != newLine.quantityUnitCode ||
+          oldLine.quantityUnitDisplayName != newLine.quantityUnitDisplayName ||
           oldLine.lessWeightPerPiece != newLine.lessWeightPerPiece ||
           oldLine.linkedStockItemId != newLine.linkedStockItemId ||
           oldLine.linkedStockUnitId != newLine.linkedStockUnitId ||
