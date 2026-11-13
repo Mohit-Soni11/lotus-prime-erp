@@ -396,7 +396,7 @@ class BankBookRepository {
         await _db.into(_db.bankTransactions).insert(
               BankTransactionsCompanion.insert(
                 txnId: txnId,
-                accountId: accountId,
+                accountId: Value(accountId),
                 txnDate: txnDate,
                 type: type.dbValue,
                 category: categoryDbValue,
@@ -471,6 +471,14 @@ class BankBookRepository {
                     t.referenceId.equals(reference)))
               .getSingleOrNull();
           if (bankEntry != null) {
+            if (!bankEntry.isVoided && bankEntry.accountId == null) {
+              await (_db.update(_db.bankTransactions)
+                    ..where((row) => row.id.equals(bankEntry.id)))
+                  .write(BankTransactionsCompanion(
+                accountId: Value(accountId),
+              ));
+              synced++;
+            }
             continue;
           }
           if (legacyBankEntry.isNotEmpty) {
@@ -507,7 +515,7 @@ class BankBookRepository {
           await _db.into(_db.bankTransactions).insert(
                 BankTransactionsCompanion.insert(
                   txnId: txnId,
-                  accountId: accountId,
+                  accountId: Value(accountId),
                   txnDate: bill.billDate,
                   type: BankTransactionType.credit.dbValue,
                   category: BankCreditCategory.salePayment.dbValue,
@@ -681,7 +689,7 @@ class BankBookRepository {
     return BankTransactionModel(
       id: row.id,
       txnId: row.txnId,
-      accountId: row.accountId,
+      accountId: row.accountId!,
       accountName: accountName,
       txnDate: row.txnDate,
       valueDate: row.valueDate,

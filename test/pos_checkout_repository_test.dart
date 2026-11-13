@@ -13,6 +13,8 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart'
     as stock;
 import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
+import 'package:lotus_erp/repositories/finance/bank_book_repository.dart';
+import 'package:lotus_erp/repositories/reports/day_book_money_repository.dart';
 import 'package:lotus_erp/repositories/sales_orders/pos/pos_checkout_repository.dart';
 
 void main() {
@@ -638,6 +640,65 @@ void main() {
       );
       expect(bankRows.map((row) => row.amount).toSet(), {200.0, 300.0});
       expect(bankRows.every((row) => !row.isVoided), isTrue);
+
+      _disposeItems(saleItems: [saleItem]);
+    },
+  );
+
+  test(
+    'finalizeSale records cash and UPI without a configured bank account',
+    () async {
+      final saleItem = _manualSaleItem(grossWeight: 1, rate: 9111.60);
+      final invoice = _invoice(
+        invoiceNumber: 'AJ-26-004',
+        saleItems: [saleItem],
+        cashPaid: 8000,
+        upiPaid: 1111.60,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+      final bill = await (db.select(db.bills)
+            ..where((row) => row.id.equals(result.billId)))
+          .getSingle();
+      final cashRows = await db.select(db.cashTransactions).get();
+      final bankRows = await db.select(db.bankTransactions).get();
+      final flow =
+          await DayBookMoneyRepository(db).fetch(invoice.invoiceDate, 0);
+
+      expect(bill.finalAmount, 9111.60);
+      expect(bill.cashPaid, 8000);
+      expect(bill.upiPaid, 1111.60);
+      expect(cashRows, hasLength(1));
+      expect(cashRows.single.amount, 8000);
+      expect(bankRows, hasLength(1));
+      expect(bankRows.single.accountId, isNull);
+      expect(bankRows.single.amount, 1111.60);
+      expect(bankRows.single.paymentMode, 'UPI');
+      expect(flow.closingCash, 8000);
+      expect(flow.closingBank, 1111.60);
+      expect(flow.entries, hasLength(2));
+      expect(
+        flow.entries
+            .where((entry) => entry.paymentMode == 'UPI')
+            .single
+            .accountName,
+        'Unassigned digital payment',
+      );
+
+      final accountId = await _insertPrimaryBankAccount(db);
+      expect(
+        await BankBookRepository(db: db).syncBillsToBank(
+          accountId: accountId,
+          date: invoice.invoiceDate,
+        ),
+        1,
+      );
+      final linkedRows = await db.select(db.bankTransactions).get();
+      expect(linkedRows, hasLength(1));
+      expect(linkedRows.single.accountId, accountId);
 
       _disposeItems(saleItems: [saleItem]);
     },

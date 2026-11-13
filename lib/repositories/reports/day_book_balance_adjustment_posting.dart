@@ -32,10 +32,6 @@ class DayBookBalanceAdjustmentPosting {
       );
     }
     if (bankAmount >= 0.01) {
-      if (bankAccountId == null) {
-        throw StateError(
-            'Select a bank account before posting a bank expense.');
-      }
       final bankSourceId = await _postExpense(
         date: date,
         dayKey: dayKey,
@@ -81,7 +77,7 @@ class DayBookBalanceAdjustmentPosting {
       await db.into(db.bankTransactions).insert(
             BankTransactionsCompanion.insert(
               txnId: bankId,
-              accountId: bankAccountId!,
+              accountId: Value(bankAccountId),
               txnDate: date,
               type: 'DEBIT',
               category:

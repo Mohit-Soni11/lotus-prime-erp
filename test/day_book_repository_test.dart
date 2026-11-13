@@ -410,7 +410,7 @@ Future<int> _insertBankReceipt(
   return db.into(db.bankTransactions).insert(
         BankTransactionsCompanion.insert(
           txnId: txnId,
-          accountId: accountId,
+          accountId: drift.Value(accountId),
           txnDate: txnDate,
           type: 'CREDIT',
           category: category,

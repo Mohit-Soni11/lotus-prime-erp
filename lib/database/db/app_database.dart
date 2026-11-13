@@ -2144,6 +2144,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 76) await _rebuildDayBookHistoricalGuards();
           if (from < 77) await _ensureDayBookMetalVerificationSchema();
+          if (from < 78 && await _tableExists('bank_transactions')) {
+            // ignore: experimental_member_use
+            await m.alterTable(TableMigration(bankTransactions));
+            await customStatement(
+                'DROP TRIGGER IF EXISTS bank_day_closed_update');
+            await customStatement(financeDayClosureSchemaSql[5]);
+          }
           await _ensureReturnReversalSchemaInternal();
           if (from < 71) await _ensureDayBookClosedSourceGuards();
         },
@@ -2192,7 +2199,7 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_transactions" (
               "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-              "account_id" INTEGER NOT NULL,
+              "account_id" INTEGER,
               "type" TEXT NOT NULL,
               "amount" REAL NOT NULL,
               "description" TEXT,

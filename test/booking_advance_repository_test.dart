@@ -150,8 +150,7 @@ void main() {
     );
   });
 
-  test('bank advance without an active account rolls back the booking',
-      () async {
+  test('UPI advance saves without a configured bank account', () async {
     final controller = BookingAdvanceController(repo: repository);
     addTearDown(controller.dispose);
     await _waitForBookingNumber(controller);
@@ -160,12 +159,23 @@ void main() {
     controller.addBookingItem();
     controller.bookingItems.single.grossCtrl.text = '4';
 
-    expect((await controller.saveBooking()).success, isFalse);
+    final saved = await controller.saveBooking();
+    expect(saved.success, isTrue);
     expect(controller.isSaving, isFalse);
-    expect(await database.select(database.customers).get(), isEmpty);
-    expect(await database.select(database.salesOrders).get(), isEmpty);
-    expect(await database.select(database.orderAdvances).get(), isEmpty);
-    expect(await database.select(database.bankTransactions).get(), isEmpty);
+    expect(await database.select(database.customers).get(), hasLength(1));
+    expect(await database.select(database.salesOrders).get(), hasLength(1));
+    expect(await database.select(database.orderAdvances).get(), hasLength(1));
+    final bankRows = await database.select(database.bankTransactions).get();
+    expect(bankRows, hasLength(1));
+    expect(bankRows.single.accountId, isNull);
+    expect(bankRows.single.paymentMode, 'UPI');
+    expect(bankRows.single.amount, 1000);
+    final money = await DayBookMoneyRepository(database).fetch(
+      DateTime.now(),
+      0,
+    );
+    expect(money.cashIn, 0);
+    expect(money.bankIn, 1000);
   });
 
   test('booking scrap metal posts into customer metal purchase report',

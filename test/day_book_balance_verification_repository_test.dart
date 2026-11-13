@@ -306,6 +306,54 @@ void main() {
     expect(await repo.fetch(date), isNull);
   });
 
+  test('carried digital receipts can be verified without a bank account',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await db.into(db.shopProfiles).insert(ShopProfilesCompanion.insert(
+          openingCashBalance: const drift.Value(100),
+        ));
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'BTXN-UNASSIGNED-UPI',
+            txnDate: DateTime(2026, 11, 6, 12),
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(50),
+            paymentMode: const drift.Value('UPI'),
+          ),
+        );
+    final repo = DayBookBalanceVerificationRepository(db);
+    final saved = await repo.verify(
+      date: date,
+      expectedCash: 100,
+      actualCash: 100,
+      expectedBank: 50,
+      actualBank: 45,
+      cashExpenseCategory: ExpenseCategory.miscExpense,
+      cashReason: 'Digital receipt discrepancy',
+    );
+
+    expect(saved.bankVariance, -5);
+    final bankRows = await db.select(db.bankTransactions).get();
+    expect(bankRows, hasLength(2));
+    expect(bankRows.every((row) => row.accountId == null), isTrue);
+    expect(bankRows.where((row) => row.type == 'DEBIT').single.amount, 5);
+    final flow = await DayBookMoneyRepository(db).fetch(date, 100);
+    expect(flow.openingBank, 50);
+    expect(flow.closingBank, 45);
+    expect(
+      await FinanceDayClosureRepository(db).closeDay(
+        date,
+        closingCash: 100,
+        physicalBank: 45,
+        requireVerifiedOpening: true,
+        closedBy: 'tester',
+      ),
+      isTrue,
+    );
+  });
+
   test(
       'opening verification ignores today’s transactions and carries adjustment forward',
       () async {

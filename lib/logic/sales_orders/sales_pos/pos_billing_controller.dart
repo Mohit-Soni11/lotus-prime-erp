@@ -139,9 +139,8 @@ class PosBillingController extends ChangeNotifier {
   final AppDatabase _db;
   final PosHoldRepository _holdRepo = PosHoldRepository();
   final PosCheckoutRepository _checkoutRepo;
-  final PosQuickStockRepository _quickStockRepo = PosQuickStockRepository();
-  final BookingAdvanceRepository _bookingAdvanceRepo =
-      BookingAdvanceRepository();
+  final PosQuickStockRepository _quickStockRepo;
+  final BookingAdvanceRepository _bookingAdvanceRepo;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
@@ -1111,12 +1110,16 @@ class PosBillingController extends ChangeNotifier {
     AppDatabase? database,
     PosCheckoutRepository? checkoutRepository,
     CustomerProfileRepository? profileRepository,
+    BookingAdvanceRepository? bookingAdvanceRepository,
     bool initializeWorkspace = true,
   })  : _db = database ?? AppDatabase(),
         _checkoutRepo =
             checkoutRepository ?? PosCheckoutRepository(db: database),
         _profileRepo =
-            profileRepository ?? CustomerProfileRepository(db: database) {
+            profileRepository ?? CustomerProfileRepository(db: database),
+        _quickStockRepo = PosQuickStockRepository(db: database),
+        _bookingAdvanceRepo =
+            bookingAdvanceRepository ?? BookingAdvanceRepository(db: database) {
     if (initializeWorkspace) {
       unawaited(_initializeInvoiceNumberPreview());
       unawaited(_restoreHeldBills());

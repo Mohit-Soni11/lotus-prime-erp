@@ -15971,9 +15971,9 @@ class $BankTransactionsTable extends BankTransactions
       const VerificationMeta('accountId');
   @override
   late final GeneratedColumn<int> accountId = GeneratedColumn<int>(
-      'account_id', aliasedName, false,
+      'account_id', aliasedName, true,
       type: DriftSqlType.int,
-      requiredDuringInsert: true,
+      requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'REFERENCES bank_accounts (id) ON DELETE RESTRICT'));
   static const VerificationMeta _txnDateMeta =
@@ -16154,8 +16154,6 @@ class $BankTransactionsTable extends BankTransactions
     if (data.containsKey('account_id')) {
       context.handle(_accountIdMeta,
           accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
-    } else if (isInserting) {
-      context.missing(_accountIdMeta);
     }
     if (data.containsKey('txn_date')) {
       context.handle(_txnDateMeta,
@@ -16275,7 +16273,7 @@ class $BankTransactionsTable extends BankTransactions
       txnId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}txn_id'])!,
       accountId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}account_id'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}account_id']),
       txnDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}txn_date'])!,
       valueDate: attachedDatabase.typeMapping
@@ -16329,8 +16327,8 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
   /// Human-readable: BTXN-2025-0001
   final String txnId;
 
-  /// FK → BankAccounts.id
-  final int accountId;
+  /// Optional until a digital receipt is matched to a shop bank account.
+  final int? accountId;
 
   /// Date the transaction was initiated / recorded
   final DateTime txnDate;
@@ -16380,7 +16378,7 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
       required this.createdAt,
       this.updatedAt,
       required this.txnId,
-      required this.accountId,
+      this.accountId,
       required this.txnDate,
       this.valueDate,
       required this.type,
@@ -16408,7 +16406,9 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
     map['txn_id'] = Variable<String>(txnId);
-    map['account_id'] = Variable<int>(accountId);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<int>(accountId);
+    }
     map['txn_date'] = Variable<DateTime>(txnDate);
     if (!nullToAbsent || valueDate != null) {
       map['value_date'] = Variable<DateTime>(valueDate);
@@ -16458,7 +16458,9 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
           ? const Value.absent()
           : Value(updatedAt),
       txnId: Value(txnId),
-      accountId: Value(accountId),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
       txnDate: Value(txnDate),
       valueDate: valueDate == null && nullToAbsent
           ? const Value.absent()
@@ -16508,7 +16510,7 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       txnId: serializer.fromJson<String>(json['txnId']),
-      accountId: serializer.fromJson<int>(json['accountId']),
+      accountId: serializer.fromJson<int?>(json['accountId']),
       txnDate: serializer.fromJson<DateTime>(json['txnDate']),
       valueDate: serializer.fromJson<DateTime?>(json['valueDate']),
       type: serializer.fromJson<String>(json['type']),
@@ -16538,7 +16540,7 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'txnId': serializer.toJson<String>(txnId),
-      'accountId': serializer.toJson<int>(accountId),
+      'accountId': serializer.toJson<int?>(accountId),
       'txnDate': serializer.toJson<DateTime>(txnDate),
       'valueDate': serializer.toJson<DateTime?>(valueDate),
       'type': serializer.toJson<String>(type),
@@ -16565,7 +16567,7 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
           DateTime? createdAt,
           Value<DateTime?> updatedAt = const Value.absent(),
           String? txnId,
-          int? accountId,
+          Value<int?> accountId = const Value.absent(),
           DateTime? txnDate,
           Value<DateTime?> valueDate = const Value.absent(),
           String? type,
@@ -16589,7 +16591,7 @@ class BankTransaction extends DataClass implements Insertable<BankTransaction> {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         txnId: txnId ?? this.txnId,
-        accountId: accountId ?? this.accountId,
+        accountId: accountId.present ? accountId.value : this.accountId,
         txnDate: txnDate ?? this.txnDate,
         valueDate: valueDate.present ? valueDate.value : this.valueDate,
         type: type ?? this.type,
@@ -16749,7 +16751,7 @@ class BankTransactionsCompanion extends UpdateCompanion<BankTransaction> {
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<String> txnId;
-  final Value<int> accountId;
+  final Value<int?> accountId;
   final Value<DateTime> txnDate;
   final Value<DateTime?> valueDate;
   final Value<String> type;
@@ -16798,7 +16800,7 @@ class BankTransactionsCompanion extends UpdateCompanion<BankTransaction> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     required String txnId,
-    required int accountId,
+    this.accountId = const Value.absent(),
     required DateTime txnDate,
     this.valueDate = const Value.absent(),
     required String type,
@@ -16818,7 +16820,6 @@ class BankTransactionsCompanion extends UpdateCompanion<BankTransaction> {
     this.isVoided = const Value.absent(),
     this.voidReason = const Value.absent(),
   })  : txnId = Value(txnId),
-        accountId = Value(accountId),
         txnDate = Value(txnDate),
         type = Value(type),
         category = Value(category);
@@ -16879,7 +16880,7 @@ class BankTransactionsCompanion extends UpdateCompanion<BankTransaction> {
       Value<DateTime>? createdAt,
       Value<DateTime?>? updatedAt,
       Value<String>? txnId,
-      Value<int>? accountId,
+      Value<int?>? accountId,
       Value<DateTime>? txnDate,
       Value<DateTime?>? valueDate,
       Value<String>? type,
@@ -45582,7 +45583,7 @@ typedef $$BankTransactionsTableCreateCompanionBuilder
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
   required String txnId,
-  required int accountId,
+  Value<int?> accountId,
   required DateTime txnDate,
   Value<DateTime?> valueDate,
   required String type,
@@ -45608,7 +45609,7 @@ typedef $$BankTransactionsTableUpdateCompanionBuilder
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
   Value<String> txnId,
-  Value<int> accountId,
+  Value<int?> accountId,
   Value<DateTime> txnDate,
   Value<DateTime?> valueDate,
   Value<String> type,
@@ -45973,7 +45974,7 @@ class $$BankTransactionsTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<String> txnId = const Value.absent(),
-            Value<int> accountId = const Value.absent(),
+            Value<int?> accountId = const Value.absent(),
             Value<DateTime> txnDate = const Value.absent(),
             Value<DateTime?> valueDate = const Value.absent(),
             Value<String> type = const Value.absent(),
@@ -46023,7 +46024,7 @@ class $$BankTransactionsTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             required String txnId,
-            required int accountId,
+            Value<int?> accountId = const Value.absent(),
             required DateTime txnDate,
             Value<DateTime?> valueDate = const Value.absent(),
             required String type,

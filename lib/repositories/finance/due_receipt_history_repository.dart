@@ -80,7 +80,8 @@ class DueReceiptHistoryRepository {
         final bill = billByNo[billNo];
         final customer =
             bill?.customerId == null ? null : customerById[bill!.customerId!];
-        final account = accountById[txn.accountId];
+        final account =
+            txn.accountId == null ? null : accountById[txn.accountId];
         receipts.add(
           _fromBankTxn(
             txn: txn,

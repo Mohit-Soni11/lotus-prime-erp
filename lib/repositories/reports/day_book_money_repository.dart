@@ -93,7 +93,9 @@ class DayBookMoneyRepository {
                 row.category, row.referenceType, row.type == 'CREDIT'),
             paymentMode: row.paymentMode,
             transactionId: row.txnId,
-            accountName: accountNames[row.accountId],
+            accountName: row.accountId == null
+                ? 'Unassigned digital payment'
+                : accountNames[row.accountId],
             partyName: row.partyName,
             referenceId: row.referenceId,
             referenceType: row.referenceType,

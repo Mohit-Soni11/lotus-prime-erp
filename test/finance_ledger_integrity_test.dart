@@ -126,7 +126,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'GIRVI-PAY-1-P',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: date,
             type: 'CREDIT',
             category: 'DUE_COLLECTION',
@@ -191,7 +191,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'B-OLD',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: date,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',
@@ -293,7 +293,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'B-SNAPSHOT',
-            accountId: bankId,
+            accountId: drift.Value(bankId),
             txnDate: date,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',
@@ -366,7 +366,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'B-MISMATCH',
-            accountId: bankId,
+            accountId: drift.Value(bankId),
             txnDate: date,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',
@@ -445,7 +445,7 @@ void main() {
     final id = await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'B-1',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: date,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',

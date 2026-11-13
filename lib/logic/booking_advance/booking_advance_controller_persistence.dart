@@ -146,19 +146,6 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         await _initBookingNumber();
       }
 
-      if ((upiAdvance > 0 || cardAdvance > 0) &&
-          !await _repo.hasActiveBankAccount()) {
-        isSaving = false;
-        _emitChanged();
-        return (
-          success: false,
-          message:
-              'Add an active bank account before recording UPI or card advance.',
-          bookingNo: '',
-          orderIds: const <int>[],
-        );
-      }
-
       final customerId = await _repo.resolveCustomerForBooking(
         selectedCustomerId: selectedCustomerId,
         customerName: nameCtrl.text,

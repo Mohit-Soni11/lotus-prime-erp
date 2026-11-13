@@ -86,7 +86,7 @@ class DayBookManualIncomeRepository {
         await _db.into(_db.bankTransactions).insert(
               BankTransactionsCompanion.insert(
                 txnId: transactionId,
-                accountId: account.id,
+                accountId: Value(account.id),
                 txnDate: date,
                 type: bank.BankTransactionType.credit.dbValue,
                 category: category.dbValue,

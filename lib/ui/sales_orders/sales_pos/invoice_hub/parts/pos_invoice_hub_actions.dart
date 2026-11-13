@@ -156,11 +156,18 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
             'Invoice finalized successfully. POS is ready for the next customer.',
         duration: const Duration(seconds: 3),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Sales finalization failed.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       if (!mounted) return;
       AppFeedback.error(
         context,
-        message: 'Could not close this sale. Please try again.',
+        message: error is StateError
+            ? error.message.toString()
+            : 'Could not close this sale. Please try again.',
       );
     }
   }

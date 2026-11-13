@@ -27,23 +27,10 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
     CustomerAdvanceOrderModel order,
   ) {
     return _readArchivedDocument(
-      read: () async {
-        final saved = await _issuedInvoiceArchive.read(
-          IssuedInvoiceKind.booking,
-          order.id,
-          order.orderNo,
-        );
-        if (saved != null) return saved;
-
-        final controller =
-            BookingInvoicePreviewController(orderIds: [order.id]);
-        try {
-          await controller.load();
-          return controller.pdfBytes;
-        } finally {
-          controller.dispose();
-        }
-      },
+      read: () => BookingIssuedPdfLoader(archive: _issuedInvoiceArchive).load(
+        orderId: order.id,
+        bookingNumber: order.orderNo,
+      ),
       unavailableMessage: 'Advance receipt PDF could not be opened.',
     );
   }

@@ -136,7 +136,7 @@ class GirviFinancialPosting {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: transactionId,
-            accountId: selected.id,
+            accountId: drift.Value(selected.id),
             txnDate: date,
             type: bankType,
             category: bankCategory,

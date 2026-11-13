@@ -1596,7 +1596,7 @@ class PurchaseEntryRepository {
     await _db.into(_db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: txnId,
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: txnDate,
             type: BankTransactionType.debit.dbValue,
             category: BankDebitCategory.purchasePayment.dbValue,

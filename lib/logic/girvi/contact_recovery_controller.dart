@@ -622,7 +622,7 @@ class ContactRecoveryController extends ChangeNotifier {
           await _db.into(_db.bankTransactions).insert(
                 BankTransactionsCompanion.insert(
                   txnId: transactionId,
-                  accountId: bankAccountId,
+                  accountId: drift.Value(bankAccountId),
                   txnDate: settledAt,
                   type: 'CREDIT',
                   category: 'DUE_COLLECTION',

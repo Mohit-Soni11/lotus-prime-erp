@@ -23,7 +23,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'CHEQUE-LATE-CLEAR',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: day,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',
@@ -73,7 +73,7 @@ void main() {
       await db.into(db.bankTransactions).insert(
             BankTransactionsCompanion.insert(
               txnId: id,
-              accountId: accountId,
+              accountId: drift.Value(accountId),
               txnDate: date,
               type: type,
               category: category,
@@ -149,7 +149,7 @@ void main() {
           .into(db.bankTransactions)
           .insert(BankTransactionsCompanion.insert(
             txnId: 'BANK-$index',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: date,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',
@@ -201,7 +201,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'INVOICE-UPI',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: previousDay,
             type: 'CREDIT',
             category: 'SALE_PAYMENT',

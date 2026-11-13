@@ -273,7 +273,7 @@ class ExpenseRepository {
           await _db.into(_db.bankTransactions).insert(
                 BankTransactionsCompanion.insert(
                   txnId: bankId,
-                  accountId: account.id,
+                  accountId: Value(account.id),
                   txnDate: expenseDate,
                   type: bank.BankTransactionType.debit.dbValue,
                   category: _bankCategory(category).dbValue,

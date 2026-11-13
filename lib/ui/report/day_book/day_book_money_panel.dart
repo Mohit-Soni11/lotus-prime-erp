@@ -39,7 +39,7 @@ class DayBookMoneyPanel extends StatelessWidget {
               closing: flow.closingCash,
             ),
             second: _PositionCard(
-              title: 'Bank Accounts',
+              title: 'Bank / Digital',
               icon: DayBookIcons.bank,
               opening: flow.openingBank,
               incoming: flow.bankIn,
@@ -50,7 +50,7 @@ class DayBookMoneyPanel extends StatelessWidget {
           if (flow.bankAccountCount == 0) ...[
             const SizedBox(height: 9),
             Text(
-              'No bank account is configured. Add one in Bank Book to include its opening balance.',
+              'Digital payments remain unassigned until linked in Bank Book. Add an account only when reconciling a specific bank balance.',
               style: DayBookStyles.labelStrong.copyWith(
                 color: DayBookColors.warning,
               ),
@@ -208,7 +208,9 @@ class _PositionCard extends StatelessWidget {
             Row(children: [
               Icon(icon, size: 21, color: DayBookColors.brandGold),
               const SizedBox(width: 8),
-              Text(title, style: DayBookStyles.sectionTitle),
+              Expanded(
+                child: Text(title, style: DayBookStyles.sectionTitle),
+              ),
             ]),
             const SizedBox(height: 12),
             _AmountLine('Opening', opening),

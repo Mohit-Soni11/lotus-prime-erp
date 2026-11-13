@@ -118,9 +118,15 @@ class FinanceDayCloseSnapshotBuilder {
     ).get();
     final movementByAccount = {
       for (final row in accountMovements)
-        row.read<int>('account_id'): row.read<double>('movement'),
+        row.readNullable<int>('account_id'): row.read<double>('movement'),
     };
     final bankPositions = [
+      if ((movementByAccount[null] ?? 0).abs() >= 0.005)
+        {
+          'id': 0,
+          'name': 'Unassigned digital payments',
+          'closing': movementByAccount[null],
+        },
       for (final account in bankAccounts)
         {
           'id': account.id,

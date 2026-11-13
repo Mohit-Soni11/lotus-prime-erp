@@ -18,11 +18,6 @@ class BookingAdvanceFinancialPosting {
   }) async {
     final bankAccountId =
         (upi > 0 || card > 0) ? await _preferredBankAccountId() : null;
-    if ((upi > 0 || card > 0) && bankAccountId == null) {
-      throw StateError(
-        'Add an active bank account before recording a UPI or card advance.',
-      );
-    }
     final reference = '$orderNo#ADV#$receiptId';
     if (cash > 0) {
       await db.into(db.cashTransactions).insert(
@@ -46,7 +41,7 @@ class BookingAdvanceFinancialPosting {
       await db.into(db.bankTransactions).insert(
             BankTransactionsCompanion.insert(
               txnId: 'BOOK-ADV-$receiptId-$mode',
-              accountId: bankAccountId!,
+              accountId: Value(bankAccountId),
               txnDate: date,
               type: 'CREDIT',
               category: 'ADVANCE_RECEIVED',

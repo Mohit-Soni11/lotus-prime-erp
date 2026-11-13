@@ -119,14 +119,6 @@ class BookingAdvanceRepository {
     return _effectiveBillingSettingsRepository.fetch();
   }
 
-  Future<bool> hasActiveBankAccount() async {
-    final account = await (_db.select(_db.bankAccounts)
-          ..where((row) => row.isActive.equals(true))
-          ..limit(1))
-        .getSingleOrNull();
-    return account != null;
-  }
-
   /// Returns the current Indian financial year string.
   /// Example: April 2025 to March 2026 is represented as "2526".
   String getCurrentFinancialYear() {

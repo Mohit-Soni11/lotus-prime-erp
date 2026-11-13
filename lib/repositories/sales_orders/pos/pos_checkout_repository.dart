@@ -597,15 +597,9 @@ class PosCheckoutRepository {
     }
 
     final preferredBankAccountId = await _findPreferredBankAccountId();
-    if ((invoice.upiPaid > 0 || invoice.cardPaid > 0) &&
-        preferredBankAccountId == null) {
-      throw StateError(
-          'Add an active bank account before recording UPI or card payments.');
-    }
-
     if (invoice.upiPaid > 0) {
       await _insertBankIncome(
-        accountId: preferredBankAccountId!,
+        accountId: preferredBankAccountId,
         amount: invoice.upiPaid,
         paymentMode: bank_book.BankPaymentMode.upi,
         billNumber: billNumber,
@@ -616,7 +610,7 @@ class PosCheckoutRepository {
 
     if (invoice.cardPaid > 0) {
       await _insertBankIncome(
-        accountId: preferredBankAccountId!,
+        accountId: preferredBankAccountId,
         amount: invoice.cardPaid,
         paymentMode: bank_book.BankPaymentMode.card,
         billNumber: billNumber,
@@ -698,60 +692,32 @@ class PosCheckoutRepository {
         );
         break;
       case PaymentMode.upi:
-        if (preferredBankAccountId != null) {
-          await _insertBankIncome(
-            accountId: preferredBankAccountId,
-            amount: amount,
-            paymentMode: bank_book.BankPaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: bank_book.BankCreditCategory.advanceReceived,
-            description: 'Customer refund payable against $billNumber',
-            referenceId: '$sourceReference#UPI',
-            referenceType: 'CUSTOMER_REFUND_PAYABLE',
-          );
-        } else {
-          await _insertCashIncome(
-            amount: amount,
-            paymentMode: cash_book.PaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: cash_book.IncomeCategory.advanceBooking,
-            description: 'Customer refund payable against $billNumber',
-            referenceId: '$sourceReference#UPI',
-            referenceType: 'CUSTOMER_REFUND_PAYABLE',
-          );
-        }
+        await _insertBankIncome(
+          accountId: preferredBankAccountId,
+          amount: amount,
+          paymentMode: bank_book.BankPaymentMode.upi,
+          billNumber: billNumber,
+          partyName: partyName,
+          txnDate: txnDate,
+          category: bank_book.BankCreditCategory.advanceReceived,
+          description: 'Customer refund payable against $billNumber',
+          referenceId: '$sourceReference#UPI',
+          referenceType: 'CUSTOMER_REFUND_PAYABLE',
+        );
         break;
       case PaymentMode.card:
-        if (preferredBankAccountId != null) {
-          await _insertBankIncome(
-            accountId: preferredBankAccountId,
-            amount: amount,
-            paymentMode: bank_book.BankPaymentMode.card,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: bank_book.BankCreditCategory.advanceReceived,
-            description: 'Customer refund payable against $billNumber',
-            referenceId: '$sourceReference#CARD',
-            referenceType: 'CUSTOMER_REFUND_PAYABLE',
-          );
-        } else {
-          await _insertCashIncome(
-            amount: amount,
-            paymentMode: cash_book.PaymentMode.card,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: cash_book.IncomeCategory.advanceBooking,
-            description: 'Customer refund payable against $billNumber',
-            referenceId: '$sourceReference#CARD',
-            referenceType: 'CUSTOMER_REFUND_PAYABLE',
-          );
-        }
+        await _insertBankIncome(
+          accountId: preferredBankAccountId,
+          amount: amount,
+          paymentMode: bank_book.BankPaymentMode.card,
+          billNumber: billNumber,
+          partyName: partyName,
+          txnDate: txnDate,
+          category: bank_book.BankCreditCategory.advanceReceived,
+          description: 'Customer refund payable against $billNumber',
+          referenceId: '$sourceReference#CARD',
+          referenceType: 'CUSTOMER_REFUND_PAYABLE',
+        );
         break;
       case PaymentMode.advance:
         break;
@@ -829,60 +795,32 @@ class PosCheckoutRepository {
         );
         break;
       case PaymentMode.upi:
-        if (preferredBankAccountId != null) {
-          await _insertBankIncome(
-            accountId: preferredBankAccountId,
-            amount: amount,
-            paymentMode: bank_book.BankPaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: bank_book.BankCreditCategory.miscCredit,
-            description: 'Excess UPI received before change return',
-            referenceId: '$sourceReference#SOURCE_UPI',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        } else {
-          await _insertCashIncome(
-            amount: amount,
-            paymentMode: cash_book.PaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: cash_book.IncomeCategory.miscIncome,
-            description: 'Excess UPI received before change return',
-            referenceId: '$sourceReference#SOURCE_UPI',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        }
+        await _insertBankIncome(
+          accountId: preferredBankAccountId,
+          amount: amount,
+          paymentMode: bank_book.BankPaymentMode.upi,
+          billNumber: billNumber,
+          partyName: partyName,
+          txnDate: txnDate,
+          category: bank_book.BankCreditCategory.miscCredit,
+          description: 'Excess UPI received before change return',
+          referenceId: '$sourceReference#SOURCE_UPI',
+          referenceType: 'CUSTOMER_CHANGE',
+        );
         break;
       case PaymentMode.card:
-        if (preferredBankAccountId != null) {
-          await _insertBankIncome(
-            accountId: preferredBankAccountId,
-            amount: amount,
-            paymentMode: bank_book.BankPaymentMode.card,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: bank_book.BankCreditCategory.miscCredit,
-            description: 'Excess card payment received before change return',
-            referenceId: '$sourceReference#SOURCE_CARD',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        } else {
-          await _insertCashIncome(
-            amount: amount,
-            paymentMode: cash_book.PaymentMode.card,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: cash_book.IncomeCategory.miscIncome,
-            description: 'Excess card payment received before change return',
-            referenceId: '$sourceReference#SOURCE_CARD',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        }
+        await _insertBankIncome(
+          accountId: preferredBankAccountId,
+          amount: amount,
+          paymentMode: bank_book.BankPaymentMode.card,
+          billNumber: billNumber,
+          partyName: partyName,
+          txnDate: txnDate,
+          category: bank_book.BankCreditCategory.miscCredit,
+          description: 'Excess card payment received before change return',
+          referenceId: '$sourceReference#SOURCE_CARD',
+          referenceType: 'CUSTOMER_CHANGE',
+        );
         break;
       case PaymentMode.advance:
         break;
@@ -913,32 +851,18 @@ class PosCheckoutRepository {
         );
         break;
       case PaymentMode.upi:
-        if (preferredBankAccountId != null) {
-          await _insertBankDebit(
-            accountId: preferredBankAccountId,
-            amount: amount,
-            paymentMode: bank_book.BankPaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: bank_book.BankDebitCategory.miscDebit,
-            description: 'Change returned to customer through UPI',
-            referenceId: '$sourceReference#RETURN_UPI',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        } else {
-          await _insertCashExpense(
-            amount: amount,
-            paymentMode: cash_book.PaymentMode.upi,
-            billNumber: billNumber,
-            partyName: partyName,
-            txnDate: txnDate,
-            category: cash_book.ExpenseCategory.miscExpense,
-            description: 'Change returned to customer through UPI',
-            referenceId: '$sourceReference#RETURN_UPI',
-            referenceType: 'CUSTOMER_CHANGE',
-          );
-        }
+        await _insertBankDebit(
+          accountId: preferredBankAccountId,
+          amount: amount,
+          paymentMode: bank_book.BankPaymentMode.upi,
+          billNumber: billNumber,
+          partyName: partyName,
+          txnDate: txnDate,
+          category: bank_book.BankDebitCategory.miscDebit,
+          description: 'Change returned to customer through UPI',
+          referenceId: '$sourceReference#RETURN_UPI',
+          referenceType: 'CUSTOMER_CHANGE',
+        );
         break;
       case PaymentMode.card:
       case PaymentMode.advance:
@@ -2880,7 +2804,7 @@ class PosCheckoutRepository {
   }
 
   Future<void> _insertBankIncome({
-    required int accountId,
+    required int? accountId,
     required double amount,
     required bank_book.BankPaymentMode paymentMode,
     required String billNumber,
@@ -2898,7 +2822,7 @@ class PosCheckoutRepository {
     await _db.into(_db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: txnId,
-            accountId: accountId,
+            accountId: Value(accountId),
             txnDate: txnDate,
             type: bank_book.BankTransactionType.credit.dbValue,
             category: category.dbValue,
@@ -2919,7 +2843,7 @@ class PosCheckoutRepository {
   }
 
   Future<void> _insertBankDebit({
-    required int accountId,
+    required int? accountId,
     required double amount,
     required bank_book.BankPaymentMode paymentMode,
     required String billNumber,
@@ -2937,7 +2861,7 @@ class PosCheckoutRepository {
     await _db.into(_db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: txnId,
-            accountId: accountId,
+            accountId: Value(accountId),
             txnDate: txnDate,
             type: bank_book.BankTransactionType.debit.dbValue,
             category: category.dbValue,

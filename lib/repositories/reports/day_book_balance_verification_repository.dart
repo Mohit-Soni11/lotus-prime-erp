@@ -82,7 +82,9 @@ class DayBookBalanceVerificationRepository {
       final start = DateTime(date.year, date.month, date.day);
       final openingCash = await money.fetchOpeningCash(start);
       final current = await money.fetch(date, openingCash);
-      if (current.bankAccountCount == 0 && actualBank.abs() >= 0.01) {
+      if (current.bankAccountCount == 0 &&
+          current.openingBank.abs() < 0.01 &&
+          actualBank.abs() >= 0.01) {
         throw StateError(
             'Add a bank account in Bank Book before verifying a non-zero bank balance.');
       }
@@ -102,11 +104,11 @@ class DayBookBalanceVerificationRepository {
                 account.activeSince.month,
                 account.activeSince.day)
             .isAfter(start));
-        if (eligible.length != 1) {
+        if (eligible.length > 1) {
           throw StateError(
               'Select exactly one active bank account before posting a bank balance adjustment.');
         }
-        bankAccountId = eligible.single.id;
+        bankAccountId = eligible.isEmpty ? null : eligible.single.id;
       }
 
       String? adjustmentId;

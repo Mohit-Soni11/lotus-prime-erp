@@ -446,7 +446,7 @@ class DueCollectionEntryRepository {
       await _db.into(_db.bankTransactions).insert(
             BankTransactionsCompanion.insert(
               txnId: txnId,
-              accountId: accountId,
+              accountId: Value(accountId),
               txnDate: txnDate,
               type: 'CREDIT',
               category: 'DUE_COLLECTION',

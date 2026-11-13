@@ -46,7 +46,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'BTXN-$year-0012',
-            accountId: accountId,
+            accountId: Value(accountId),
             txnDate: DateTime.now(),
             type: 'CREDIT',
             category: 'DUE_COLLECTION',

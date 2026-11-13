@@ -580,7 +580,7 @@ void main() {
     await db.into(db.bankTransactions).insert(
           BankTransactionsCompanion.insert(
             txnId: 'BANK-1',
-            accountId: accountId,
+            accountId: drift.Value(accountId),
             txnDate: DateTime(2026, 11, 7),
             type: 'CREDIT',
             category: 'OTHER_INCOME',

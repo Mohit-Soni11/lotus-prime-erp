@@ -14,6 +14,7 @@ import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../core/pdf/lotus_pdf_page_counter.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import 'pos_invoice_metal_setup_card.dart';
 import 'pos_invoice_template_selector.dart';

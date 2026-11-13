@@ -89,7 +89,8 @@ class _DayBookScreenState extends State<DayBookScreen> {
         expectedCash: flow.openingCash,
         expectedBank: flow.openingBank,
         expenseRecords: _ctrl.summary?.expenseRecords ?? const [],
-        bankAccountConfigured: flow.bankAccountCount != 0,
+        bankAccountConfigured:
+            flow.bankAccountCount != 0 || flow.openingBank.abs() >= 0.01,
         existing: _ctrl.balanceVerification,
         onSave: _ctrl.verifyBalance,
       ),

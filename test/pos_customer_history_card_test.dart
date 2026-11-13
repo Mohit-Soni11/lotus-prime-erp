@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'package:lotus_erp/models/customer/customer_profile/customer_profile_model.dart';
 import 'package:lotus_erp/ui/sales_orders/sales_pos/customer_history/pos_customer_history_card.dart';
+import 'package:lotus_erp/ui/sales_orders/sales_pos/customer_history/pos_advance_invoice_section.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -32,7 +33,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final controller = PosBillingController();
+    final controller = PosBillingController(initializeWorkspace: false);
     addTearDown(controller.dispose);
 
     controller.customerHistory = CustomerProfileModel(
@@ -115,13 +116,113 @@ void main() {
     expect(find.text('AJ-BK-26-0010'), findsOneWidget);
     expect(find.text('3 invoices'), findsOneWidget);
     expect(find.text('1 invoice'), findsOneWidget);
-    expect(find.text('Rs 35,000.00'), findsNothing);
-    expect(find.textContaining('Weight 10 g'), findsOneWidget);
-    expect(find.textContaining('Locked Rs 6,500.00/g'), findsOneWidget);
-    expect(find.textContaining('Advance Rs 12,000.00'), findsOneWidget);
-    expect(find.textContaining('Estimate'), findsNothing);
-    expect(find.textContaining('Customer credit available'), findsNothing);
-    expect(find.textContaining('Rs 1,34,480.28'), findsNothing);
-    expect(find.textContaining('more advance'), findsNothing);
+    expect(find.text('Total Bookings'), findsOneWidget);
+    expect(find.text('Total Advance'), findsOneWidget);
+    expect(find.text('₹35,000.00'), findsOneWidget);
+    expect(find.text('Conversion Ready'), findsNothing);
+    expect(find.text('Rate Locked'), findsNWidgets(2));
+    expect(find.text('Open Rate'), findsNWidgets(2));
+    expect(find.text('At sale'), findsOneWidget);
+    expect(find.text('₹6,500/g'), findsOneWidget);
+    expect(find.text('₹12,000'), findsOneWidget);
+    expect(find.text('View Booking'), findsNWidgets(3));
+    expect(find.text('Use in Sale'), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('booking card actions open PDF and sale conversion separately',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = PosBillingController(initializeWorkspace: false);
+    addTearDown(controller.dispose);
+    final order = CustomerAdvanceOrderModel(
+      id: 7,
+      orderNo: 'AJ-BK-26-0007',
+      itemName: 'Silver Payal',
+      metalType: 'SILVER',
+      purity: '925',
+      approxWeight: 82,
+      lockedRate: 82,
+      bookingType: 'LOCKED',
+      status: AdvanceOrderStatus.pending,
+      totalAdvancePaid: 12000,
+      estimatedTotal: 6724,
+      createdAt: DateTime(2026, 11, 12),
+    );
+    var pdfOpens = 0;
+    var saleLoads = 0;
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PosAdvanceInvoiceSection(
+          controller: controller,
+          orders: [order],
+          onViewBooking: (_) async {
+            pdfOpens++;
+          },
+          onUseInSale: (_) async {
+            saleLoads++;
+          },
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('View Booking'));
+    await tester.pump();
+    expect(pdfOpens, 1);
+    expect(saleLoads, 0);
+
+    await tester.tap(find.text('Use in Sale'));
+    await tester.pump();
+    expect(pdfOpens, 1);
+    expect(saleLoads, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('booking invoice cards remain usable at compact width',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 850);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = PosBillingController(initializeWorkspace: false);
+    addTearDown(controller.dispose);
+    final order = CustomerAdvanceOrderModel(
+      id: 7,
+      orderNo: 'AJ-BK-26-0007',
+      itemName: 'Silver Payal',
+      metalType: 'SILVER',
+      purity: '925',
+      approxWeight: 82,
+      lockedRate: 0,
+      bookingType: 'OPEN',
+      status: AdvanceOrderStatus.pending,
+      totalAdvancePaid: 12000,
+      estimatedTotal: 0,
+      createdAt: DateTime(2026, 11, 12),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: PosAdvanceInvoiceSection(
+            controller: controller,
+            orders: [order],
+            onViewBooking: (_) async {},
+            onUseInSale: (_) async {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Open Rate'), findsNWidgets(2));
+    expect(find.text('View Booking'), findsOneWidget);
+    expect(find.text('Use in Sale'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

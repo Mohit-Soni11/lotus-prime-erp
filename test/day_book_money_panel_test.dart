@@ -70,7 +70,7 @@ void main() {
 
       expect(find.text('Money Movement'), findsOneWidget);
       expect(find.text('Physical Cash'), findsOneWidget);
-      expect(find.text('Bank Accounts'), findsOneWidget);
+      expect(find.text('Bank / Digital'), findsOneWidget);
       expect(find.text('Opening Balance'), findsOneWidget);
       expect(find.text('Closing Balance'), findsOneWidget);
       if (width == 1200) {

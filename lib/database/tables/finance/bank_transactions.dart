@@ -32,9 +32,10 @@ class BankTransactions extends Table with BaseTable {
   /// Human-readable: BTXN-2025-0001
   TextColumn get txnId => text().unique()();
 
-  /// FK → BankAccounts.id
-  IntColumn get accountId =>
-      integer().references(BankAccounts, #id, onDelete: KeyAction.restrict)();
+  /// Optional until a digital receipt is matched to a shop bank account.
+  IntColumn get accountId => integer()
+      .nullable()
+      .references(BankAccounts, #id, onDelete: KeyAction.restrict)();
 
   // ── Date & Time ────────────────────────────────────────────────────────────
   /// Date the transaction was initiated / recorded

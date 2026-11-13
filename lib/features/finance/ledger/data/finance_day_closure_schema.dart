@@ -32,7 +32,7 @@ const financeDayClosureSchemaSql = <String>[
     WHEN EXISTS (SELECT 1 FROM finance_day_closures
       WHERE OLD.txn_date < end_epoch OR NEW.txn_date < end_epoch)
       AND (OLD.txn_date != NEW.txn_date
-        OR OLD.account_id != NEW.account_id
+        OR OLD.account_id IS NOT NEW.account_id
         OR OLD.type != NEW.type
         OR OLD.category != NEW.category
         OR OLD.amount != NEW.amount
