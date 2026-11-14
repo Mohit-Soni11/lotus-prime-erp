@@ -68,15 +68,14 @@ class SidebarMenu {
       title: 'Stock & Inventory',
       icon: Icons.inventory_2_outlined,
       subItems: [
+        MenuItemData(AppRoutes.addStockRoute),
         MenuItemData(AppRoutes.inventoryRoute),
         MenuItemData(AppRoutes.stockSummaryRoute),
-        MenuItemData(AppRoutes.stockActivityRoute),
         MenuItemData(AppRoutes.stockSearchRoute),
-        MenuItemData(AppRoutes.addStockRoute),
-        MenuItemData(AppRoutes.barcodePrintRoute),
-        MenuItemData(AppRoutes.stockDispositionRoute),
+        MenuItemData(AppRoutes.stockActivityRoute),
         MenuItemData(AppRoutes.stockTransferRoute),
         MenuItemData(AppRoutes.lowStockAlertRoute),
+        MenuItemData(AppRoutes.stockDispositionRoute),
       ],
     ),
 
