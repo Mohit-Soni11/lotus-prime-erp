@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/stock_metal_symbol.dart';
 
 class GoldBatchOverviewCard extends StatelessWidget {
   final GoldStockController ctrl;
@@ -50,7 +51,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               child: Row(
                 children: [
-                  _HeaderIcon(tone: _gradeTone()),
+                  const _HeaderIcon(tone: GoldStockColors.brandGold),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -162,49 +163,9 @@ class GoldBatchOverviewCard extends StatelessWidget {
     );
   }
 
-  IconData _gradeIcon() {
-    final normalized =
-        ctrl.purityDisplay.trim().toUpperCase().replaceAll('KT', 'K');
-    if (normalized.contains('22K') || normalized.contains('916')) {
-      return Icons.verified_rounded;
-    }
-    if (normalized.contains('18K') || normalized.contains('750')) {
-      return Icons.diamond_rounded;
-    }
-    if (normalized.contains('14K') || normalized.contains('585')) {
-      return Icons.auto_awesome_rounded;
-    }
-    if (normalized.contains('9K') || normalized.contains('375')) {
-      return Icons.category_rounded;
-    }
-    if (normalized.isNotEmpty &&
-        !(normalized.contains('24K') || normalized.contains('999'))) {
-      return Icons.tune_rounded;
-    }
-    return Icons.workspace_premium_rounded;
-  }
+  IconData _gradeIcon() => Icons.grade_rounded;
 
-  Color _gradeTone() {
-    final normalized =
-        ctrl.purityDisplay.trim().toUpperCase().replaceAll('KT', 'K');
-    if (normalized.contains('18K') || normalized.contains('750')) {
-      return const Color(0xFF2563EB);
-    }
-    if (normalized.contains('14K') || normalized.contains('585')) {
-      return const Color(0xFF0F8A72);
-    }
-    if (normalized.contains('9K') || normalized.contains('375')) {
-      return const Color(0xFF8B5CF6);
-    }
-    if (normalized.isNotEmpty &&
-        !(normalized.contains('24K') ||
-            normalized.contains('999') ||
-            normalized.contains('22K') ||
-            normalized.contains('916'))) {
-      return GoldStockColors.textMuted;
-    }
-    return GoldStockColors.brandGold;
-  }
+  Color _gradeTone() => GoldStockColors.goldAccent;
 }
 
 class _MetricData {
@@ -290,7 +251,13 @@ class _HeaderIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(11),
         border: Border.all(color: tone.withValues(alpha: 0.20)),
       ),
-      child: Icon(Icons.receipt_long_rounded, color: tone, size: 18),
+      child: Center(
+        child: StockMetalSymbol(
+          metal: StockMetalSymbolType.gold,
+          color: tone,
+          size: 27,
+        ),
+      ),
     );
   }
 }

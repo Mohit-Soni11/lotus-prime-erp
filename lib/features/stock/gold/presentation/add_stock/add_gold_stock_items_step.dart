@@ -5,64 +5,32 @@ import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_intake
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_invoice_card.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_items_table.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_purchase_valuation_card.dart';
-import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_settlement_method_card.dart';
 
 class AddGoldStockItemsStep extends StatelessWidget {
   final GoldStockController ctrl;
-  final Future<void> Function() onSave;
-  final VoidCallback onResetBatch;
-
   const AddGoldStockItemsStep({
     super.key,
     required this.ctrl,
-    required this.onSave,
-    required this.onResetBatch,
   });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final desktopShell = constraints.maxWidth >= 1180;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              GoldIntakeWorkflowCard(ctrl: ctrl),
-              const SizedBox(height: 16),
-              if (desktopShell)
-                _GoldDesktopWorkspace(ctrl: ctrl)
-              else ...[
-                _GoldTopCards(ctrl: ctrl),
-              ],
-              const SizedBox(height: 16),
-              GoldItemsTable(ctrl: ctrl),
-              const SizedBox(height: 16),
-              _GoldSettlementWorkspace(ctrl: ctrl, desktop: desktopShell),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _GoldDesktopWorkspace extends StatelessWidget {
-  final GoldStockController ctrl;
-
-  const _GoldDesktopWorkspace({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _GoldTopCards(ctrl: ctrl)),
-      ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GoldIntakeWorkflowCard(ctrl: ctrl),
+          const SizedBox(height: 16),
+          _GoldTopCards(ctrl: ctrl),
+          const SizedBox(height: 16),
+          GoldItemsTable(ctrl: ctrl),
+          const SizedBox(height: 16),
+          GoldPurchaseValuationCard(ctrl: ctrl),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 }
@@ -95,56 +63,6 @@ class _GoldTopCards extends StatelessWidget {
             GoldBatchOverviewCard(ctrl: ctrl),
             const SizedBox(height: 12),
             GoldInvoiceCard(ctrl: ctrl),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _GoldSettlementWorkspace extends StatelessWidget {
-  final GoldStockController ctrl;
-  final bool desktop;
-
-  const _GoldSettlementWorkspace({required this.ctrl, required this.desktop});
-
-  @override
-  Widget build(BuildContext context) {
-    if (!desktop) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          GoldPurchaseValuationCard(ctrl: ctrl),
-          const SizedBox(height: 16),
-          GoldSettlementMethodCard(ctrl: ctrl),
-        ],
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final sideBySide = constraints.maxWidth >= 1340;
-
-        if (!sideBySide) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              GoldPurchaseValuationCard(ctrl: ctrl),
-              const SizedBox(height: 16),
-              GoldSettlementMethodCard(ctrl: ctrl),
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 42,
-              child: GoldPurchaseValuationCard(ctrl: ctrl),
-            ),
-            const SizedBox(width: 16),
-            Expanded(flex: 58, child: GoldSettlementMethodCard(ctrl: ctrl)),
           ],
         );
       },

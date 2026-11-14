@@ -1,95 +1,9 @@
-import 'package:lotus_erp/features/stock/silver/application/silver_payment_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_intake_valuation_controller.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
 import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 // ✨ Added Missing Snapshot Class to bridge the logic
-class SilverPaymentSnapshot {
-  final PaymentMode paymentMode;
-  final DueReturnType settlementPreference;
-  final SilverDiscountMode discountMode;
-  final double ratePerKg;
-  final double ratePerGram;
-  final double grossFineWeight;
-  final double payableFineWeight;
-  final double fineDiscountWeight;
-  final double cashDiscountAmount;
-  final double fineValueAmount;
-  final double totalMakingAmount;
-  final double subtotalAmount;
-  final double gstPercent;
-  final double appliedGstAmount;
-  final double totalBillAmount;
-  final double cashPaid;
-  final double upiPaid;
-  final double bankingPaid;
-  final double cardPaid;
-  final double cashBankPaidTotal;
-  final double totalPaidValue;
-  final double dueAmount;
-  final double returnAmount;
-  final bool hasDue;
-  final bool hasReturn;
-  final bool isSettled;
-  final double metalGrossWeight;
-  final double metalPurity;
-  final double metalFineCalculated;
-  final double metalPaidValue;
-  final double metalFineShortage;
-  final double metalFineExcess;
-  final double metalFineShortageValue;
-  final double metalFineExcessValue;
-  final double metalFineEquivalentCash;
-  final double cashTargetAmount;
-  final double previousSupplierDue;
-  final double previousSupplierDueAdjustment;
-  final double previousSupplierDueFineEquivalent;
-  final String balanceLabel;
-
-  const SilverPaymentSnapshot({
-    required this.paymentMode,
-    required this.settlementPreference,
-    required this.discountMode,
-    required this.ratePerKg,
-    required this.ratePerGram,
-    required this.grossFineWeight,
-    required this.payableFineWeight,
-    required this.fineDiscountWeight,
-    required this.cashDiscountAmount,
-    required this.fineValueAmount,
-    required this.totalMakingAmount,
-    required this.subtotalAmount,
-    required this.gstPercent,
-    required this.appliedGstAmount,
-    required this.totalBillAmount,
-    required this.cashPaid,
-    required this.upiPaid,
-    required this.bankingPaid,
-    required this.cardPaid,
-    required this.cashBankPaidTotal,
-    required this.totalPaidValue,
-    required this.dueAmount,
-    required this.returnAmount,
-    required this.hasDue,
-    required this.hasReturn,
-    required this.isSettled,
-    required this.metalGrossWeight,
-    required this.metalPurity,
-    required this.metalFineCalculated,
-    required this.metalPaidValue,
-    required this.metalFineShortage,
-    required this.metalFineExcess,
-    required this.metalFineShortageValue,
-    required this.metalFineExcessValue,
-    required this.metalFineEquivalentCash,
-    required this.cashTargetAmount,
-    required this.previousSupplierDue,
-    required this.previousSupplierDueAdjustment,
-    required this.previousSupplierDueFineEquivalent,
-    required this.balanceLabel,
-  });
-}
-
 class SilverInvoiceLineSnapshot {
   final String id;
   final String itemName;
@@ -136,7 +50,7 @@ class SilverInvoiceLineSnapshot {
 
 class SilverInvoiceSummaryData {
   final List<SilverInvoiceLineSnapshot> items;
-  final SilverPaymentSnapshot paymentSnapshot;
+  final StockIntakeValuationSnapshot valuationSnapshot;
   final bool gstEnabled;
   final int rowCount;
   final int totalPieces;
@@ -151,7 +65,7 @@ class SilverInvoiceSummaryData {
 
   const SilverInvoiceSummaryData({
     required this.items,
-    required this.paymentSnapshot,
+    required this.valuationSnapshot,
     required this.gstEnabled,
     required this.rowCount,
     required this.totalPieces,
@@ -168,7 +82,7 @@ class SilverInvoiceSummaryData {
   bool get hasItems => items.isNotEmpty;
 
   factory SilverInvoiceSummaryData.fromController(SilverStockController ctrl) {
-    final paymentSnapshot = ctrl.paymentSnapshot;
+    final valuationSnapshot = ctrl.valuationSnapshot;
     final rows = ctrl.enteredSilverRows;
     final items = rows.map((row) => _mapRow(row)).toList(growable: false);
 
@@ -177,25 +91,25 @@ class SilverInvoiceSummaryData {
       (sum, item) => sum + item.totalAmount,
     );
 
-    final hasRateVariance = paymentSnapshot.ratePerGram > 0 &&
+    final hasRateVariance = valuationSnapshot.ratePerGram > 0 &&
         items.any(
           (item) =>
-              (item.ratePerGram - paymentSnapshot.ratePerGram).abs() > 0.0001,
+              (item.ratePerGram - valuationSnapshot.ratePerGram).abs() > 0.0001,
         );
 
     return SilverInvoiceSummaryData(
       items: items,
-      paymentSnapshot: paymentSnapshot,
+      valuationSnapshot: valuationSnapshot,
       gstEnabled: ctrl.gstEnabled,
       rowCount: items.length,
       totalPieces: ctrl.totalQuantity,
       totalGrossWeight: ctrl.totalGrossWeight,
-      totalFineWeight: paymentSnapshot.payableFineWeight,
+      totalFineWeight: valuationSnapshot.fineWeight,
       totalMakingAmount: ctrl.totalMakingAmount,
       itemSnapshotAmount: itemSnapshotAmount,
-      invoiceSubtotal: paymentSnapshot.subtotalAmount,
-      invoiceGstAmount: paymentSnapshot.appliedGstAmount,
-      finalBillAmount: paymentSnapshot.totalBillAmount,
+      invoiceSubtotal: valuationSnapshot.subtotalAmount,
+      invoiceGstAmount: valuationSnapshot.gstAmount,
+      finalBillAmount: valuationSnapshot.totalAmount,
       hasRateVariance: hasRateVariance,
     );
   }

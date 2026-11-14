@@ -74,8 +74,6 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
                   : AddGoldStockItemsStep(
                       key: const ValueKey('Gold-items-step'),
                       ctrl: _ctrl,
-                      onSave: _onSave,
-                      onResetBatch: _showResetDialog,
                     ),
             ),
           );

@@ -3,7 +3,7 @@ part of '../../inventory_screen.dart';
 enum _InventoryBatchDocumentType {
   fullDossier(
     title: 'Full Batch Dossier',
-    description: 'Complete supplier, valuation, settlement and stock record.',
+    description: 'Complete supplier, valuation and stock record.',
     fileSuffix: 'full_dossier',
   ),
   stockStatus(
@@ -23,7 +23,7 @@ enum _InventoryBatchDocumentType {
   });
 }
 
-Map<String, dynamic> _decodePaymentMeta(String raw) {
+Map<String, dynamic> _decodeVoucherMeta(String raw) {
   if (raw.trim().isEmpty) return const {};
   try {
     final decoded = jsonDecode(raw);
@@ -33,13 +33,6 @@ Map<String, dynamic> _decodePaymentMeta(String raw) {
     }
   } catch (_) {}
   return const {};
-}
-
-double _metaDouble(Map<String, dynamic> meta, String key) {
-  final value = meta[key];
-  if (value is num) return value.toDouble();
-  if (value is String) return double.tryParse(value) ?? 0.0;
-  return 0.0;
 }
 
 String _metaString(Map<String, dynamic> meta, String key) {

@@ -610,12 +610,6 @@ GoRouter createAppRouter() {
             redirect: (context, state) => RoutePaths.settingsMetalCostAnalyser,
           ),
           GoRoute(
-            path: RoutePaths.stockDisposition,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.stockDispositionRoute),
-            ),
-          ),
-          GoRoute(
             path: RoutePaths.stockTransfer,
             builder: (context, state) => StockTransferScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),

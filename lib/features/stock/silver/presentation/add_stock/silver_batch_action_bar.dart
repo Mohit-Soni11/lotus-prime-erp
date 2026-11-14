@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_intake_valuation_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 
@@ -22,10 +23,10 @@ class SilverBatchActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      listenable: Listenable.merge([ctrl, ctrl.valuation]),
       builder: (context, _) {
         final summary = ctrl.invoiceSummary;
-        final snapshot = ctrl.paymentSnapshot;
+        final snapshot = ctrl.valuationSnapshot;
         final accent = ctrl.gstEnabled
             ? SilverStockColors.success
             : SilverStockColors.paymentPrimary;
@@ -102,59 +103,32 @@ class SilverBatchActionBar extends StatelessWidget {
 
   List<Widget> _metricTiles(
     SilverInvoiceSummaryData summary,
-    SilverPaymentSnapshot snapshot,
-  ) {
-    final balanceIcon = snapshot.hasReturn
-        ? SilverStockIcons.returnBalance
-        : snapshot.hasDue
-            ? SilverStockIcons.dueBalance
-            : SilverStockIcons.amountReceived;
-    final balanceLabel = snapshot.hasReturn
-        ? SilverStockStrings.supplierReturnLabel
-        : snapshot.hasDue
-            ? SilverStockStrings.currentDueLabel
-            : 'Settled';
-    final balanceValue = snapshot.hasReturn
-        ? _money(snapshot.returnAmount)
-        : _money(snapshot.dueAmount);
-    final balanceTone = snapshot.hasReturn
-        ? SilverStockColors.paymentReturn
-        : snapshot.hasDue
-            ? SilverStockColors.paymentDue
-            : SilverStockColors.success;
-
-    return [
-      _FooterMetric(
-        icon: SilverStockIcons.lineSnapshot,
-        label: SilverStockStrings.itemSnapshotTotalLabel,
-        value: _money(summary.itemSnapshotAmount),
-        tone: SilverStockColors.paymentPrimary,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: SilverStockIcons.invoiceSummary,
-        label: SilverStockStrings.finalBillAmountLabel,
-        value: _money(snapshot.totalBillAmount),
-        tone: summary.gstEnabled
-            ? SilverStockColors.success
-            : SilverStockColors.paymentPrimary,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: SilverStockIcons.amountReceived,
-        label: SilverStockStrings.totalReceivedLabel,
-        value: _money(snapshot.totalPaidValue),
-        tone: SilverStockColors.success,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: balanceIcon,
-        label: balanceLabel,
-        value: balanceValue,
-        tone: balanceTone,
-      ),
-    ];
-  }
+    StockIntakeValuationSnapshot snapshot,
+  ) =>
+      [
+        _FooterMetric(
+          icon: SilverStockIcons.lineSnapshot,
+          label: SilverStockStrings.itemSnapshotTotalLabel,
+          value: _money(summary.itemSnapshotAmount),
+          tone: SilverStockColors.paymentPrimary,
+        ),
+        const SizedBox(width: 12),
+        _FooterMetric(
+          icon: SilverStockIcons.fineWeight,
+          label: 'Valuation Fine',
+          value: '${snapshot.fineWeight.toStringAsFixed(3)} g',
+          tone: SilverStockColors.brandSilver,
+        ),
+        const SizedBox(width: 12),
+        _FooterMetric(
+          icon: SilverStockIcons.invoiceSummary,
+          label: 'Final Stock Value',
+          value: _money(snapshot.totalAmount),
+          tone: summary.gstEnabled
+              ? SilverStockColors.success
+              : SilverStockColors.paymentPrimary,
+        ),
+      ];
 }
 
 class _FooterMetric extends StatelessWidget {

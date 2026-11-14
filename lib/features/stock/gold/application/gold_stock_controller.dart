@@ -4,11 +4,10 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_batch_code_generator.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_invoice_summary_logic.dart';
-import 'package:lotus_erp/features/stock/gold/application/gold_payment_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_intake_valuation_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_supplier_invoice_policy.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_batch_posting_guard.dart';
 import 'package:lotus_erp/features/stock/shared/application/supplier_bill_attachment_service.dart';
-import 'package:lotus_erp/features/stock/shared/application/supplier_ledger_loader.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/purchase/purchase_voucher_origin.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
@@ -18,7 +17,6 @@ import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.
 
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_quantity_unit.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 
 class GoldStockController extends AddStockController {
   String _goldBatchCode = '';
@@ -29,8 +27,8 @@ class GoldStockController extends AddStockController {
   late final GoldSupplierInvoicePolicy _supplierInvoicePolicy =
       GoldSupplierInvoicePolicy(_rateDb);
 
-  /// ✅ Payment controller — wired to this batch lifecycle
-  final GoldPaymentController payment = GoldPaymentController();
+  final StockIntakeValuationController valuation =
+      StockIntakeValuationController(gramsPerRate: 10);
 
   final TextEditingController supplierInvoiceNumberCtrl =
       TextEditingController();
@@ -39,10 +37,8 @@ class GoldStockController extends AddStockController {
 
   String? _pendingGoldFocusId;
   String? _activeGoldRowId;
-  SupplierLedgerSnapshot? _supplierLedger;
   String? _billPhotoPath;
   bool _isPickingBillPhoto = false;
-  bool _isLoadingSupplierLedger = false;
   double _goldRatePer10g = 0.0;
   DateTime? _goldRateDate;
   bool _isLoadingGoldRate = false;
@@ -51,7 +47,7 @@ class GoldStockController extends AddStockController {
 
   GoldStockController() : super(initialMetal: StockCategory.gold) {
     _startNewBatchIdentity(notify: false);
-    payment.addListener(_handlePaymentChanged);
+    valuation.addListener(_handleValuationChanged);
     _loadGoldRateSnapshot();
   }
 
@@ -67,9 +63,6 @@ class GoldStockController extends AddStockController {
   List<GoldItemModel> get enteredGoldRows =>
       _goldRows.where((row) => row.hasAnyInput).toList(growable: false);
 
-  SupplierLedgerSnapshot? get supplierLedger => _supplierLedger;
-  double get supplierOutstandingDue => _supplierLedger?.outstandingDue ?? 0.0;
-  bool get isLoadingSupplierLedger => _isLoadingSupplierLedger;
   String? get billPhotoPath => _billPhotoPath;
   String get billPhotoName =>
       SupplierBillAttachmentService.fileName(_billPhotoPath);
@@ -83,8 +76,8 @@ class GoldStockController extends AddStockController {
   double get goldRatePerGram =>
       _goldRatePer10g > 0 ? _goldRatePer10g / 10.0 : 0.0;
   double get _activeInvoiceRatePerGram {
-    final paymentRate = payment.todayRatePerGram;
-    return paymentRate > 0 ? paymentRate : goldRatePerGram;
+    final valuationRate = valuation.ratePerGram;
+    return valuationRate > 0 ? valuationRate : goldRatePerGram;
   }
 
   bool get hasGoldRateSnapshot => goldRatePerGram > 0;
@@ -100,66 +93,14 @@ class GoldStockController extends AddStockController {
       );
   double get totalMakingAmount =>
       enteredGoldRows.fold(0.0, (sum, row) => sum + row.makingAmount);
-  GoldPaymentSnapshot get paymentSnapshot {
-    payment.updateInvoiceSummary(
-      fine: totalValuationFineWeight,
-      making: totalMakingAmount,
+  StockIntakeValuationSnapshot get valuationSnapshot {
+    valuation.updateTotals(
+      fineWeight: totalValuationFineWeight,
+      makingAmount: totalMakingAmount,
       notify: false,
     );
-    payment.syncGstEnabled(gstEnabled, notify: false);
-
-    return GoldPaymentSnapshot(
-      paymentMode: payment.paymentMode,
-      settlementPreference: payment.metalDueReturnType,
-      discountMode: payment.discountMode,
-      ratePer10g: payment.todayRatePer10g,
-      ratePerGram: payment.todayRatePerGram,
-      grossFineWeight: payment.grossFineFromItems,
-      valuationFineWeight: payment.totalFineFromItems,
-      fineDiscountWeight: payment.fineDiscountWeight,
-      cashDiscountAmount: payment.cashDiscountAmount,
-      fineValueAmount: payment.fineValueAmount,
-      totalMakingAmount: payment.totalMakingFromItems,
-      subtotalAmount: payment.subTotalAmount,
-      gstPercent: payment.taxPercentage,
-      appliedGstAmount: payment.taxAmount,
-      totalBillAmount: payment.finalBillAmount,
-      cashPaid: payment.cashPaid,
-      upiPaid: payment.upiPaid,
-      bankingPaid: payment.bankPaid,
-      cardPaid: payment.cardPaid,
-      cashBankPaidTotal: payment.cashBankPaidTotal,
-      totalPaidValue: payment.totalPaidValue,
-      cashDueAmount: payment.cashDueAmount,
-      dueAmount: payment.dueAmount,
-      fineDueWeight: payment.fineDueWeight,
-      fineDueValue: payment.fineDueValue,
-      fineReturnWeight: payment.fineReturnWeight,
-      fineReturnValue: payment.fineReturnValue,
-      supplierCreditFineWeight: payment.supplierCreditFineWeight,
-      supplierCreditValue: payment.supplierCreditValue,
-      returnAmount: payment.returnAmount,
-      hasDue: payment.hasDue,
-      hasFineDue: payment.hasFineDue,
-      hasFineReturn: payment.hasFineReturn,
-      hasSupplierCredit: payment.hasSupplierCredit,
-      hasReturn: payment.hasReturn,
-      isSettled: payment.isSettled,
-      metalGrossWeight: payment.metalGivenWeight,
-      metalPurity: payment.metalGivenPurity,
-      metalFineCalculated: payment.fineReceived,
-      metalPaidValue: payment.metalReceivedValue,
-      metalFineShortage: payment.fineShortage,
-      metalFineExcess: payment.fineExcess,
-      metalFineShortageValue: payment.fineShortageValue,
-      metalFineExcessValue: payment.fineExcessValue,
-      metalFineEquivalentCash: payment.differenceInCashValue,
-      cashTargetAmount: payment.cashTargetAmount,
-      previousSupplierDue: payment.supplierPreviousDue,
-      previousSupplierDueAdjustment: payment.previousDueAdjustment,
-      previousSupplierDueFineEquivalent: payment.previousDueFineEquivalent,
-      balanceLabel: payment.balanceLabel,
-    );
+    valuation.setGstEnabled(gstEnabled, notify: false);
+    return StockIntakeValuationSnapshot.fromController(valuation);
   }
 
   @override
@@ -191,24 +132,6 @@ class GoldStockController extends AddStockController {
     return 'Rs ${goldRatePerGram.toStringAsFixed(2)}/g';
   }
 
-  @override
-  void setSessionSupplier(SupplierListItemModel? supplier) {
-    super.setSessionSupplier(supplier);
-    _loadSupplierLedger(supplier?.id);
-  }
-
-  @override
-  void setSessionSupplierText(String value) {
-    super.setSessionSupplierText(value);
-    _clearSupplierLedger();
-  }
-
-  @override
-  void clearSessionSupplier({bool clearFields = true}) {
-    super.clearSessionSupplier(clearFields: clearFields);
-    _clearSupplierLedger();
-  }
-
   Future<void> pickBillPhoto() async {
     if (_isPickingBillPhoto) {
       return;
@@ -233,38 +156,6 @@ class GoldStockController extends AddStockController {
 
   void clearBillPhoto() {
     _billPhotoPath = null;
-    notifyListeners();
-  }
-
-  Future<void> _loadSupplierLedger(int? supplierId) async {
-    if (supplierId == null) {
-      _clearSupplierLedger();
-      return;
-    }
-
-    _isLoadingSupplierLedger = true;
-    notifyListeners();
-
-    try {
-      final ledger = await SupplierLedgerLoader.load(
-        db: _rateDb,
-        supplierId: supplierId,
-      );
-      if (linkedSupplier?.id != supplierId && sessionSupplierId != supplierId) {
-        return;
-      }
-      _supplierLedger = ledger;
-      payment.setSupplierPreviousDue(ledger?.outstandingDue ?? 0.0);
-    } finally {
-      _isLoadingSupplierLedger = false;
-      notifyListeners();
-    }
-  }
-
-  void _clearSupplierLedger() {
-    _supplierLedger = null;
-    _isLoadingSupplierLedger = false;
-    payment.setSupplierPreviousDue(0.0);
     notifyListeners();
   }
 
@@ -446,7 +337,7 @@ class GoldStockController extends AddStockController {
     if (supplierValidation != null) {
       return supplierValidation;
     }
-    if (payment.todayRatePer10g <= 0) {
+    if (valuation.ratePerBase <= 0) {
       return 'Enter the Gold invoice rate before saving this batch.';
     }
     return null;
@@ -476,7 +367,7 @@ class GoldStockController extends AddStockController {
       return null;
     }
 
-    final snapshot = paymentSnapshot;
+    final snapshot = valuationSnapshot;
     final sequenceNo = await getNextPurchaseSequence();
     await _ensureCurrentBatchCodeIsAvailable();
     final invoiceCategory = _supplierInvoicePolicy.categoryFor(
@@ -499,32 +390,22 @@ class GoldStockController extends AddStockController {
       entryOrigin: PurchaseVoucherOrigin.addStock,
       taxType: gstEnabled ? PurchaseTaxType.gst : PurchaseTaxType.normal,
       discountType: PurchaseDiscountType.flatAmount,
-      discountValue: snapshot.cashDiscountAmount,
-      discountAmount: snapshot.cashDiscountAmount,
+      discountValue: 0,
+      discountAmount: 0,
       grossAmount: invoiceSummary.itemSnapshotAmount,
       taxableAmount: snapshot.subtotalAmount,
-      gstAmount: snapshot.appliedGstAmount,
-      cgstAmount: gstEnabled ? snapshot.appliedGstAmount / 2.0 : 0.0,
-      sgstAmount: gstEnabled ? snapshot.appliedGstAmount / 2.0 : 0.0,
-      grandTotal: snapshot.totalBillAmount,
-      cashPaid: snapshot.cashPaid,
-      upiPaid: snapshot.upiPaid,
-      bankPaid: snapshot.bankingPaid,
-      cardPaid: snapshot.cardPaid,
-      totalPaid: snapshot.totalPaidValue,
-      balanceDue: snapshot.dueAmount,
-      ratePerKg: snapshot.ratePer10g,
-      metalPaidGrossWeight: snapshot.metalGrossWeight,
-      metalPaidPurity: snapshot.metalPurity,
-      metalPaidFine: snapshot.metalFineCalculated,
-      metalPaidValue: snapshot.metalPaidValue,
-      dueMode: snapshot.hasDue ? snapshot.settlementPreference.name : null,
-      excessMode:
-          snapshot.hasReturn ? snapshot.settlementPreference.name : null,
-      promiseDate: snapshot.hasDue ? payment.promiseDate : null,
+      gstAmount: snapshot.gstAmount,
+      cgstAmount: gstEnabled ? snapshot.gstAmount / 2 : 0,
+      sgstAmount: gstEnabled ? snapshot.gstAmount / 2 : 0,
+      grandTotal: snapshot.totalAmount,
+      cashPaid: 0,
+      bankPaid: 0,
+      cardPaid: 0,
+      totalPaid: 0,
+      balanceDue: 0,
+      ratePerKg: snapshot.ratePerBase,
       paymentMeta: jsonEncode({
-        'mode': snapshot.paymentMode.name,
-        'taxMode': payment.taxMode.name,
+        'stockIntakeOnly': true,
         'purchaseCategory': invoiceCategory.storageValue,
         'purchaseCategoryLabel': invoiceCategory.label,
         'inputCreditStatus': creditStatus.storageValue,
@@ -532,45 +413,7 @@ class GoldStockController extends AddStockController {
         'supplierInvoiceNo': supplierInvoiceNumberCtrl.text.trim(),
         'supplierBillAttachmentPath': _billPhotoPath,
         'supplierBillAttachmentRequired': gstEnabled,
-        'discountMode': payment.discountMode.name,
-        'ratePerGram': snapshot.ratePerGram,
-        'ratePer10g': snapshot.ratePer10g,
-        'fineDiscountWeight': snapshot.fineDiscountWeight,
-        'cashDiscountAmount': snapshot.cashDiscountAmount,
-        'actualFineWeight': totalActualFineWeight,
-        'wastageFineWeight': totalWastageFineWeight,
-        'valuationFineWeight': totalValuationFineWeight,
         'gstRatePercent': snapshot.gstPercent,
-        'metalGstPercent': payment.metalGstPercent,
-        'cashGstPercent': payment.cashGstPercent,
-        'metalTaxableAmount': payment.metalTaxableAmount,
-        'cashTaxableAmount': payment.cashTaxableAmount,
-        'metalGstAmount': payment.metalTaxAmount,
-        'cashGstAmount': payment.cashTaxAmount,
-        'settlementPreference': snapshot.settlementPreference.name,
-        'promiseDate':
-            snapshot.hasDue ? payment.promiseDate?.toIso8601String() : null,
-        'cashBankPaidTotal': snapshot.cashBankPaidTotal,
-        'cashTargetAmount': snapshot.cashTargetAmount,
-        'cashDueAmount': snapshot.cashDueAmount,
-        'dueAmount': snapshot.dueAmount,
-        'fineDueWeight': snapshot.fineDueWeight,
-        'fineDueValue': snapshot.fineDueValue,
-        'fineReturnWeight': snapshot.fineReturnWeight,
-        'fineReturnValue': snapshot.fineReturnValue,
-        'supplierCreditFineWeight': snapshot.supplierCreditFineWeight,
-        'supplierCreditValue': snapshot.supplierCreditValue,
-        'returnAmount': snapshot.returnAmount,
-        'isSettled': snapshot.isSettled,
-        'metalFineShortage': snapshot.metalFineShortage,
-        'metalFineExcess': snapshot.metalFineExcess,
-        'metalFineShortageValue': snapshot.metalFineShortageValue,
-        'metalFineExcessValue': snapshot.metalFineExcessValue,
-        'balanceLabel': snapshot.balanceLabel,
-        'oldDueBefore': snapshot.previousSupplierDue,
-        'oldDueAdjustedAmount': snapshot.previousSupplierDueAdjustment,
-        'oldDueFineEquivalent': snapshot.previousSupplierDueFineEquivalent,
-        'metalLines': payment.metalLinePayloads,
       }),
       party: PurchaseVoucherPartyDraft(
         supplierId: linkedSupplier?.id ?? sessionSupplierId,
@@ -638,7 +481,7 @@ class GoldStockController extends AddStockController {
               effectiveRatePerGram: snapshot.ratePerGram > 0
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
-              gstRate: gstEnabled ? gstRate : 0.0,
+              gstRate: snapshot.gstPercent,
               quantityMode: row.quantityMode,
               packetCount: row.packetCount,
               piecesPerPacket: row.piecesPerPacket,
@@ -657,7 +500,7 @@ class GoldStockController extends AddStockController {
     PurchaseSaveResult result,
     List<StockRowEntry> rowsToSave,
   ) {
-    return '${rowsToSave.length} Gold row${rowsToSave.length == 1 ? '' : 's'} saved under voucher ${result.voucherNo}. Payment split and supplier settlement have been linked to this batch.';
+    return '${rowsToSave.length} Gold row${rowsToSave.length == 1 ? '' : 's'} saved under voucher ${result.voucherNo}. Stock valuation has been saved with this batch.';
   }
 
   @override
@@ -726,14 +569,21 @@ class GoldStockController extends AddStockController {
     }
   }
 
-  void _handlePaymentChanged() {
-    if (!_syncGoldRowRatesWithPayment()) {
+  void _handleValuationChanged() {
+    _syncGstRateToRows();
+    if (!_syncGoldRowRatesWithValuation()) {
       notifyListeners();
     }
   }
 
-  bool _syncGoldRowRatesWithPayment() {
-    final ratePerGram = payment.todayRatePerGram;
+  void _syncGstRateToRows() {
+    final nextRate = valuation.configuredGstPercent;
+    if (gstRate == nextRate) return;
+    gstRate = nextRate;
+  }
+
+  bool _syncGoldRowRatesWithValuation() {
+    final ratePerGram = valuation.ratePerGram;
     if (ratePerGram <= 0) {
       return false;
     }
@@ -774,7 +624,7 @@ class GoldStockController extends AddStockController {
     _startNewBatchIdentity(notify: false);
     supplierInvoiceNumberCtrl.clear();
     _billPhotoPath = null;
-    payment.resetSettlement();
+    valuation.reset();
     _clearGoldRows();
     _addGoldModel(requestFocus: true);
     _loadGoldRateSnapshot();
@@ -787,9 +637,7 @@ class GoldStockController extends AddStockController {
     _startNewBatchIdentity(notify: false);
     supplierInvoiceNumberCtrl.clear();
     _billPhotoPath = null;
-    _supplierLedger = null;
-    _isLoadingSupplierLedger = false;
-    payment.resetSettlement();
+    valuation.reset();
     _clearGoldRows();
     super.resetForNewBatch();
     _loadGoldRateSnapshot();
@@ -845,8 +693,8 @@ class GoldStockController extends AddStockController {
   @override
   void dispose() {
     supplierInvoiceNumberCtrl.dispose();
-    payment.removeListener(_handlePaymentChanged);
-    payment.dispose();
+    valuation.removeListener(_handleValuationChanged);
+    valuation.dispose();
     for (final row in _goldRows) {
       row.removeListener(notifyListeners);
       row.disposeAll();
@@ -872,7 +720,7 @@ class GoldStockController extends AddStockController {
         _goldRateDate = null;
       }
 
-      payment.setTodayRatePer10g(_goldRatePer10g);
+      valuation.setRatePerBase(_goldRatePer10g);
 
       for (final row in _goldRows) {
         row.applyPurchaseRate(_activeInvoiceRatePerGram, onlyIfEmpty: false);

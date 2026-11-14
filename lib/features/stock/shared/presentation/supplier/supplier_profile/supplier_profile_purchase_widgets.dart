@@ -72,14 +72,16 @@ class _PurchaseHistoryCard extends StatelessWidget {
                       'Bill ${_money(item.grandTotal)}',
                       SupplierProfileColors.brandGold,
                     ),
-                    _MiniBadge(
-                      'Paid ${_money(item.totalPaid)}',
-                      SupplierProfileColors.success,
-                    ),
-                    _MiniBadge(
-                      'Baki ${_money(item.balanceDue)}',
-                      dueColor,
-                    ),
+                    if (item.isSettlementTracked) ...[
+                      _MiniBadge(
+                        'Paid ${_money(item.totalPaid)}',
+                        SupplierProfileColors.success,
+                      ),
+                      _MiniBadge(
+                        'Baki ${_money(item.balanceDue)}',
+                        dueColor,
+                      ),
+                    ],
                     if (item.hasOldDueAdjustment)
                       _MiniBadge(
                         'Old due adjusted ${_money(item.oldDueAdjustedAmount)}',

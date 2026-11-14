@@ -21,7 +21,7 @@ class _InventoryBatchGroup {
   final double valuationFine;
   final double makingAmount;
   final double stockValue;
-  final _InventoryPaymentSummary payment;
+  final _InventoryPurchaseValuation valuation;
 
   const _InventoryBatchGroup({
     required this.batchCode,
@@ -41,7 +41,7 @@ class _InventoryBatchGroup {
     required this.valuationFine,
     required this.makingAmount,
     required this.stockValue,
-    required this.payment,
+    required this.valuation,
   });
 
   bool get isGst => taxType.toUpperCase().contains('GST');
@@ -209,7 +209,6 @@ class _InventoryBatchGroup {
       supplierName,
       supplierInvoiceNo,
       taxType,
-      payment.paymentStatus,
       stockStatusLabel,
       for (final unit in units) ...[
         unit.itemName,
@@ -248,7 +247,7 @@ class _InventoryBatchGroup {
       valuationFine: units.fold(0.0, (sum, unit) => sum + unit.valuationFine),
       makingAmount: units.fold(0.0, (sum, unit) => sum + unit.makingAmount),
       stockValue: units.fold(0.0, (sum, unit) => sum + unit.unitCost),
-      payment: _InventoryPaymentSummary.fromUnit(first),
+      valuation: _InventoryPurchaseValuation.fromUnit(first),
     );
   }
 
@@ -273,83 +272,23 @@ String _stockUnitCountText(int count) {
   return '$count ${count == 1 ? 'unit' : 'units'}';
 }
 
-class _InventoryPaymentSummary {
+class _InventoryPurchaseValuation {
   final double grandTotal;
-  final double totalPaid;
-  final double balanceDue;
-  final double cashPaid;
-  final double upiPaid;
-  final double bankPaid;
-  final double cardPaid;
-  final double metalPaidFine;
-  final double metalPaidValue;
   final double gstAmount;
-  final double cgstAmount;
-  final double sgstAmount;
-  final double fineDueWeight;
-  final double fineDueValue;
-  final double fineReturnWeight;
-  final double fineReturnValue;
-  final double supplierCreditValue;
-  final String paymentStatus;
-  final String dueMode;
-  final String excessMode;
   final String attachmentPath;
-  final String paymentMode;
-  final String balanceLabel;
 
-  const _InventoryPaymentSummary({
+  const _InventoryPurchaseValuation({
     required this.grandTotal,
-    required this.totalPaid,
-    required this.balanceDue,
-    required this.cashPaid,
-    required this.upiPaid,
-    required this.bankPaid,
-    required this.cardPaid,
-    required this.metalPaidFine,
-    required this.metalPaidValue,
     required this.gstAmount,
-    required this.cgstAmount,
-    required this.sgstAmount,
-    required this.fineDueWeight,
-    required this.fineDueValue,
-    required this.fineReturnWeight,
-    required this.fineReturnValue,
-    required this.supplierCreditValue,
-    required this.paymentStatus,
-    required this.dueMode,
-    required this.excessMode,
     required this.attachmentPath,
-    required this.paymentMode,
-    required this.balanceLabel,
   });
 
-  factory _InventoryPaymentSummary.fromUnit(_InventoryGradeUnit unit) {
-    final meta = _decodePaymentMeta(unit.paymentMeta);
-    return _InventoryPaymentSummary(
+  factory _InventoryPurchaseValuation.fromUnit(_InventoryGradeUnit unit) {
+    final meta = _decodeVoucherMeta(unit.voucherMeta);
+    return _InventoryPurchaseValuation(
       grandTotal: unit.grandTotal,
-      totalPaid: unit.totalPaid,
-      balanceDue: unit.balanceDue,
-      cashPaid: unit.cashPaid,
-      upiPaid: unit.upiPaid,
-      bankPaid: unit.bankPaid,
-      cardPaid: unit.cardPaid,
-      metalPaidFine: unit.metalPaidFine,
-      metalPaidValue: unit.metalPaidValue,
       gstAmount: unit.gstAmount,
-      cgstAmount: unit.cgstAmount,
-      sgstAmount: unit.sgstAmount,
-      fineDueWeight: _metaDouble(meta, 'fineDueWeight'),
-      fineDueValue: _metaDouble(meta, 'fineDueValue'),
-      fineReturnWeight: _metaDouble(meta, 'fineReturnWeight'),
-      fineReturnValue: _metaDouble(meta, 'fineReturnValue'),
-      supplierCreditValue: _metaDouble(meta, 'supplierCreditValue'),
-      paymentStatus: unit.paymentStatus,
-      dueMode: unit.dueMode,
-      excessMode: unit.excessMode,
       attachmentPath: _metaString(meta, 'supplierBillAttachmentPath'),
-      paymentMode: _metaString(meta, 'mode'),
-      balanceLabel: _metaString(meta, 'balanceLabel'),
     );
   }
 
@@ -414,21 +353,8 @@ class _InventoryGradeUnit {
   final String taxType;
   final String supplierInvoiceNo;
   final double grandTotal;
-  final double totalPaid;
-  final double balanceDue;
-  final double cashPaid;
-  final double upiPaid;
-  final double bankPaid;
-  final double cardPaid;
-  final double metalPaidFine;
-  final double metalPaidValue;
   final double gstAmount;
-  final double cgstAmount;
-  final double sgstAmount;
-  final String paymentStatus;
-  final String dueMode;
-  final String excessMode;
-  final String paymentMeta;
+  final String voucherMeta;
   final int batchCreatedAt;
   final String status;
   final String sourceItemNames;
@@ -474,21 +400,8 @@ class _InventoryGradeUnit {
     required this.taxType,
     required this.supplierInvoiceNo,
     required this.grandTotal,
-    required this.totalPaid,
-    required this.balanceDue,
-    required this.cashPaid,
-    required this.upiPaid,
-    required this.bankPaid,
-    required this.cardPaid,
-    required this.metalPaidFine,
-    required this.metalPaidValue,
     required this.gstAmount,
-    required this.cgstAmount,
-    required this.sgstAmount,
-    required this.paymentStatus,
-    required this.dueMode,
-    required this.excessMode,
-    required this.paymentMeta,
+    required this.voucherMeta,
     required this.batchCreatedAt,
     required this.status,
     required this.sourceItemNames,
@@ -554,21 +467,8 @@ class _InventoryGradeUnit {
       taxType: text('tax_type'),
       supplierInvoiceNo: text('supplier_invoice_no'),
       grandTotal: number('grand_total'),
-      totalPaid: number('total_paid'),
-      balanceDue: number('balance_due'),
-      cashPaid: number('cash_paid'),
-      upiPaid: number('upi_paid'),
-      bankPaid: number('bank_paid'),
-      cardPaid: number('card_paid'),
-      metalPaidFine: number('metal_paid_fine'),
-      metalPaidValue: number('metal_paid_value'),
       gstAmount: number('gst_amount'),
-      cgstAmount: number('cgst_amount'),
-      sgstAmount: number('sgst_amount'),
-      paymentStatus: text('payment_status'),
-      dueMode: text('due_mode'),
-      excessMode: text('excess_mode'),
-      paymentMeta: text('payment_meta'),
+      voucherMeta: text('payment_meta'),
       batchCreatedAt: integer('batch_created_at'),
       status: text('status'),
       sourceItemNames: text('source_item_names'),

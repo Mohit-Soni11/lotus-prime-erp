@@ -138,20 +138,7 @@ class _InventoryGradeDetailScreenState
         COALESCE(pv.tax_type, 'NORMAL') AS tax_type,
         COALESCE(pv.supplier_invoice_no, '') AS supplier_invoice_no,
         COALESCE(pv.grand_total, 0.0) AS grand_total,
-        COALESCE(pv.total_paid, 0.0) AS total_paid,
-        COALESCE(pv.balance_due, 0.0) AS balance_due,
-        COALESCE(pv.cash_paid, 0.0) AS cash_paid,
-        COALESCE(pv.upi_paid, 0.0) AS upi_paid,
-        COALESCE(pv.bank_paid, 0.0) AS bank_paid,
-        COALESCE(pv.card_paid, 0.0) AS card_paid,
-        COALESCE(pv.metal_paid_fine, 0.0) AS metal_paid_fine,
-        COALESCE(pv.metal_paid_value, 0.0) AS metal_paid_value,
         COALESCE(pv.gst_amount, 0.0) AS gst_amount,
-        COALESCE(pv.cgst_amount, 0.0) AS cgst_amount,
-        COALESCE(pv.sgst_amount, 0.0) AS sgst_amount,
-        COALESCE(pv.payment_status, '') AS payment_status,
-        COALESCE(pv.due_mode, '') AS due_mode,
-        COALESCE(pv.excess_mode, '') AS excess_mode,
         COALESCE(pv.payment_meta, '') AS payment_meta,
         COALESCE(pv.created_at, u.created_at) AS batch_created_at,
         u.status AS status,
@@ -653,7 +640,6 @@ class _InventoryGradeDetailScreenState
                     'Partially Sold',
                     'Sold Out',
                     'GST',
-                    'Due',
                     'Attachment',
                   ])
                     _BatchFilterChip(
@@ -903,10 +889,8 @@ class _InventoryGradeDetailScreenState
         return batch.isSoldOut;
       case 'GST':
         return batch.isGst;
-      case 'Due':
-        return batch.payment.balanceDue > 0 || batch.payment.fineDueWeight > 0;
       case 'Attachment':
-        return batch.payment.hasAttachment;
+        return batch.valuation.hasAttachment;
       default:
         return true;
     }

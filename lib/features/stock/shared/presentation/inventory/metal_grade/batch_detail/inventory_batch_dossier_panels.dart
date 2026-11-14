@@ -512,6 +512,16 @@ class _BatchOverviewPanel extends StatelessWidget {
                     label: 'Valuation Fine',
                     value: '${_weight(batch.valuationFine)} g',
                     accent: InvColors.brandGold),
+              if (batch.isGst && batch.valuation.gstAmount > 0)
+                _DossierMetric(
+                    label: 'GST',
+                    value: _money(batch.valuation.gstAmount),
+                    accent: ui.accent),
+              if (batch.valuation.grandTotal > 0)
+                _DossierMetric(
+                    label: 'Final Stock Value',
+                    value: _money(batch.valuation.grandTotal),
+                    accent: InvColors.success),
             ],
           ),
         ],
@@ -565,127 +575,6 @@ class _HeaderActionButton extends StatelessWidget {
   }
 }
 
-class _BatchPaymentPanel extends StatelessWidget {
-  final _InventoryBatchGroup batch;
-  final StockMetalUiData ui;
-
-  const _BatchPaymentPanel({
-    required this.batch,
-    required this.ui,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final payment = batch.payment;
-    return _DossierPanel(
-      icon: Icons.account_balance_wallet_rounded,
-      title: 'Payment Summary',
-      subtitle: 'Cash, metal, GST, due and return snapshot',
-      accent: ui.accent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_paymentMetrics(payment).isNotEmpty)
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final metric in _paymentMetrics(payment))
-                  _DossierMetric(
-                    label: metric.label,
-                    value: metric.value,
-                    accent: metric.accent,
-                  ),
-              ],
-            ),
-          if (_paymentMetrics(payment).isNotEmpty &&
-              _paymentInfoRows(payment, batch.isGst).isNotEmpty)
-            const SizedBox(height: 12),
-          for (final row in _paymentInfoRows(payment, batch.isGst))
-            _DossierInfoRow(label: row.label, value: row.value),
-          if (_paymentMetrics(payment).isEmpty &&
-              _paymentInfoRows(payment, batch.isGst).isEmpty)
-            Text(
-              'No payment settlement information is recorded for this batch.',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: InvColors.textMuted,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  List<_DossierMetricData> _paymentMetrics(_InventoryPaymentSummary payment) {
-    final metrics = <_DossierMetricData>[];
-    if (payment.grandTotal > 0) {
-      metrics.add(_DossierMetricData(
-          'Final Bill', _money(payment.grandTotal), ui.accent));
-    }
-    if (payment.totalPaid > 0) {
-      metrics.add(_DossierMetricData(
-          'Total Paid', _money(payment.totalPaid), InvColors.success));
-    }
-    if (payment.balanceDue > 0) {
-      metrics.add(_DossierMetricData(
-          'Cash Due', _money(payment.balanceDue), InvColors.danger));
-    }
-    if (payment.metalPaidFine > 0) {
-      metrics.add(_DossierMetricData('Metal Paid',
-          '${_weight(payment.metalPaidFine)} g', InvColors.brandGold));
-    }
-    if (payment.fineDueWeight > 0) {
-      metrics.add(_DossierMetricData(
-          'Fine Due', '${_weight(payment.fineDueWeight)} g', InvColors.danger));
-    }
-    if (payment.fineReturnWeight > 0) {
-      metrics.add(_DossierMetricData('Fine Return',
-          '${_weight(payment.fineReturnWeight)} g', const Color(0xFF0F766E)));
-    }
-    if (payment.supplierCreditValue > 0) {
-      metrics.add(_DossierMetricData('Supplier Credit',
-          _money(payment.supplierCreditValue), InvColors.brandGold));
-    }
-    return metrics;
-  }
-
-  List<_DossierInfoData> _paymentInfoRows(
-    _InventoryPaymentSummary payment,
-    bool isGst,
-  ) {
-    final rows = <_DossierInfoData>[];
-    if (payment.paymentMode.trim().isNotEmpty) {
-      rows.add(
-          _DossierInfoData('Payment Mode', _titleCase(payment.paymentMode)));
-    }
-    if (payment.cashPaid > 0) {
-      rows.add(_DossierInfoData('Cash', _money(payment.cashPaid)));
-    }
-    if (payment.upiPaid > 0) {
-      rows.add(_DossierInfoData('UPI', _money(payment.upiPaid)));
-    }
-    if (payment.bankPaid > 0) {
-      rows.add(_DossierInfoData('Bank', _money(payment.bankPaid)));
-    }
-    if (payment.cardPaid > 0) {
-      rows.add(_DossierInfoData('Card', _money(payment.cardPaid)));
-    }
-    if (isGst && payment.gstAmount > 0) {
-      rows.add(_DossierInfoData('GST Total', _money(payment.gstAmount)));
-      rows.add(_DossierInfoData(
-        'CGST / SGST',
-        '${_money(payment.cgstAmount)} / ${_money(payment.sgstAmount)}',
-      ));
-    }
-    if (payment.paymentStatus.trim().isNotEmpty) {
-      rows.add(_DossierInfoData('Status', payment.paymentStatus));
-    }
-    return rows;
-  }
-}
-
 class _BatchDocumentPanel extends StatelessWidget {
   final _InventoryBatchGroup batch;
   final StockMetalUiData ui;
@@ -697,7 +586,7 @@ class _BatchDocumentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final path = batch.payment.attachmentPath.trim();
+    final path = batch.valuation.attachmentPath.trim();
     return _DossierPanel(
       icon: Icons.attach_file_rounded,
       title: 'Supplier Bill Document',
@@ -827,21 +716,6 @@ class _BatchStockLedgerPanel extends StatelessWidget {
       ),
     );
   }
-}
-
-class _DossierMetricData {
-  final String label;
-  final String value;
-  final Color accent;
-
-  const _DossierMetricData(this.label, this.value, this.accent);
-}
-
-class _DossierInfoData {
-  final String label;
-  final String value;
-
-  const _DossierInfoData(this.label, this.value);
 }
 
 class _DossierLedgerSection extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_intake_valuation_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
 
@@ -22,10 +23,10 @@ class GoldBatchActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      listenable: Listenable.merge([ctrl, ctrl.valuation]),
       builder: (context, _) {
         final summary = ctrl.invoiceSummary;
-        final snapshot = ctrl.paymentSnapshot;
+        final snapshot = ctrl.valuationSnapshot;
         final accent = ctrl.gstEnabled
             ? GoldStockColors.success
             : GoldStockColors.paymentPrimary;
@@ -106,78 +107,32 @@ class GoldBatchActionBar extends StatelessWidget {
 
   List<Widget> _metricTiles(
     GoldInvoiceSummaryData summary,
-    GoldPaymentSnapshot snapshot,
-  ) {
-    final balanceIcon = snapshot.hasFineReturn
-        ? GoldStockIcons.fineWeight
-        : snapshot.hasSupplierCredit
-            ? Icons.savings_rounded
-            : snapshot.hasReturn
-                ? GoldStockIcons.returnBalance
-                : GoldStockIcons.dueBalance;
-    final balanceLabel = snapshot.hasFineReturn
-        ? 'Fine Return'
-        : snapshot.hasSupplierCredit
-            ? 'Supplier Credit'
-            : snapshot.hasReturn
-                ? GoldStockStrings.supplierReturnLabel
-                : snapshot.hasFineDue
-                    ? 'Cash Due'
-                    : GoldStockStrings.currentDueLabel;
-    final balanceValue = snapshot.hasFineReturn
-        ? '${snapshot.fineReturnWeight.toStringAsFixed(3)} g'
-        : snapshot.hasSupplierCredit
-            ? '${snapshot.supplierCreditFineWeight.toStringAsFixed(3)} g'
-            : snapshot.hasReturn
-                ? _money(snapshot.returnAmount)
-                : _money(snapshot.dueAmount);
-    final balanceTone = snapshot.hasReturn
-        ? GoldStockColors.paymentReturn
-        : snapshot.hasDue
-            ? GoldStockColors.paymentDue
-            : GoldStockColors.success;
-
-    return [
-      _FooterMetric(
-        icon: GoldStockIcons.lineSnapshot,
-        label: GoldStockStrings.itemSnapshotTotalLabel,
-        value: _money(summary.itemSnapshotAmount),
-        tone: GoldStockColors.paymentPrimary,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: GoldStockIcons.invoiceSummary,
-        label: GoldStockStrings.finalBillAmountLabel,
-        value: _money(snapshot.totalBillAmount),
-        tone: summary.gstEnabled
-            ? GoldStockColors.success
-            : GoldStockColors.paymentPrimary,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: GoldStockIcons.amountReceived,
-        label: GoldStockStrings.totalReceivedLabel,
-        value: _money(snapshot.totalPaidValue),
-        tone: GoldStockColors.success,
-      ),
-      const SizedBox(width: 12),
-      _FooterMetric(
-        icon: balanceIcon,
-        label: balanceLabel,
-        value: balanceValue,
-        tone: balanceTone,
-      ),
-      if (snapshot.hasFineDue) ...[
+    StockIntakeValuationSnapshot snapshot,
+  ) =>
+      [
+        _FooterMetric(
+          icon: GoldStockIcons.lineSnapshot,
+          label: GoldStockStrings.itemSnapshotTotalLabel,
+          value: _money(summary.itemSnapshotAmount),
+          tone: GoldStockColors.paymentPrimary,
+        ),
         const SizedBox(width: 12),
         _FooterMetric(
           icon: GoldStockIcons.fineWeight,
-          label: 'Fine Due',
-          value: '${snapshot.fineDueWeight.toStringAsFixed(3)} g',
-          tone: GoldStockColors.paymentDue,
+          label: 'Valuation Fine',
+          value: '${snapshot.fineWeight.toStringAsFixed(3)} g',
+          tone: GoldStockColors.brandGold,
         ),
-      ],
-    ];
-  }
+        const SizedBox(width: 12),
+        _FooterMetric(
+          icon: GoldStockIcons.invoiceSummary,
+          label: 'Final Stock Value',
+          value: _money(snapshot.totalAmount),
+          tone: summary.gstEnabled
+              ? GoldStockColors.success
+              : GoldStockColors.paymentPrimary,
+        ),
+      ];
 }
 
 class _FooterMetric extends StatelessWidget {

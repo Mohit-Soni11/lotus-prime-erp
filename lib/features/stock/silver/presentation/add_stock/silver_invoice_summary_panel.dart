@@ -15,7 +15,7 @@ class SilverInvoiceSummaryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      listenable: Listenable.merge([ctrl, ctrl.valuation]),
       builder: (context, _) {
         final summary = ctrl.invoiceSummary;
 

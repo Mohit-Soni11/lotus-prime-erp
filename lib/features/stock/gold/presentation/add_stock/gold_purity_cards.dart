@@ -57,7 +57,7 @@ class _HeroBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Set the purity grade before entering item rows, wastage and supplier settlement.',
+                  'Set the purity grade before entering item rows, wastage and purchase value.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(

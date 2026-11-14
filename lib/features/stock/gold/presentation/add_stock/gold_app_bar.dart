@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/stock_metal_symbol.dart';
 
 class GoldAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
@@ -95,7 +96,7 @@ class _GoldAppBarState extends State<GoldAppBar>
   }
 
   Widget _buildModuleIcon() {
-    final tone = _moduleTone();
+    const tone = GoldStockColors.brandGold;
     return Container(
       width: 34,
       height: 34,
@@ -117,10 +118,10 @@ class _GoldAppBarState extends State<GoldAppBar>
           ),
         ],
       ),
-      child: Icon(
-        _moduleIcon(),
+      child: const StockMetalSymbol(
+        metal: StockMetalSymbolType.gold,
         color: Colors.white,
-        size: 18,
+        size: 26,
       ),
     );
   }
@@ -148,50 +149,6 @@ class _GoldAppBarState extends State<GoldAppBar>
       return '9KT Low Karat Gold Stock';
     }
     return '$purity Gold Stock';
-  }
-
-  IconData _moduleIcon() {
-    final purity = widget.ctrl.purityDisplay.trim().toUpperCase();
-    final normalized = purity.replaceAll('KT', 'K');
-    if (normalized.contains('22K') || normalized.contains('916')) {
-      return Icons.verified_rounded;
-    }
-    if (normalized.contains('18K') || normalized.contains('750')) {
-      return Icons.diamond_rounded;
-    }
-    if (normalized.contains('14K') || normalized.contains('585')) {
-      return Icons.auto_awesome_rounded;
-    }
-    if (normalized.contains('9K') || normalized.contains('375')) {
-      return Icons.category_rounded;
-    }
-    if (purity.isNotEmpty &&
-        !(normalized.contains('24K') || normalized.contains('999'))) {
-      return Icons.tune_rounded;
-    }
-    return Icons.workspace_premium_rounded;
-  }
-
-  Color _moduleTone() {
-    final purity = widget.ctrl.purityDisplay.trim().toUpperCase();
-    final normalized = purity.replaceAll('KT', 'K');
-    if (normalized.contains('18K') || normalized.contains('750')) {
-      return const Color(0xFF2563EB);
-    }
-    if (normalized.contains('14K') || normalized.contains('585')) {
-      return const Color(0xFF0F8A72);
-    }
-    if (normalized.contains('9K') || normalized.contains('375')) {
-      return const Color(0xFF8B5CF6);
-    }
-    if (purity.isNotEmpty &&
-        !(normalized.contains('24K') ||
-            normalized.contains('999') ||
-            normalized.contains('22K') ||
-            normalized.contains('916'))) {
-      return const Color(0xFF64748B);
-    }
-    return GoldStockColors.brandGold;
   }
 
   Widget _buildVerticalDivider() {

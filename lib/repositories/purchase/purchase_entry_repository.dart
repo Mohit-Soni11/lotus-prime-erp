@@ -354,11 +354,13 @@ class PurchaseEntryRepository {
             (isSupplierPurchase
                 ? PurchaseVoucherOrigin.supplierPurchase
                 : PurchaseVoucherOrigin.customerMetalPurchase);
-        final paymentStatus = _resolvePaymentStatus(
-          draft.balanceDue,
-          draft.totalPaid,
-          draft.dueMode,
-        );
+        final paymentStatus = entryOrigin == PurchaseVoucherOrigin.addStock
+            ? 'NOT_TRACKED'
+            : _resolvePaymentStatus(
+                draft.balanceDue,
+                draft.totalPaid,
+                draft.dueMode,
+              );
 
         await _db.customStatement(
           '''
@@ -866,6 +868,24 @@ class PurchaseEntryRepository {
   }
 
   void _assertDraftCanBePosted(PurchaseVoucherDraft draft) {
+    if (draft.entryOrigin == PurchaseVoucherOrigin.addStock &&
+        (draft.cashPaid != 0 ||
+            draft.upiPaid != 0 ||
+            draft.bankPaid != 0 ||
+            draft.cardPaid != 0 ||
+            draft.totalPaid != 0 ||
+            draft.balanceDue != 0 ||
+            draft.metalPaidGrossWeight != 0 ||
+            draft.metalPaidPurity != 0 ||
+            draft.metalPaidFine != 0 ||
+            draft.metalPaidValue != 0 ||
+            (draft.dueMode?.trim().isNotEmpty ?? false) ||
+            (draft.excessMode?.trim().isNotEmpty ?? false) ||
+            draft.promiseDate != null)) {
+      throw const PurchasePostingException(
+        'Stock intake cannot record supplier payment or due amounts.',
+      );
+    }
     if (draft.voucherNo.trim().isEmpty) {
       throw const PurchasePostingException('Voucher number is required.');
     }

@@ -1,113 +1,7 @@
-import 'package:lotus_erp/features/stock/gold/application/gold_payment_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_intake_valuation_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
-
-class GoldPaymentSnapshot {
-  final PaymentMode paymentMode;
-  final DueReturnType settlementPreference;
-  final GoldDiscountMode discountMode;
-  final double ratePer10g;
-  final double ratePerGram;
-  final double grossFineWeight;
-  final double valuationFineWeight;
-  final double fineDiscountWeight;
-  final double cashDiscountAmount;
-  final double fineValueAmount;
-  final double totalMakingAmount;
-  final double subtotalAmount;
-  final double gstPercent;
-  final double appliedGstAmount;
-  final double totalBillAmount;
-  final double cashPaid;
-  final double upiPaid;
-  final double bankingPaid;
-  final double cardPaid;
-  final double cashBankPaidTotal;
-  final double totalPaidValue;
-  final double cashDueAmount;
-  final double dueAmount;
-  final double fineDueWeight;
-  final double fineDueValue;
-  final double fineReturnWeight;
-  final double fineReturnValue;
-  final double supplierCreditFineWeight;
-  final double supplierCreditValue;
-  final double returnAmount;
-  final bool hasDue;
-  final bool hasFineDue;
-  final bool hasFineReturn;
-  final bool hasSupplierCredit;
-  final bool hasReturn;
-  final bool isSettled;
-  final double metalGrossWeight;
-  final double metalPurity;
-  final double metalFineCalculated;
-  final double metalPaidValue;
-  final double metalFineShortage;
-  final double metalFineExcess;
-  final double metalFineShortageValue;
-  final double metalFineExcessValue;
-  final double metalFineEquivalentCash;
-  final double cashTargetAmount;
-  final double previousSupplierDue;
-  final double previousSupplierDueAdjustment;
-  final double previousSupplierDueFineEquivalent;
-  final String balanceLabel;
-
-  const GoldPaymentSnapshot({
-    required this.paymentMode,
-    required this.settlementPreference,
-    required this.discountMode,
-    required this.ratePer10g,
-    required this.ratePerGram,
-    required this.grossFineWeight,
-    required this.valuationFineWeight,
-    required this.fineDiscountWeight,
-    required this.cashDiscountAmount,
-    required this.fineValueAmount,
-    required this.totalMakingAmount,
-    required this.subtotalAmount,
-    required this.gstPercent,
-    required this.appliedGstAmount,
-    required this.totalBillAmount,
-    required this.cashPaid,
-    required this.upiPaid,
-    required this.bankingPaid,
-    required this.cardPaid,
-    required this.cashBankPaidTotal,
-    required this.totalPaidValue,
-    required this.cashDueAmount,
-    required this.dueAmount,
-    required this.fineDueWeight,
-    required this.fineDueValue,
-    required this.fineReturnWeight,
-    required this.fineReturnValue,
-    required this.supplierCreditFineWeight,
-    required this.supplierCreditValue,
-    required this.returnAmount,
-    required this.hasDue,
-    required this.hasFineDue,
-    required this.hasFineReturn,
-    required this.hasSupplierCredit,
-    required this.hasReturn,
-    required this.isSettled,
-    required this.metalGrossWeight,
-    required this.metalPurity,
-    required this.metalFineCalculated,
-    required this.metalPaidValue,
-    required this.metalFineShortage,
-    required this.metalFineExcess,
-    required this.metalFineShortageValue,
-    required this.metalFineExcessValue,
-    required this.metalFineEquivalentCash,
-    required this.cashTargetAmount,
-    required this.previousSupplierDue,
-    required this.previousSupplierDueAdjustment,
-    required this.previousSupplierDueFineEquivalent,
-    required this.balanceLabel,
-  });
-}
 
 class GoldInvoiceLineSnapshot {
   final String id;
@@ -153,7 +47,7 @@ class GoldInvoiceLineSnapshot {
 
 class GoldInvoiceSummaryData {
   final List<GoldInvoiceLineSnapshot> items;
-  final GoldPaymentSnapshot paymentSnapshot;
+  final StockIntakeValuationSnapshot valuationSnapshot;
   final bool gstEnabled;
   final int rowCount;
   final int totalPieces;
@@ -168,7 +62,7 @@ class GoldInvoiceSummaryData {
 
   const GoldInvoiceSummaryData({
     required this.items,
-    required this.paymentSnapshot,
+    required this.valuationSnapshot,
     required this.gstEnabled,
     required this.rowCount,
     required this.totalPieces,
@@ -185,7 +79,7 @@ class GoldInvoiceSummaryData {
   bool get hasItems => items.isNotEmpty;
 
   factory GoldInvoiceSummaryData.fromController(GoldStockController ctrl) {
-    final paymentSnapshot = ctrl.paymentSnapshot;
+    final valuationSnapshot = ctrl.valuationSnapshot;
     final rows = ctrl.enteredGoldRows;
     final items = rows.map((row) => _mapRow(row)).toList(growable: false);
 
@@ -194,25 +88,25 @@ class GoldInvoiceSummaryData {
       (sum, item) => sum + item.totalAmount,
     );
 
-    final hasRateVariance = paymentSnapshot.ratePerGram > 0 &&
+    final hasRateVariance = valuationSnapshot.ratePerGram > 0 &&
         items.any(
           (item) =>
-              (item.ratePerGram - paymentSnapshot.ratePerGram).abs() > 0.0001,
+              (item.ratePerGram - valuationSnapshot.ratePerGram).abs() > 0.0001,
         );
 
     return GoldInvoiceSummaryData(
       items: items,
-      paymentSnapshot: paymentSnapshot,
+      valuationSnapshot: valuationSnapshot,
       gstEnabled: ctrl.gstEnabled,
       rowCount: items.length,
       totalPieces: ctrl.totalQuantity,
       totalGrossWeight: ctrl.totalGrossWeight,
-      totalFineWeight: paymentSnapshot.valuationFineWeight,
+      totalFineWeight: valuationSnapshot.fineWeight,
       totalMakingAmount: ctrl.totalMakingAmount,
       itemSnapshotAmount: itemSnapshotAmount,
-      invoiceSubtotal: paymentSnapshot.subtotalAmount,
-      invoiceGstAmount: paymentSnapshot.appliedGstAmount,
-      finalBillAmount: paymentSnapshot.totalBillAmount,
+      invoiceSubtotal: valuationSnapshot.subtotalAmount,
+      invoiceGstAmount: valuationSnapshot.gstAmount,
+      finalBillAmount: valuationSnapshot.totalAmount,
       hasRateVariance: hasRateVariance,
     );
   }

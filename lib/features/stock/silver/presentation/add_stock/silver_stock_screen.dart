@@ -72,8 +72,6 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
                   : AddSilverStockItemsStep(
                       key: const ValueKey('silver-items-step'),
                       ctrl: _ctrl,
-                      onSave: _onSave,
-                      onResetBatch: _showResetDialog,
                     ),
             ),
           );

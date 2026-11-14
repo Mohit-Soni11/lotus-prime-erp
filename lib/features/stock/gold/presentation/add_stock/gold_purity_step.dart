@@ -375,7 +375,7 @@ class _GoldPurityStepState extends State<GoldPurityStep>
   Color _toneFor(GoldPurityProfile profile) {
     final percent = profile.purityPercent;
     if (profile.isCustom) {
-      return GoldStockColors.textDark;
+      return const Color(0xFF705624);
     }
     if (percent >= 99) {
       return const Color(0xFFD4AF37);
@@ -384,21 +384,21 @@ class _GoldPurityStepState extends State<GoldPurityStep>
       return const Color(0xFFB88718);
     }
     if (percent >= 73) {
-      return const Color(0xFF2563EB);
+      return const Color(0xFFA87915);
     }
     if (percent >= 56) {
-      return const Color(0xFF0F8A72);
+      return const Color(0xFFC28D2C);
     }
-    return const Color(0xFF8B5CF6);
+    return const Color(0xFF8C6718);
   }
 
   IconData _iconFor(GoldPurityProfile profile) {
     final percent = profile.purityPercent;
     if (profile.isCustom) {
-      return Icons.tune_rounded;
+      return Icons.edit_rounded;
     }
     if (percent >= 99) {
-      return Icons.workspace_premium_rounded;
+      return Icons.toll_rounded;
     }
     if (percent >= 90) {
       return Icons.verified_rounded;
@@ -407,9 +407,9 @@ class _GoldPurityStepState extends State<GoldPurityStep>
       return Icons.diamond_rounded;
     }
     if (percent >= 56) {
-      return Icons.auto_awesome_rounded;
+      return Icons.scale_rounded;
     }
-    return Icons.category_rounded;
+    return GoldStockIcons.stockModule;
   }
 
   Widget _guideline(String text) {
@@ -441,7 +441,7 @@ class _GoldPurityStepState extends State<GoldPurityStep>
       const _StockGroup(
         label: '24KT Fine Gold',
         description: '999 fine grade',
-        icon: Icons.workspace_premium_rounded,
+        icon: Icons.toll_rounded,
         color: Color(0xFFD4AF37),
       ),
       const _StockGroup(
@@ -454,25 +454,25 @@ class _GoldPurityStepState extends State<GoldPurityStep>
         label: '18KT Studded Gold',
         description: '750 jewellery',
         icon: Icons.diamond_rounded,
-        color: Color(0xFF2563EB),
+        color: Color(0xFFA87915),
       ),
       const _StockGroup(
         label: '14KT Lightweight Gold',
         description: '585 jewellery',
-        icon: Icons.auto_awesome_rounded,
-        color: Color(0xFF0F8A72),
+        icon: Icons.scale_rounded,
+        color: Color(0xFFC28D2C),
       ),
       const _StockGroup(
         label: '9KT Low Karat Gold',
         description: '375 and lower',
-        icon: Icons.category_rounded,
-        color: Color(0xFF8B5CF6),
+        icon: GoldStockIcons.stockModule,
+        color: Color(0xFF8C6718),
       ),
       const _StockGroup(
         label: 'Custom Gold Grade',
         description: 'Custom purity stock',
-        icon: Icons.tune_rounded,
-        color: Color(0xFF0F172A),
+        icon: Icons.edit_rounded,
+        color: Color(0xFF705624),
       ),
     ];
 

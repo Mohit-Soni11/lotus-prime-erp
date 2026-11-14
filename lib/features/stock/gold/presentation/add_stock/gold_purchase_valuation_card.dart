@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/stock_metal_symbol.dart';
 
 class GoldPurchaseValuationCard extends StatelessWidget {
   final GoldStockController ctrl;
@@ -13,19 +14,19 @@ class GoldPurchaseValuationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      listenable: Listenable.merge([ctrl, ctrl.valuation]),
       builder: (context, _) {
-        final payment = ctrl.payment;
+        final snapshot = ctrl.valuationSnapshot;
+        final valuation = ctrl.valuation;
         final actualFine = ctrl.totalActualFineWeight;
         final valuationFine = ctrl.totalValuationFineWeight;
-        final finalAmount = payment.finalBillAmount;
+        final finalAmount = snapshot.totalAmount;
 
         return _GoldCardShell(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _CardHeader(
-                icon: GoldStockIcons.rateChart,
                 title: '4. Purchase Valuation',
                 subtitle: 'Rate, fine weight, making and final vendor value.',
               ),
@@ -41,34 +42,27 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                         final children = [
                           _RateInput(
                             label: '24K Rate / 10g',
-                            controller: payment.todayRatePer10gCtrl,
+                            controller: valuation.rateCtrl,
                             icon: GoldStockIcons.rateChart,
                             prefixText: 'Rs ',
                             suffixText: '/10g',
                           ),
                           _ReadOnlyMetric(
                             label: 'Rate / Gram',
-                            value: _money(payment.todayRatePerGram),
+                            value: _money(valuation.ratePerGram),
                             icon: GoldStockIcons.price,
                             tone: GoldStockColors.paymentPrimary,
                           ),
                           _ReadOnlyMetric(
                             label: 'Making Charges',
-                            value: _money(payment.totalMakingFromItems),
+                            value: _money(valuation.makingAmount),
                             icon: GoldStockIcons.makingCharges,
                             tone: GoldStockColors.textDark,
                           ),
                           if (ctrl.gstEnabled)
                             _RateInput(
-                              label: 'Metal GST Rate',
-                              controller: payment.metalGstPercentCtrl,
-                              icon: Icons.percent_rounded,
-                              suffixText: '%',
-                            ),
-                          if (ctrl.gstEnabled)
-                            _RateInput(
-                              label: 'Cash GST Rate',
-                              controller: payment.cashGstPercentCtrl,
+                              label: 'GST Rate',
+                              controller: valuation.gstPercentCtrl,
                               icon: Icons.percent_rounded,
                               suffixText: '%',
                             ),
@@ -129,14 +123,14 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                             ),
                             _SummaryTile(
                               label: 'Making Total',
-                              value: _money(payment.totalMakingFromItems),
+                              value: _money(valuation.makingAmount),
                               icon: GoldStockIcons.makingCharges,
                               tone: GoldStockColors.textDark,
                             ),
                             if (ctrl.gstEnabled)
                               _SummaryTile(
                                 label: 'GST Total',
-                                value: _money(payment.taxAmount),
+                                value: _money(valuation.gstAmount),
                                 icon: Icons.receipt_long_rounded,
                                 tone: GoldStockColors.paymentReturn,
                               ),
@@ -217,12 +211,10 @@ class _GoldCardShell extends StatelessWidget {
 }
 
 class _CardHeader extends StatelessWidget {
-  final IconData icon;
   final String title;
   final String subtitle;
 
   const _CardHeader({
-    required this.icon,
     required this.title,
     required this.subtitle,
   });
@@ -241,7 +233,13 @@ class _CardHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(9),
               border: Border.all(color: GoldStockColors.brandGoldBorder),
             ),
-            child: Icon(icon, size: 16, color: GoldStockColors.brandGold),
+            child: const Center(
+              child: StockMetalSymbol(
+                metal: StockMetalSymbolType.gold,
+                color: GoldStockColors.goldAccent,
+                size: 23,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

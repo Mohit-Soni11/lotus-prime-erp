@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/stock_metal_symbol.dart';
 
 class SilverAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
@@ -57,6 +58,35 @@ class _SilverAppBarState extends State<SilverAppBar>
         children: [
           _buildBackButton(),
           const SizedBox(width: 16),
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SilverStockColors.gradientStart,
+                  SilverStockColors.silverAccent
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: SilverStockColors.brandSilver.withValues(alpha: 0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const StockMetalSymbol(
+              metal: StockMetalSymbolType.silver,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               _headerTitle,

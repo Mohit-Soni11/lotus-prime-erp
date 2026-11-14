@@ -30,10 +30,9 @@ class _InventoryBatchPdfService {
             pw.NewPage(freeSpace: 150),
             _purchaseValuation(batch, metal),
             pw.SizedBox(height: 12),
-            _settlementSummary(batch),
           ];
 
-          if (batch.payment.hasAttachment) {
+          if (batch.valuation.hasAttachment) {
             widgets.addAll([
               pw.SizedBox(height: 12),
               _supplierDocument(batch),
@@ -212,85 +211,21 @@ class _InventoryBatchPdfService {
                 'Valuation Fine Total', '${_weight(batch.valuationFine)} g'),
             if (_hasMoney(batch.makingAmount))
               _metric('Making Total', _money(batch.makingAmount)),
-            if (_hasMoney(batch.payment.gstAmount))
-              _metric('GST Total', _money(batch.payment.gstAmount)),
-            if (_hasMoney(batch.payment.grandTotal))
+            if (_hasMoney(batch.valuation.gstAmount))
+              _metric('GST Total', _money(batch.valuation.gstAmount)),
+            if (_hasMoney(batch.valuation.grandTotal))
               _metric(
-                  'Final Purchase Amount', _money(batch.payment.grandTotal)),
+                  'Final Purchase Amount', _money(batch.valuation.grandTotal)),
           ],
         ),
       ],
     );
   }
 
-  static pw.Widget _settlementSummary(_InventoryBatchGroup batch) {
-    final payment = batch.payment;
-    final cards = <pw.Widget>[
-      if (_hasMoney(payment.grandTotal))
-        _metric('Final Bill', _money(payment.grandTotal)),
-      if (_hasMoney(payment.totalPaid))
-        _metric('Total Paid', _money(payment.totalPaid)),
-      if (_hasMoney(payment.balanceDue))
-        _metric('Cash Due', _money(payment.balanceDue)),
-      if (_hasWeight(payment.metalPaidFine))
-        _metric('Metal Paid', '${_weight(payment.metalPaidFine)} g'),
-      if (_hasWeight(payment.fineDueWeight))
-        _metric('Fine Due', '${_weight(payment.fineDueWeight)} g'),
-      if (_hasWeight(payment.fineReturnWeight))
-        _metric('Fine Return', '${_weight(payment.fineReturnWeight)} g'),
-      if (batch.isGst && _hasMoney(payment.gstAmount))
-        _metric('GST Total', _money(payment.gstAmount)),
-      if (batch.isGst && _hasMoney(payment.cgstAmount))
-        _metric('CGST', _money(payment.cgstAmount)),
-      if (batch.isGst && _hasMoney(payment.sgstAmount))
-        _metric('SGST', _money(payment.sgstAmount)),
-      if (_hasMoney(payment.cashPaid))
-        _metric('Cash', _money(payment.cashPaid)),
-      if (_hasMoney(payment.upiPaid)) _metric('UPI', _money(payment.upiPaid)),
-      if (_hasMoney(payment.bankPaid))
-        _metric('Bank', _money(payment.bankPaid)),
-      if (_hasMoney(payment.cardPaid))
-        _metric('Card', _money(payment.cardPaid)),
-      if (_hasText(payment.paymentStatus))
-        _metric('Status', payment.paymentStatus.toUpperCase()),
-    ];
-
-    return _section(
-      title: '4. Settlement Method',
-      children: [
-        if (_hasText(payment.paymentMode) ||
-            _hasText(payment.balanceLabel)) ...[
-          pw.Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (_hasText(payment.paymentMode))
-                _metric('Settlement Mode', _humanizeToken(payment.paymentMode)),
-              if (_hasText(payment.balanceLabel))
-                _metric(
-                    'Balance Handling', _humanizeToken(payment.balanceLabel)),
-              if (_hasText(payment.dueMode))
-                _metric('Due Mode', _humanizeToken(payment.dueMode)),
-              if (_hasText(payment.excessMode))
-                _metric('Excess Mode', _humanizeToken(payment.excessMode)),
-            ],
-          ),
-          pw.SizedBox(height: 8),
-        ],
-        pw.Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children:
-              cards.isEmpty ? [_metric('Status', 'No payment details')] : cards,
-        ),
-      ],
-    );
-  }
-
   static pw.Widget _supplierDocument(_InventoryBatchGroup batch) {
-    final path = batch.payment.attachmentPath.trim();
+    final path = batch.valuation.attachmentPath.trim();
     return _section(
-      title: '5. Supplier Bill Document',
+      title: '4. Supplier Bill Document',
       children: [
         pw.Text(
           path.isEmpty
@@ -664,14 +599,5 @@ class _InventoryBatchPdfService {
       unit.itemType,
       unit.segment,
     ].where((value) => value.trim().isNotEmpty).join(' - ');
-  }
-
-  static String _humanizeToken(String value) {
-    final spaced =
-        value.trim().replaceAll('_', ' ').replaceAll('-', ' ').replaceAllMapped(
-              RegExp(r'([a-z])([A-Z])'),
-              (match) => '${match.group(1)} ${match.group(2)}',
-            );
-    return _titleCase(spaced);
   }
 }

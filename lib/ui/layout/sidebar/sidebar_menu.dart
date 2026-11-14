@@ -75,7 +75,6 @@ class SidebarMenu {
         MenuItemData(AppRoutes.stockActivityRoute),
         MenuItemData(AppRoutes.stockTransferRoute),
         MenuItemData(AppRoutes.lowStockAlertRoute),
-        MenuItemData(AppRoutes.stockDispositionRoute),
       ],
     ),
 

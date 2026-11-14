@@ -22,6 +22,37 @@ void main() {
 
   tearDown(() => database.close());
 
+  test('Add Stock saves inventory without a supplier settlement', () async {
+    final draft = _goldDraft(
+      voucherNo: 'STOCK-ONLY-2026-0001',
+      origin: PurchaseVoucherOrigin.addStock,
+      cashPaid: 0,
+      totalPaid: 0,
+    );
+
+    expect(await repository.savePurchase(draft), isNotNull);
+    expect(await database.select(database.stockItems).get(), hasLength(1));
+    expect(await database.select(database.cashTransactions).get(), isEmpty);
+    expect(await database.select(database.bankTransactions).get(), isEmpty);
+    final voucher = await database.customSelect(
+      'SELECT payment_status, total_paid, balance_due FROM purchase_vouchers '
+      'WHERE voucher_no = ?',
+      variables: [const Variable<String>('STOCK-ONLY-2026-0001')],
+    ).getSingle();
+    expect(voucher.read<String>('payment_status'), 'NOT_TRACKED');
+    expect(voucher.read<double>('total_paid'), 0);
+    expect(voucher.read<double>('balance_due'), 0);
+  });
+
+  test('Add Stock rejects hidden supplier payment amounts', () async {
+    final draft = _goldDraft(
+      voucherNo: 'STOCK-PAID-2026-0001',
+      origin: PurchaseVoucherOrigin.addStock,
+    );
+    expect(await repository.savePurchase(draft), isNull);
+    expect(await database.select(database.stockItems).get(), isEmpty);
+  });
+
   test('noncash purchase requires a bank account and posts a real debit',
       () async {
     final draft =
@@ -135,6 +166,8 @@ void main() {
     final supplier = await repository.savePurchase(_goldDraft(
       voucherNo: 'GS-05NOV2026-B001',
       origin: PurchaseVoucherOrigin.addStock,
+      cashPaid: 0,
+      totalPaid: 0,
     ));
     expect(customer, isNotNull);
     expect(supplier, isNotNull);
@@ -408,6 +441,7 @@ PurchaseVoucherDraft _goldDraft({
   double upiPaid = 0,
   double bankPaid = 0,
   double cardPaid = 0,
+  double totalPaid = 70000,
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
@@ -428,7 +462,7 @@ PurchaseVoucherDraft _goldDraft({
     upiPaid: upiPaid,
     bankPaid: bankPaid,
     cardPaid: cardPaid,
-    totalPaid: 70000,
+    totalPaid: totalPaid,
     balanceDue: 0,
     ratePerKg: 700000,
     metalPaidGrossWeight: 0,

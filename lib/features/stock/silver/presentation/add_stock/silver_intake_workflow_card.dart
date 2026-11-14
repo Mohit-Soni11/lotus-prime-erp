@@ -13,7 +13,7 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([
         ctrl,
-        ctrl.payment,
+        ctrl.valuation,
         ctrl.supplierInvoiceNumberCtrl,
         ctrl.supplierNameCtrl,
         ctrl.supplierMobileCtrl,
@@ -83,7 +83,6 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
     final hasSupplier = supplierName.isNotEmpty || supplierMobile.isNotEmpty;
     final hasInvoice = supplierInvoice.isNotEmpty;
     final hasItems = ctrl.enteredRowCount > 0;
-    final hasErrors = ctrl.rowsWithErrorsCount > 0;
     final gradeTone = _gradeTone();
 
     return [
@@ -93,8 +92,8 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
         subtitle:
             ctrl.gstEnabled ? 'GST supplier purchase' : 'Supplier purchase',
         icon: ctrl.gstEnabled
-            ? Icons.account_balance_rounded
-            : Icons.store_rounded,
+            ? Icons.receipt_long_rounded
+            : Icons.storefront_rounded,
         tone: ctrl.gstEnabled
             ? SilverStockColors.success
             : SilverStockColors.paymentPrimary,
@@ -104,7 +103,7 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
         number: 2,
         title: 'Metal & Tracking',
         subtitle: _metalTrackingSummary(),
-        icon: _gradeIcon(),
+        icon: SilverStockIcons.stockModule,
         tone: gradeTone,
         state: ctrl.purityDisplay.trim().isEmpty
             ? _WorkflowStepState.active
@@ -133,18 +132,6 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
         tone: SilverStockColors.accentInventory,
         state:
             hasItems ? _WorkflowStepState.complete : _WorkflowStepState.active,
-      ),
-      _WorkflowStep(
-        number: 5,
-        title: 'Settlement & Review',
-        subtitle: _settlementSummary(),
-        icon: SilverStockIcons.invoiceSummary,
-        tone: hasErrors ? SilverStockColors.danger : SilverStockColors.success,
-        state: hasItems
-            ? hasErrors
-                ? _WorkflowStepState.warning
-                : _WorkflowStepState.active
-            : _WorkflowStepState.pending,
       ),
     ];
   }
@@ -179,39 +166,6 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
       if (supplierMobile.isNotEmpty) supplierMobile,
       if (supplierInvoice.isNotEmpty) supplierInvoice,
     ].join(' • ');
-  }
-
-  String _settlementSummary() {
-    if (ctrl.rowsWithErrorsCount > 0) {
-      return '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention';
-    }
-    if (ctrl.enteredRowCount == 0) {
-      return 'Review after item entry';
-    }
-    return 'Ready for valuation and save';
-  }
-
-  IconData _gradeIcon() {
-    if (ctrl.isMixedInvoiceMode) {
-      return Icons.receipt_long_rounded;
-    }
-    final purity = ctrl.intakeModeTitle.trim().toUpperCase();
-    if (purity.contains('999') || purity.contains('99.9')) {
-      return Icons.workspace_premium_rounded;
-    }
-    if (purity.contains('925') || purity.contains('92.5')) {
-      return Icons.verified_rounded;
-    }
-    if (purity.contains('800') || purity.contains('80')) {
-      return Icons.temple_hindu_rounded;
-    }
-    if (purity.contains('700') || purity.contains('70')) {
-      return Icons.soup_kitchen_rounded;
-    }
-    if (purity.isNotEmpty) {
-      return Icons.business_center_rounded;
-    }
-    return Icons.toll_rounded;
   }
 
   Color _gradeTone() {

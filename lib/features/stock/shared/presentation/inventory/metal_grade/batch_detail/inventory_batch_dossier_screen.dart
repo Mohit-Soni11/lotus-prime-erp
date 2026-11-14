@@ -54,24 +54,13 @@ class _InventoryBatchDossierScreenState
             sliver: SliverToBoxAdapter(
               child: Column(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _BatchOverviewPanel(
-                          batch: widget.batch,
-                          metal: widget.metal,
-                          ui: ui,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _BatchPaymentPanel(batch: widget.batch, ui: ui),
-                      ),
-                    ],
+                  _BatchOverviewPanel(
+                    batch: widget.batch,
+                    metal: widget.metal,
+                    ui: ui,
                   ),
                   const SizedBox(height: 16),
-                  if (widget.batch.payment.hasAttachment) ...[
+                  if (widget.batch.valuation.hasAttachment) ...[
                     _BatchDocumentPanel(batch: widget.batch, ui: ui),
                     const SizedBox(height: 16),
                   ],

@@ -13,7 +13,7 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([
         ctrl,
-        ctrl.payment,
+        ctrl.valuation,
         ctrl.supplierInvoiceNumberCtrl,
         ctrl.supplierNameCtrl,
         ctrl.supplierMobileCtrl,
@@ -91,7 +91,6 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
     final hasSupplier = supplierName.isNotEmpty || supplierMobile.isNotEmpty;
     final hasInvoice = supplierInvoice.isNotEmpty;
     final hasItems = ctrl.enteredRowCount > 0;
-    final hasErrors = ctrl.rowsWithErrorsCount > 0;
     final gradeTone = _gradeTone();
 
     return [
@@ -101,8 +100,8 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
         subtitle:
             ctrl.gstEnabled ? 'GST supplier purchase' : 'Supplier purchase',
         icon: ctrl.gstEnabled
-            ? Icons.account_balance_rounded
-            : Icons.store_rounded,
+            ? Icons.receipt_long_rounded
+            : Icons.storefront_rounded,
         tone: ctrl.gstEnabled
             ? GoldStockColors.success
             : GoldStockColors.paymentPrimary,
@@ -112,7 +111,7 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
         number: 2,
         title: 'Metal & Tracking',
         subtitle: _metalTrackingSummary(),
-        icon: _gradeIcon(),
+        icon: GoldStockIcons.stockModule,
         tone: gradeTone,
         state: ctrl.purityDisplay.trim().isEmpty
             ? _WorkflowStepState.active
@@ -142,18 +141,6 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
         state:
             hasItems ? _WorkflowStepState.complete : _WorkflowStepState.active,
       ),
-      _WorkflowStep(
-        number: 5,
-        title: 'Settlement & Review',
-        subtitle: _settlementSummary(),
-        icon: GoldStockIcons.invoiceSummary,
-        tone: hasErrors ? GoldStockColors.danger : GoldStockColors.success,
-        state: hasItems
-            ? hasErrors
-                ? _WorkflowStepState.warning
-                : _WorkflowStepState.active
-            : _WorkflowStepState.pending,
-      ),
     ];
   }
 
@@ -180,38 +167,6 @@ class GoldIntakeWorkflowCard extends StatelessWidget {
       if (supplierMobile.isNotEmpty) supplierMobile,
       if (supplierInvoice.isNotEmpty) supplierInvoice,
     ].join(' • ');
-  }
-
-  String _settlementSummary() {
-    if (ctrl.rowsWithErrorsCount > 0) {
-      return '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention';
-    }
-    if (ctrl.enteredRowCount == 0) {
-      return 'Review after item entry';
-    }
-    return 'Ready for valuation and save';
-  }
-
-  IconData _gradeIcon() {
-    final purity = ctrl.purityDisplay.trim().toUpperCase();
-    final normalized = purity.replaceAll('KT', 'K');
-    if (normalized.contains('22K') || normalized.contains('916')) {
-      return Icons.verified_rounded;
-    }
-    if (normalized.contains('18K') || normalized.contains('750')) {
-      return Icons.diamond_rounded;
-    }
-    if (normalized.contains('14K') || normalized.contains('585')) {
-      return Icons.auto_awesome_rounded;
-    }
-    if (normalized.contains('9K') || normalized.contains('375')) {
-      return Icons.category_rounded;
-    }
-    if (purity.isNotEmpty &&
-        !(normalized.contains('24K') || normalized.contains('999'))) {
-      return Icons.tune_rounded;
-    }
-    return Icons.workspace_premium_rounded;
   }
 
   Color _gradeTone() {

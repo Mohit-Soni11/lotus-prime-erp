@@ -16,9 +16,8 @@ void main() {
       AppRoutes.stockActivityRoute,
       AppRoutes.stockTransferRoute,
       AppRoutes.lowStockAlertRoute,
-      AppRoutes.stockDispositionRoute,
     ]);
-    expect(stockMenu.subItems, hasLength(8));
+    expect(stockMenu.subItems, hasLength(7));
     for (final item in stockMenu.subItems) {
       expect(RouteMapper.toPath(item.routeId), isNot(RoutePaths.dashboard));
     }

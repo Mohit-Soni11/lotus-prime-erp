@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/stock_metal_symbol.dart';
 
 class SilverPurchaseValuationCard extends StatelessWidget {
   final SilverStockController ctrl;
@@ -13,9 +14,10 @@ class SilverPurchaseValuationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      listenable: Listenable.merge([ctrl, ctrl.valuation]),
       builder: (context, _) {
-        final payment = ctrl.payment;
+        final snapshot = ctrl.valuationSnapshot;
+        final valuation = ctrl.valuation;
         final actualFine = ctrl.totalActualFineWeight;
         final valuationFine = ctrl.totalValuationFineWeight;
 
@@ -24,7 +26,6 @@ class SilverPurchaseValuationCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _CardHeader(
-                icon: SilverStockIcons.rateChart,
                 title: '4. Purchase Valuation',
                 subtitle:
                     'Silver rate, valuation fine, making and supplier bill value.',
@@ -41,34 +42,27 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                         final fields = [
                           _RateInput(
                             label: 'Invoice Silver Rate / Kg',
-                            controller: payment.todayRatePerKgCtrl,
+                            controller: valuation.rateCtrl,
                             icon: SilverStockIcons.rateChart,
                             prefixText: 'Rs ',
                             suffixText: '/kg',
                           ),
                           _ReadOnlyMetric(
                             label: 'Rate / Gram',
-                            value: _money(payment.todayRatePerGram),
-                            icon: SilverStockIcons.amountReceived,
+                            value: _money(valuation.ratePerGram),
+                            icon: SilverStockIcons.metalValue,
                             tone: SilverStockColors.paymentPrimary,
                           ),
                           _ReadOnlyMetric(
                             label: 'Making Charges',
-                            value: _money(payment.totalMakingFromItems),
+                            value: _money(valuation.makingAmount),
                             icon: SilverStockIcons.makingCharges,
                             tone: SilverStockColors.textDark,
                           ),
                           if (ctrl.gstEnabled)
                             _RateInput(
-                              label: 'Metal GST Rate',
-                              controller: payment.metalGstPercentCtrl,
-                              icon: Icons.percent_rounded,
-                              suffixText: '%',
-                            ),
-                          if (ctrl.gstEnabled)
-                            _RateInput(
-                              label: 'Cash GST Rate',
-                              controller: payment.cashGstPercentCtrl,
+                              label: 'GST Rate',
+                              controller: valuation.gstPercentCtrl,
                               icon: Icons.percent_rounded,
                               suffixText: '%',
                             ),
@@ -128,26 +122,26 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                             ),
                             _SummaryTile(
                               label: 'Silver Value',
-                              value: _money(payment.fineValueAmount),
-                              icon: SilverStockIcons.amountReceived,
+                              value: _money(valuation.metalValue),
+                              icon: SilverStockIcons.metalValue,
                               tone: SilverStockColors.paymentPrimary,
                             ),
                             _SummaryTile(
                               label: 'Making Total',
-                              value: _money(payment.totalMakingFromItems),
+                              value: _money(valuation.makingAmount),
                               icon: SilverStockIcons.makingCharges,
                               tone: SilverStockColors.textDark,
                             ),
                             if (ctrl.gstEnabled)
                               _SummaryTile(
                                 label: 'GST Total',
-                                value: _money(payment.taxAmount),
+                                value: _money(valuation.gstAmount),
                                 icon: Icons.receipt_long_rounded,
                                 tone: SilverStockColors.paymentReturn,
                               ),
                             _SummaryTile(
                               label: 'Final Supplier Bill',
-                              value: _money(payment.finalBillAmount),
+                              value: _money(snapshot.totalAmount),
                               icon: SilverStockIcons.payable,
                               tone: SilverStockColors.paymentPrimary,
                               emphasized: true,
@@ -220,12 +214,10 @@ class _SilverCardShell extends StatelessWidget {
 }
 
 class _CardHeader extends StatelessWidget {
-  final IconData icon;
   final String title;
   final String subtitle;
 
   const _CardHeader({
-    required this.icon,
     required this.title,
     required this.subtitle,
   });
@@ -244,7 +236,13 @@ class _CardHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(9),
               border: Border.all(color: SilverStockColors.brandSilverBorder),
             ),
-            child: Icon(icon, size: 16, color: SilverStockColors.brandSilver),
+            child: const Center(
+              child: StockMetalSymbol(
+                metal: StockMetalSymbolType.silver,
+                color: SilverStockColors.silverAccent,
+                size: 23,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

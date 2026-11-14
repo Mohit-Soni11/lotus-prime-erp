@@ -44,7 +44,6 @@ class AppRoutes {
   static const String stockSearchRoute = '/stock/search';
   static const String stockValuationRoute = '/stock/valuation';
   static const String addStockRoute = '/stock/add';
-  static const String stockDispositionRoute = '/stock/disposition';
   static const String stockTransferRoute = '/stock/transfer';
   static const String lowStockAlertRoute = '/stock/low-alert';
 
@@ -93,7 +92,6 @@ class AppRoutes {
     stockSearchRoute: 'Stock Search Center',
     stockValuationRoute: 'Metal Valuation Desk',
     addStockRoute: 'Add Stock',
-    stockDispositionRoute: 'Inventory Disposition',
     stockTransferRoute: 'Stock Transfer',
     lowStockAlertRoute: 'Low Stock Alerts',
     newGirviRoute: 'New Pledge Ticket',
@@ -163,7 +161,6 @@ class RoutePaths {
   static const String stockSearch = '/app/stock/search';
   static const String stockValuation = '/app/stock/valuation';
   static const String stockAdd = '/app/stock/add';
-  static const String stockDisposition = '/app/stock/disposition';
   static const String stockTransfer = '/app/stock/transfer';
   static const String stockLowAlert = '/app/stock/low-alert';
 
@@ -238,7 +235,6 @@ class RouteMapper {
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,
     AppRoutes.stockSearchRoute: RoutePaths.stockSearch,
     AppRoutes.addStockRoute: RoutePaths.stockAdd,
-    AppRoutes.stockDispositionRoute: RoutePaths.stockDisposition,
     AppRoutes.stockTransferRoute: RoutePaths.stockTransfer,
     AppRoutes.lowStockAlertRoute: RoutePaths.stockLowAlert,
     AppRoutes.newGirviRoute: RoutePaths.girviNew,

@@ -70,6 +70,8 @@ class SupplierProfilePurchaseModel {
   });
 
   bool get hasBillPhoto => billPhotoPath != null && billPhotoPath!.isNotEmpty;
+  bool get isSettlementTracked =>
+      paymentStatus.trim().toUpperCase() != 'NOT_TRACKED';
   bool get isGstPurchase =>
       purchaseCategory.trim().toUpperCase() == 'GST_PURCHASE' ||
       taxType.trim().toUpperCase() == 'GST';
@@ -90,11 +92,13 @@ class SupplierProfilePurchaseModel {
         !hasDue;
   }
 
-  String get statusLabel => isPaid
-      ? 'COMPLETE'
-      : totalPaid > 0.005
-          ? 'PARTIAL'
-          : 'UNPAID';
+  String get statusLabel => !isSettlementTracked
+      ? 'STOCK INTAKE'
+      : isPaid
+          ? 'COMPLETE'
+          : totalPaid > 0.005
+              ? 'PARTIAL'
+              : 'UNPAID';
 
   String get formattedDate => _formatDate(createdAt);
 
