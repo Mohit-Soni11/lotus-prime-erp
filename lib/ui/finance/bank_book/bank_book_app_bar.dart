@@ -18,18 +18,24 @@ import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 
 class BankBookAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final String? title;
   final BankBookController ctrl;
   final VoidCallback onAddEntry;
   final VoidCallback onSyncBills;
   final VoidCallback onAddAccount;
+  final VoidCallback? onExportCsv;
+  final VoidCallback? onPrintPdf;
 
   const BankBookAppBar({
     super.key,
     required this.onBack,
+    this.title,
     required this.ctrl,
     required this.onAddEntry,
     required this.onSyncBills,
     required this.onAddAccount,
+    this.onExportCsv,
+    this.onPrintPdf,
   });
 
   @override
@@ -124,7 +130,7 @@ class _BankBookAppBarState extends State<BankBookAppBar>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(BankBookStrings.moduleTitle,
+                Text(widget.title ?? BankBookStrings.moduleTitle,
                     style: BankBookStyles.appBarTitle),
                 if (_shopName.isNotEmpty)
                   Text(_shopName,
@@ -165,6 +171,24 @@ class _BankBookAppBarState extends State<BankBookAppBar>
             ),
 
             const SizedBox(width: 20),
+
+            if (widget.onExportCsv != null && widget.onPrintPdf != null)
+              ListenableBuilder(
+                listenable: widget.ctrl,
+                builder: (context, _) => PopupMenuButton<String>(
+                  tooltip: 'Export Bank Ledger',
+                  enabled: widget.ctrl.exportData != null,
+                  icon: const Icon(Icons.ios_share_rounded,
+                      color: BankBookColors.shellTitle),
+                  onSelected: (value) => value == 'csv'
+                      ? widget.onExportCsv!()
+                      : widget.onPrintPdf!(),
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'csv', child: Text('Export CSV')),
+                    PopupMenuItem(value: 'pdf', child: Text('Print / PDF')),
+                  ],
+                ),
+              ),
 
             // â”€â”€ Add Account Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _AppBarIconBtn(

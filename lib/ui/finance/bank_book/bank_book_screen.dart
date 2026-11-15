@@ -31,6 +31,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/finance/bank_book/bank_book_theme.dart';
 import '../../../logic/finance/bank_book/bank_book_controller.dart';
+import '../../../logic/finance/bank_book/bank_book_export_service.dart';
 import '../../finance/bank_book/bank_book_app_bar.dart';
 import '../../finance/bank_book/bank_book_left_panel.dart';
 import '../../finance/bank_book/bank_book_transaction_list.dart';
@@ -39,7 +40,10 @@ import '../../finance/bank_book/bank_book_add_account_dialog.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookScreen extends StatefulWidget {
-  const BankBookScreen({super.key});
+  const BankBookScreen({super.key, this.onBack, this.title});
+
+  final VoidCallback? onBack;
+  final String? title;
 
   @override
   State<BankBookScreen> createState() => _BankBookScreenState();
@@ -116,6 +120,23 @@ class _BankBookScreenState extends State<BankBookScreen> {
     }
   }
 
+  Future<void> _export({required bool pdf}) async {
+    final data = _ctrl.exportData;
+    if (data == null) return;
+    try {
+      if (pdf) {
+        await BankBookExportService.printPdf(data);
+      } else {
+        await BankBookExportService.exportCsv(data);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      AppFeedback.show(context,
+          type: AppFeedbackType.error,
+          message: 'Bank ledger export failed: $error');
+    }
+  }
+
   // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
@@ -127,11 +148,14 @@ class _BankBookScreenState extends State<BankBookScreen> {
 
         // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: BankBookAppBar(
-          onBack: () => Navigator.pop(context),
+          onBack: widget.onBack ?? () => Navigator.pop(context),
+          title: widget.title,
           ctrl: _ctrl,
           onAddEntry: _showAddEntryDialog,
           onSyncBills: _onSyncBills,
           onAddAccount: _showAddAccountDialog,
+          onExportCsv: () => _export(pdf: false),
+          onPrintPdf: () => _export(pdf: true),
         ),
 
         body: SafeArea(

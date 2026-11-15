@@ -80,6 +80,11 @@ class _AccountBookScreenState extends State<AccountBookScreen> {
     if (mounted) await controller.load();
   }
 
+  Future<void> _openBankLedger() async {
+    await context.push(RoutePaths.financeBankLedger);
+    if (mounted) await controller.load();
+  }
+
   Future<void> _openDayBook(DateTime day) async {
     final date = DateFormat('yyyy-MM-dd').format(day);
     await context.push('${RoutePaths.reportDayBook}?date=$date');
@@ -162,43 +167,60 @@ class _AccountBookScreenState extends State<AccountBookScreen> {
                     'Complete Day Book activity for ${DateFormat('MMMM yyyy').format(controller.month)}',
                     style: AccountBookTheme.detail),
               ]),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                OutlinedButton.icon(
-                    onPressed: _openCashLedger,
-                    icon: const Icon(Icons.payments_outlined, size: 18),
-                    label: const Text('Cash Ledger',
-                        style: TextStyle(fontWeight: FontWeight.w800)),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: AccountBookTheme.ink,
-                        side: const BorderSide(
-                            color: AccountBookTheme.border, width: 1.2))),
-                const SizedBox(width: 8),
-                IconButton(
-                    tooltip: 'Previous month',
-                    onPressed: () => controller.shiftMonth(-1),
-                    color: AccountBookTheme.ink,
-                    icon: const Icon(Icons.chevron_left_rounded)),
-                OutlinedButton.icon(
-                    onPressed: _chooseMonth,
-                    icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                    label: Text(
-                        DateFormat('MMMM yyyy').format(controller.month),
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
-                    style: OutlinedButton.styleFrom(
-                        foregroundColor: AccountBookTheme.ink,
-                        side: const BorderSide(
-                            color: AccountBookTheme.border, width: 1.2))),
-                IconButton(
-                    tooltip: 'Next month',
-                    onPressed: () => controller.shiftMonth(1),
-                    color: AccountBookTheme.ink,
-                    icon: const Icon(Icons.chevron_right_rounded)),
-                IconButton(
-                    tooltip: 'Refresh',
-                    onPressed: controller.load,
-                    color: AccountBookTheme.ink,
-                    icon: const Icon(Icons.refresh_rounded)),
-              ]),
+              Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                        onPressed: _openCashLedger,
+                        icon: const Icon(Icons.payments_outlined, size: 18),
+                        label: const Text('Cash Ledger',
+                            style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: AccountBookTheme.ink,
+                            side: const BorderSide(
+                                color: AccountBookTheme.border, width: 1.2))),
+                    OutlinedButton.icon(
+                        onPressed: _openBankLedger,
+                        icon: const Icon(Icons.account_balance_outlined,
+                            size: 18),
+                        label: const Text('Bank Ledger',
+                            style: TextStyle(fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                            foregroundColor: AccountBookTheme.ink,
+                            side: const BorderSide(
+                                color: AccountBookTheme.border, width: 1.2))),
+                    Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                          tooltip: 'Previous month',
+                          onPressed: () => controller.shiftMonth(-1),
+                          color: AccountBookTheme.ink,
+                          icon: const Icon(Icons.chevron_left_rounded)),
+                      OutlinedButton.icon(
+                          onPressed: _chooseMonth,
+                          icon: const Icon(Icons.calendar_month_outlined,
+                              size: 18),
+                          label: Text(
+                              DateFormat('MMMM yyyy').format(controller.month),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w800)),
+                          style: OutlinedButton.styleFrom(
+                              foregroundColor: AccountBookTheme.ink,
+                              side: const BorderSide(
+                                  color: AccountBookTheme.border, width: 1.2))),
+                      IconButton(
+                          tooltip: 'Next month',
+                          onPressed: () => controller.shiftMonth(1),
+                          color: AccountBookTheme.ink,
+                          icon: const Icon(Icons.chevron_right_rounded)),
+                      IconButton(
+                          tooltip: 'Refresh',
+                          onPressed: controller.load,
+                          color: AccountBookTheme.ink,
+                          icon: const Icon(Icons.refresh_rounded)),
+                    ]),
+                  ]),
             ]),
       );
 

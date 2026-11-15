@@ -69,6 +69,7 @@ class ChequeSummary {
 
 class BankBookSummaryModel {
   final double openingBalance;
+  final double openingAdjustment;
   final double totalCredit;
   final double totalDebit;
   final double closingBalance;
@@ -95,6 +96,7 @@ class BankBookSummaryModel {
 
   const BankBookSummaryModel({
     required this.openingBalance,
+    this.openingAdjustment = 0,
     required this.totalCredit,
     required this.totalDebit,
     required this.closingBalance,

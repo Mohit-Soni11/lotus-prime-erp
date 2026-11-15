@@ -175,6 +175,7 @@ class RoutePaths {
   // Finance
   static const String financeCashBook = '/app/finance/cashbook';
   static const String financeCashLedger = '/app/finance/cashbook/ledger';
+  static const String financeBankLedger = '/app/finance/cashbook/bank-ledger';
   static const String financeBankBook = '/app/finance/bankbook';
   static const String financeExpense = '/app/finance/expense';
   static const String financeJournal = '/app/finance/journal';

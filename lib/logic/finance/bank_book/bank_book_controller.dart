@@ -21,6 +21,7 @@ import '../../../models/finance/bank_book/bank_account_model.dart';
 import '../../../models/finance/bank_book/bank_book_summary_model.dart';
 import '../../../repositories/finance/bank_book_repository.dart';
 import '../../../core/logging/app_logger.dart';
+import 'bank_book_export_service.dart';
 
 class BankBookController extends ChangeNotifier {
   BankBookController() {
@@ -59,6 +60,19 @@ class BankBookController extends ChangeNotifier {
   List<BankTransactionGroup> get groups => _groups;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  BankBookExportData? get exportData {
+    final account = _selectedAccount;
+    if (account == null || _isLoading || _errorMessage != null) return null;
+    final range = _dateRange;
+    return BankBookExportData(
+      account: account,
+      periodStart: range.start,
+      periodEnd: range.end,
+      summary: _summary,
+      transactions: List.unmodifiable(_allTxns),
+    );
+  }
 
   // ── Search ────────────────────────────────────────────────────────────────
   final TextEditingController searchCtrl = TextEditingController();

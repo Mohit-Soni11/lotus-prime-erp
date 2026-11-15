@@ -635,6 +635,13 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
+            path: RoutePaths.financeBankLedger,
+            builder: (context, state) => BankBookScreen(
+              title: 'Bank Ledger',
+              onBack: () => _goBackOr(context, RoutePaths.financeCashBook),
+            ),
+          ),
+          GoRoute(
             path: RoutePaths.financeBankBook,
             builder: (_, __) => const BankBookScreen(),
           ),

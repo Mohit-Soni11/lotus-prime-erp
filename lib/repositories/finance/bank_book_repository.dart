@@ -251,7 +251,23 @@ class BankBookRepository {
       if (account == null) {
         throw StateError('Bank account is unavailable.');
       }
-      final openingBalance = account.openingBalance;
+      final activeDate = DateTime(account.activeSince.year,
+          account.activeSince.month, account.activeSince.day);
+      final prior = await _db.customSelect(
+        '''SELECT COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount
+               WHEN type = 'DEBIT' THEN -amount ELSE 0 END), 0) AS movement
+           FROM bank_transactions
+           WHERE account_id = ? AND is_voided = 0 AND txn_date < ?''',
+        variables: [Variable.withInt(accountId), Variable.withDateTime(from)],
+        readsFrom: {_db.bankTransactions},
+      ).getSingle();
+      final openingBalance =
+          (activeDate.isAfter(from) ? 0.0 : account.openingBalance) +
+              prior.read<double>('movement');
+      final openingAdjustment =
+          activeDate.isAfter(from) && !activeDate.isAfter(to)
+              ? account.openingBalance
+              : 0.0;
 
       // All non-voided transactions in range
       final rows = await (_db.select(_db.bankTransactions)
@@ -315,7 +331,8 @@ class BankBookRepository {
         }
       }
 
-      final closingBalance = openingBalance + totalCredit - totalDebit;
+      final closingBalance =
+          openingBalance + openingAdjustment + totalCredit - totalDebit;
       final netFlow = totalCredit - totalDebit;
       final pendingCheques = totalIssued - totalCleared - totalBounced;
 
@@ -326,6 +343,7 @@ class BankBookRepository {
 
       return BankBookSummaryModel(
         openingBalance: openingBalance,
+        openingAdjustment: openingAdjustment,
         totalCredit: totalCredit,
         totalDebit: totalDebit,
         closingBalance: closingBalance,

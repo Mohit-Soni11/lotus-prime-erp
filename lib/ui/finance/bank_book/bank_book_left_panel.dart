@@ -65,6 +65,10 @@ class BankBookLeftPanel extends StatelessWidget {
                     // 4. Opening Balance
                     _OpeningBalanceCard(ctrl: ctrl),
                     const SizedBox(height: 12),
+                    if (ctrl.summary.openingAdjustment != 0) ...[
+                      _AccountOpeningAdjustment(ctrl: ctrl),
+                      const SizedBox(height: 12),
+                    ],
 
                     // 5. Credit / Debit split
                     _CreditDebitRow(ctrl: ctrl),
@@ -534,8 +538,8 @@ class _OpeningBalanceCard extends StatelessWidget {
 
   void _showEditDialog(BuildContext context) {
     final txtCtrl = TextEditingController(
-      text: ctrl.summary.openingBalance > 0
-          ? ctrl.summary.openingBalance.toStringAsFixed(2)
+      text: (ctrl.selectedAccount?.openingBalance ?? 0) > 0
+          ? ctrl.selectedAccount!.openingBalance.toStringAsFixed(2)
           : '',
     );
 
@@ -595,6 +599,27 @@ class _OpeningBalanceCard extends StatelessWidget {
 }
 
 // â”€â”€ Credit / Debit Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+class _AccountOpeningAdjustment extends StatelessWidget {
+  const _AccountOpeningAdjustment({required this.ctrl});
+
+  final BankBookController ctrl;
+
+  @override
+  Widget build(BuildContext context) => _Card(
+        child: Row(children: [
+          const Icon(Icons.account_balance_outlined,
+              color: BankBookColors.brandGold, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text('New account opening in this period',
+                style: BankBookStyles.labelPrimary),
+          ),
+          Text(BankAccountModel.formatAmount(ctrl.summary.openingAdjustment),
+              style: BankBookStyles.amountSmall),
+        ]),
+      );
+}
 
 class _CreditDebitRow extends StatelessWidget {
   final BankBookController ctrl;
