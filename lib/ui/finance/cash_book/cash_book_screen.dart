@@ -89,6 +89,7 @@ class _CashBookScreenState extends State<CashBookScreen> {
         backgroundColor: CashBookColors.bodyBg,
         appBar: CashBookAppBar(
           onBack: _handleBack,
+          title: 'Cash Ledger',
           onHome: _goHome,
           showHomeAction: _history.view != CashBookHistoryView.daily,
           onExportCsv: _history.view != CashBookHistoryView.daily ||

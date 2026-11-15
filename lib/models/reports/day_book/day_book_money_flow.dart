@@ -57,11 +57,18 @@ class DayBookMoneyFlow {
     required this.openingBank,
     required List<DayBookMoneyEntry> entries,
     this.bankAccountCount,
-  }) : entries = List.unmodifiable(entries);
+    Map<DateTime, double> bankOpeningAdditionsByDay = const {},
+  })  : bankOpeningAdditionsByDay = Map.unmodifiable(bankOpeningAdditionsByDay),
+        entries = List.unmodifiable(entries);
 
   final double openingCash;
   final double openingBank;
   final int? bankAccountCount;
+
+  /// Opening balances of accounts activated after the period's first day.
+  final Map<DateTime, double> bankOpeningAdditionsByDay;
+  double get bankOpeningAdditions => bankOpeningAdditionsByDay.values
+      .fold(0, (double total, value) => total + value);
   final List<DayBookMoneyEntry> entries;
 
   double _sum(bool Function(DayBookMoneyEntry) include) => entries
@@ -73,7 +80,8 @@ class DayBookMoneyFlow {
   double get bankIn => _sum((entry) => !entry.isCash && entry.incoming);
   double get bankOut => _sum((entry) => !entry.isCash && !entry.incoming);
   double get closingCash => openingCash + cashIn - cashOut;
-  double get closingBank => openingBank + bankIn - bankOut;
+  double get closingBank =>
+      openingBank + bankOpeningAdditions + bankIn - bankOut;
   double get openingTotal => openingCash + openingBank;
   double get closingTotal => closingCash + closingBank;
 

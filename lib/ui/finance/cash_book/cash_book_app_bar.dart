@@ -8,6 +8,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.onBack,
     required this.status,
+    this.title,
     this.onHome,
     this.showHomeAction = false,
     this.onExportCsv,
@@ -15,6 +16,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final VoidCallback onBack;
+  final String? title;
   final VoidCallback? onHome;
   final bool showHomeAction;
   final SystemStatus status;
@@ -90,7 +92,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: Tooltip(
                       message: 'Account Book Home',
                       child: Text(
-                        CashBookStrings.moduleTitle.toUpperCase(),
+                        (title ?? CashBookStrings.moduleTitle).toUpperCase(),
                         style: CashBookStyles.appBarTitle.copyWith(
                             letterSpacing: 0.3, fontWeight: FontWeight.w800),
                         maxLines: 1,
@@ -107,7 +109,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 if (onExportCsv != null && onPrintPdf != null)
                   PopupMenuButton<String>(
-                    tooltip: 'Export Account Book Cash Ledger',
+                    tooltip: 'Export Account Book',
                     icon: const Icon(Icons.ios_share_rounded,
                         color: Colors.white),
                     onSelected: (value) =>

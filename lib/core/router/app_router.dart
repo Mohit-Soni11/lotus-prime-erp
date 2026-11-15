@@ -54,6 +54,7 @@ import 'package:lotus_erp/features/stock/shared/presentation/supplier/supplier_p
 
 import '../../ui/purchase_orders/purchase_entry/purchase_entry_screen.dart';
 
+import '../../ui/finance/account_book/account_book_screen.dart';
 import '../../ui/finance/cash_book/cash_book_screen.dart';
 import '../../ui/finance/bank_book/bank_book_screen.dart';
 import '../../ui/finance/due_collection_entry/due_collection_entry_screen.dart';
@@ -623,8 +624,14 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.financeCashBook,
-            builder: (context, state) => CashBookScreen(
+            builder: (context, state) => AccountBookScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.financeCashLedger,
+            builder: (context, state) => CashBookScreen(
+              onBack: () => _goBackOr(context, RoutePaths.financeCashBook),
             ),
           ),
           GoRoute(
@@ -690,6 +697,8 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.reportDayBook,
             builder: (context, state) => DayBookScreen(
+              initialDate:
+                  DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),

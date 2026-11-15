@@ -21,8 +21,9 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DayBookScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final DateTime? initialDate;
 
-  const DayBookScreen({super.key, this.onBack});
+  const DayBookScreen({super.key, this.onBack, this.initialDate});
 
   @override
   State<DayBookScreen> createState() => _DayBookScreenState();
@@ -36,7 +37,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
   @override
   void initState() {
     super.initState();
-    _ctrl = DayBookController();
+    _ctrl = DayBookController(initialDate: widget.initialDate);
   }
 
   @override

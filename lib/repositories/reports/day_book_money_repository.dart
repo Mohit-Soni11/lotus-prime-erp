@@ -31,7 +31,12 @@ class DayBookMoneyRepository {
   Future<DayBookMoneyFlow> fetch(DateTime date, double openingCash) async {
     final start = DateTime(date.year, date.month, date.day);
     final end = DateTime(date.year, date.month, date.day + 1);
+    return fetchRange(start, end, openingCash);
+  }
 
+  /// Uses the same posted ledger as Day Book for any half-open date range.
+  Future<DayBookMoneyFlow> fetchRange(
+      DateTime start, DateTime end, double openingCash) async {
     final accounts = await _db.select(_db.bankAccounts).get();
     final accountNames = {
       for (final account in accounts) account.id: account.accountName
@@ -41,6 +46,15 @@ class DayBookMoneyRepository {
                 account.activeSince.month, account.activeSince.day)
             .isAfter(start))
         .fold(0.0, (double total, account) => total + account.openingBalance);
+    final bankOpeningAdditions = <DateTime, double>{};
+    for (final account in accounts) {
+      final activeDate = DateTime(account.activeSince.year,
+          account.activeSince.month, account.activeSince.day);
+      if (activeDate.isAfter(start) && activeDate.isBefore(end)) {
+        bankOpeningAdditions[activeDate] =
+            (bankOpeningAdditions[activeDate] ?? 0) + account.openingBalance;
+      }
+    }
 
     final priorBankMovement = await _db.customSelect(
       '''SELECT COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount
@@ -113,6 +127,7 @@ class DayBookMoneyRepository {
       openingBank: openingAccounts + priorBankMovement.read<double>('movement'),
       entries: entries,
       bankAccountCount: accounts.length,
+      bankOpeningAdditionsByDay: bankOpeningAdditions,
     );
   }
 

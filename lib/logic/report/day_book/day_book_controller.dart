@@ -29,7 +29,11 @@ import '../../../core/logging/app_logger.dart';
 import 'day_book_close_authorization.dart';
 
 class DayBookController extends ChangeNotifier {
-  DayBookController() {
+  DayBookController({DateTime? initialDate}) {
+    if (initialDate != null) {
+      _selectedDate =
+          DateTime(initialDate.year, initialDate.month, initialDate.day);
+    }
     _init();
   }
 

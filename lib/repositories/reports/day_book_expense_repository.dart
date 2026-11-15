@@ -13,6 +13,11 @@ class DayBookExpenseRepository {
   Future<List<DayBookExpenseRecord>> fetch(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);
     final end = DateTime(date.year, date.month, date.day + 1);
+    return fetchRange(start, end);
+  }
+
+  Future<List<DayBookExpenseRecord>> fetchRange(
+      DateTime start, DateTime end) async {
     final rows = await (_db.select(_db.cashTransactions)
           ..where((row) =>
               row.type.equals(CashTransactionType.expense.dbValue) &

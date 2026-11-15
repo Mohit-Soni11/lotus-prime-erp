@@ -12,6 +12,11 @@ class DayBookStockAddedRepository {
   Future<List<DayBookStockAddedBatch>> fetch(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);
     final end = DateTime(date.year, date.month, date.day + 1);
+    return fetchRange(start, end);
+  }
+
+  Future<List<DayBookStockAddedBatch>> fetchRange(
+      DateTime start, DateTime end) async {
     final rows = await _db.customSelect(
       '''
       SELECT sm.id AS movement_id, sm.source_line_no, sm.occurred_at,

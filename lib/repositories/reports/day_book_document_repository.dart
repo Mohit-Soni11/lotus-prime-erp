@@ -13,6 +13,11 @@ class DayBookDocumentRepository {
   Future<List<DayBookDocument>> fetch(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);
     final end = DateTime(date.year, date.month, date.day + 1);
+    return fetchRange(start, end);
+  }
+
+  /// Reads the original dated documents in a half-open reporting period.
+  Future<List<DayBookDocument>> fetchRange(DateTime start, DateTime end) async {
     final documents = <DayBookDocument>[];
 
     final bills = await (_db.select(_db.bills)
@@ -22,11 +27,12 @@ class DayBookDocumentRepository {
         .get();
     final issueSnapshots = await DayBookBillIssueSnapshotRepository(_db)
         .fetchForBills(bills.map((bill) => bill.id));
-    final billItems = bills.isEmpty
-        ? <BillItem>[]
-        : await (_db.select(_db.billItems)
-              ..where((item) => item.billId.isIn(bills.map((b) => b.id))))
-            .get();
+    final billItems = <BillItem>[];
+    for (final ids in _chunks(bills.map((bill) => bill.id).toList())) {
+      billItems.addAll(await (_db.select(_db.billItems)
+            ..where((item) => item.billId.isIn(ids)))
+          .get());
+    }
     final itemsByBill = <int, List<DayBookDocumentItem>>{};
     for (final item in billItems) {
       itemsByBill.putIfAbsent(item.billId, () => []).add(DayBookDocumentItem(
@@ -75,12 +81,14 @@ class DayBookDocumentRepository {
         .get();
     final advanceOrders = <int, SalesOrder>{};
     if (advances.isNotEmpty) {
-      final orders = await (_db.select(_db.salesOrders)
-            ..where((row) => row.id
-                .isIn(advances.map((advance) => advance.orderId).toList())))
-          .get();
-      for (final order in orders) {
-        advanceOrders[order.id] = order;
+      for (final ids
+          in _chunks(advances.map((advance) => advance.orderId).toList())) {
+        final orders = await (_db.select(_db.salesOrders)
+              ..where((row) => row.id.isIn(ids)))
+            .get();
+        for (final order in orders) {
+          advanceOrders[order.id] = order;
+        }
       }
     }
     for (final advance in advances) {
@@ -168,9 +176,12 @@ class DayBookDocumentRepository {
         .map((document) => document.customerId!)
         .toSet();
     if (customerIds.isNotEmpty) {
-      final customers = await (_db.select(_db.customers)
-            ..where((customer) => customer.id.isIn(customerIds)))
-          .get();
+      final customers = <Customer>[];
+      for (final ids in _chunks(customerIds.toList())) {
+        customers.addAll(await (_db.select(_db.customers)
+              ..where((customer) => customer.id.isIn(ids)))
+            .get());
+      }
       final byId = {for (final customer in customers) customer.id: customer};
       for (var index = 0; index < documents.length; index++) {
         final source = documents[index];
@@ -276,28 +287,36 @@ class DayBookDocumentRepository {
     final owner = isPurchase ? 'purchase_voucher_id' : 'return_voucher_id';
     final name = isPurchase ? 'item_description' : 'item_description';
     final weight = isPurchase ? 'net_weight' : 'received_net_weight';
-    final placeholders = List.filled(ids.length, '?').join(',');
-    final rows = await _db
-        .customSelect(
-          'SELECT $owner AS voucher_id, metal_type, $name AS item_name, '
-          '$weight AS net_weight, quantity FROM $table '
-          'WHERE $owner IN ($placeholders) ORDER BY $owner, id',
-          variables: ids.map(Variable.withInt).toList(),
-        )
-        .get();
     final result = <int, List<DayBookDocumentItem>>{};
-    for (final row in rows) {
-      final id = row.read<int>('voucher_id');
-      result.putIfAbsent(id, () => []).add(DayBookDocumentItem(
-            metal: row.read<String>('metal_type'),
-            name: row.readNullable<String>('item_name') ?? 'Metal item',
-            netWeightGrams: row.read<double>('net_weight'),
-            quantity: row.read<int>('quantity'),
-          ));
+    for (final batch in _chunks(ids)) {
+      final placeholders = List.filled(batch.length, '?').join(',');
+      final rows = await _db
+          .customSelect(
+            'SELECT $owner AS voucher_id, metal_type, $name AS item_name, '
+            '$weight AS net_weight, quantity FROM $table '
+            'WHERE $owner IN ($placeholders) ORDER BY $owner, id',
+            variables: batch.map(Variable.withInt).toList(),
+          )
+          .get();
+      for (final row in rows) {
+        final id = row.read<int>('voucher_id');
+        result.putIfAbsent(id, () => []).add(DayBookDocumentItem(
+              metal: row.read<String>('metal_type'),
+              name: row.readNullable<String>('item_name') ?? 'Metal item',
+              netWeightGrams: row.read<double>('net_weight'),
+              quantity: row.read<int>('quantity'),
+            ));
+      }
     }
     return result.map((id, items) => MapEntry(id, List.unmodifiable(items)));
   }
 
   DateTime _date(int timestamp) => DateTime.fromMillisecondsSinceEpoch(
       timestamp.abs() >= 100000000000 ? timestamp : timestamp * 1000);
+
+  Iterable<List<T>> _chunks<T>(List<T> values) sync* {
+    for (var offset = 0; offset < values.length; offset += 500) {
+      yield values.skip(offset).take(500).toList(growable: false);
+    }
+  }
 }
