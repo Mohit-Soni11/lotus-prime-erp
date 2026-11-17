@@ -123,6 +123,28 @@ void main() {
     );
   });
 
+  test('legacy 750 plan retains non-selling data during profile upgrade', () {
+    final original = MetalRateProfile.defaultFor(MetalRateMetal.silver);
+    final payload = original.copyWith(purityPlans: [
+      ...original.purityPlans.where((plan) => plan.label != '700'),
+      const MetalRatePurityPlan(
+        label: '750',
+        purityPercent: 75,
+        supplierPremiumPercent: 0,
+        targetMarginPercent: 0,
+        buyRatePer10g: 90000,
+      ),
+    ]).toJson();
+
+    final loaded = MetalRateProfile.fromJson(payload);
+    expect(loaded.purityPlans.map((plan) => plan.label), contains('700'));
+    expect(
+        loaded.purityPlans
+            .firstWhere((plan) => plan.label == '750')
+            .buyRatePer10g,
+        90000);
+  });
+
   testWidgets('silver jewellery uses the same counter row as other purities',
       (tester) async {
     late AppDatabase database;
@@ -148,6 +170,8 @@ void main() {
       ));
       controller = MetalRateController(repo: repository);
       await controller.load();
+      controller.updateShopRate(
+          metal: MetalRateMetal.silver, index: 1, value: 0);
     });
     addTearDown(() async {
       controller.dispose();
@@ -167,7 +191,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       expect(find.text('Counter Rate Control'), findsOneWidget);
       expect(find.text('70% purity · Local Jewellery'), findsOneWidget);
-      expect(find.text('700'), findsOneWidget);
+      expect(
+          find.descendant(
+            of: find.byKey(const ValueKey('silver-sell-1')),
+            matching: find.text('₹ 1,61,875'),
+          ),
+          findsOneWidget);
+      expect(find.textContaining('Auto'), findsOneWidget);
+      expect(find.text('700'), findsWidgets);
       expect(
           find.byKey(const ValueKey('silver-jewellery-rate')), findsOneWidget);
       expect(find.byKey(const ValueKey('silver-jewellery-card')), findsNothing);
@@ -176,6 +207,12 @@ void main() {
       expect(find.text('₹ 1,75,00,000'), findsNothing);
       expect(tester.takeException(), isNull, reason: 'Width $width');
     }
+
+    final puritySelector = find.byKey(const ValueKey('history-purity-700'));
+    await tester.ensureVisible(puritySelector);
+    await tester.tap(puritySelector);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('No saved rate for this period'), findsOneWidget);
 
     await tester.ensureVisible(find.text('LIVE RATE'));
     await tester.tap(find.text('LIVE RATE'));

@@ -16,6 +16,7 @@ class MetalRateQuote {
   final MetalRateQuoteSide side;
   final String purityLabel;
   final double purityPercent;
+  // Historical field name: silver quotes store a per-kg rate here.
   final double ratePer10g;
   final double billingRate;
   final String billingUnit;
@@ -111,7 +112,7 @@ class MetalRateQuoteService {
     }
 
     final ratePer10g = side == MetalRateQuoteSide.selling
-        ? _sellingRatePer10g(profile, plan)
+        ? profile.effectiveSellingRateFor(plan)
         : profile.primaryBuyRatePer10g;
 
     if (ratePer10g <= 0) {
@@ -175,22 +176,6 @@ class MetalRateQuoteService {
     return purityLabel == null || purityLabel.trim().isEmpty
         ? plans.first
         : null;
-  }
-
-  double _sellingRatePer10g(
-    MetalRateProfile profile,
-    MetalRatePurityPlan plan,
-  ) {
-    if (profile.metal == MetalRateMetal.silver && plan.label == '700') {
-      return plan.manualDisplayRatePer10g;
-    }
-    if (plan.manualDisplayRatePer10g > 0) {
-      return plan.manualDisplayRatePer10g;
-    }
-    if (profile.marketBaseRatePer10g <= 0) {
-      return 0.0;
-    }
-    return profile.marketParityRateFor(plan);
   }
 }
 

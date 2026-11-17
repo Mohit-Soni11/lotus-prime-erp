@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
+import '../../../models/setting/metal_rate/metal_rate_price_unit.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
 import '../../../repositories/setting/metal_costing/metal_costing_repository.dart';
 import '../../../repositories/setting/metal_rate/metal_rate_repository.dart';
@@ -18,10 +19,14 @@ enum MetalCostingState { idle, loading, loaded, error }
 
 class MetalCostingController extends ChangeNotifier {
   final MetalCostingRepository _repo;
+  final MetalRateRepository _rateRepository;
   MetalCostingController({
     MetalCostingRepository? repo,
+    MetalRateRepository? rateRepository,
     AppDatabase? db,
-  }) : _repo = repo ?? MetalCostingRepository(db ?? AppDatabase()) {
+  })  : _repo = repo ?? MetalCostingRepository(db ?? AppDatabase()),
+        _rateRepository =
+            rateRepository ?? MetalRateRepository(db: db ?? AppDatabase()) {
     loadData();
   }
 
@@ -51,11 +56,12 @@ class MetalCostingController extends ChangeNotifier {
 
     try {
       // 1. Resolve all costing rates from the authoritative rate ledger.
-      final metalRateProfiles = await MetalRateRepository().loadProfiles();
+      final metalRateProfiles = await _rateRepository.loadProfiles();
       final profileRates = {
         for (final profile in metalRateProfiles)
           profile.metal.key: profile.primaryShopRatePer10g > 0
-              ? profile.primaryShopRatePer10g * 10
+              ? MetalRatePriceUnit.forMetal(profile.metal)
+                  .toCostingRatePer100g(profile.primaryShopRatePer10g)
               : 0.0,
       };
 

@@ -3,12 +3,12 @@ part of '../metal_rate_detail_screen.dart';
 class _HistoryCard extends StatefulWidget {
   final List<MetalRateHistoryEntry> history;
   final Color accent;
-  final String purityLabel;
+  final List<String> purityLabels;
   final MetalRatePriceUnit priceUnit;
   const _HistoryCard(
       {required this.history,
       required this.accent,
-      required this.purityLabel,
+      required this.purityLabels,
       required this.priceUnit});
 
   @override
@@ -17,10 +17,26 @@ class _HistoryCard extends StatefulWidget {
 
 class _HistoryCardState extends State<_HistoryCard> {
   MetalRateHistoryPeriod _period = MetalRateHistoryPeriod.current;
+  String? _selectedPurity;
+
+  @override
+  void didUpdateWidget(covariant _HistoryCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selectedPurity != null &&
+        !widget.purityLabels.contains(_selectedPurity)) {
+      _selectedPurity = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final view = MetalRateHistoryView.build(widget.history, _period);
+    final selectedPurity = _selectedPurity ??
+        (widget.purityLabels.isEmpty ? null : widget.purityLabels.first);
+    final view = MetalRateHistoryView.build(
+      widget.history,
+      _period,
+      purityLabel: selectedPurity,
+    );
     return _DetailSection(
       icon: Icons.history_rounded,
       title: 'Rate History',
@@ -29,12 +45,14 @@ class _HistoryCardState extends State<_HistoryCard> {
         final trend = _HistoryTrend(
           view: view,
           accent: widget.accent,
-          purityLabel: widget.purityLabel,
+          purityLabel: selectedPurity ?? 'Metal',
+          purityLabels: widget.purityLabels,
           priceUnit: widget.priceUnit,
           onPeriodChanged: (period) => setState(() => _period = period),
+          onPurityChanged: (purity) => setState(() => _selectedPurity = purity),
         );
         final revisions = _HistoryEntries(
-            entries: view.revisions,
+            entries: view.changeEntries,
             accent: widget.accent,
             priceUnit: widget.priceUnit);
         if (constraints.maxWidth < 950) {

@@ -26,10 +26,7 @@ class MetalRateRepository {
 
   Stream<List<MetalRateProfile>> watchProfiles() async* {
     await _ensureLedgerInitialised();
-    yield await _readCurrentProfiles();
-    yield* _db.select(_db.metalRateProfiles).watch().asyncMap(
-          (_) => _readCurrentProfiles(),
-        );
+    yield* _db.select(_db.metalRateProfiles).watch().map(_profilesFromRows);
   }
 
   Future<void> saveProfile(
@@ -121,22 +118,32 @@ class MetalRateRepository {
   }
 
   Future<void> _ensureLedgerInitialised() async {
-    final existing =
-        await (_db.select(_db.metalRateProfiles)..limit(1)).getSingleOrNull();
-    if (existing != null) return;
+    final existing = await _db.select(_db.metalRateProfiles).get();
+    _validateMetalKeys(existing.map((row) => row.metalKey));
+    if (existing.length == MetalRateMetal.values.length) return;
+    for (final row in existing) {
+      _profileFromPayload(
+          row.profileJson, MetalRateMetalX.fromKey(row.metalKey));
+    }
 
-    final imported = await _readLegacyProfiles();
-    final legacyDailyRate = await (_db.select(_db.dailyRates)
-          ..orderBy([(table) => OrderingTerm.desc(table.rateDate)])
-          ..limit(1))
-        .getSingleOrNull();
+    final isNewLedger = existing.isEmpty;
+    final imported = isNewLedger
+        ? await _readLegacyProfiles()
+        : const <MetalRateMetal, MetalRateProfile>{};
+    final legacyDailyRate = isNewLedger
+        ? await (_db.select(_db.dailyRates)
+              ..orderBy([(table) => OrderingTerm.desc(table.rateDate)])
+              ..limit(1))
+            .getSingleOrNull()
+        : null;
     await _db.transaction(() async {
-      final alreadyInitialised =
-          await (_db.select(_db.metalRateProfiles)..limit(1)).getSingleOrNull();
-      if (alreadyInitialised != null) return;
+      final stored = await _db.select(_db.metalRateProfiles).get();
+      final storedKeys = stored.map((row) => row.metalKey).toSet();
+      _validateMetalKeys(storedKeys);
 
       final now = DateTime.now();
       for (final metal in MetalRateMetal.values) {
+        if (storedKeys.contains(metal.key)) continue;
         final importedProfile = imported[metal] ??
             _profileFromLegacyDailyRate(metal, legacyDailyRate) ??
             MetalRateProfile.defaultFor(metal);
@@ -165,8 +172,19 @@ class MetalRateRepository {
       }
     });
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_legacyProfilesKey);
+    if (isNewLedger) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_legacyProfilesKey);
+    }
+  }
+
+  void _validateMetalKeys(Iterable<String> keys) {
+    final supported = MetalRateMetal.values.map((metal) => metal.key).toSet();
+    for (final key in keys) {
+      if (!supported.contains(key)) {
+        throw FormatException('Unknown metal rate profile key: $key');
+      }
+    }
   }
 
   Future<Map<MetalRateMetal, MetalRateProfile>> _readLegacyProfiles() async {
@@ -257,8 +275,13 @@ class MetalRateRepository {
 
   Future<List<MetalRateProfile>> _readCurrentProfiles() async {
     final rows = await _db.select(_db.metalRateProfiles).get();
+    return _profilesFromRows(rows);
+  }
+
+  List<MetalRateProfile> _profilesFromRows(List<MetalRateProfileRecord> rows) {
     final byMetal = <MetalRateMetal, MetalRateProfile>{};
     for (final row in rows) {
+      _validateMetalKeys([row.metalKey]);
       final metal = MetalRateMetalX.fromKey(row.metalKey);
       byMetal[metal] = _profileFromPayload(row.profileJson, metal);
     }
@@ -269,15 +292,30 @@ class MetalRateRepository {
 
   MetalRateProfile _profileFromPayload(String payload, MetalRateMetal metal) {
     try {
-      return MetalRateProfile.fromJson(
-        Map<String, dynamic>.from(jsonDecode(payload) as Map),
-      );
-    } catch (_) {
-      return MetalRateProfile.defaultFor(metal);
+      final json = Map<String, dynamic>.from(jsonDecode(payload) as Map);
+      final embeddedMetal = json['metal'];
+      if (embeddedMetal != null && embeddedMetal != metal.key) {
+        throw const FormatException('Metal key does not match profile payload');
+      }
+      final profile = MetalRateProfile.fromJson({...json, 'metal': metal.key});
+      _validateProfile(profile);
+      return profile;
+    } catch (error) {
+      throw FormatException('Invalid ${metal.label} rate profile: $error');
     }
   }
 
   void _validateProfile(MetalRateProfile profile) {
+    if (profile.purityPlans.isEmpty) {
+      throw ArgumentError('Rate profile has no purity plans.');
+    }
+    final labels = <String>{};
+    for (final plan in profile.purityPlans) {
+      final label = plan.label.trim().toUpperCase();
+      if (label.isEmpty || !labels.add(label) || plan.purityPercent > 100) {
+        throw ArgumentError('Rate profile has invalid purity plans.');
+      }
+    }
     final values = <double>[
       profile.mcxRatePer10g,
       profile.physicalMarketRatePer10g,

@@ -51,6 +51,7 @@ class _RateField extends StatefulWidget {
   final bool enabled;
   final ValueChanged<double> onChanged;
   final String? unit;
+  final String? hintText;
 
   const _RateField({
     super.key,
@@ -59,6 +60,7 @@ class _RateField extends StatefulWidget {
     required this.enabled,
     required this.onChanged,
     this.unit,
+    this.hintText,
   });
 
   @override
@@ -121,6 +123,7 @@ class _RateFieldState extends State<_RateField> {
       style: MetalRateDetailStyles.value.copyWith(fontSize: 16),
       decoration: InputDecoration(
         prefixText: '₹ ',
+        hintText: widget.hintText,
         suffixText: widget.unit == null ? null : '/ ${widget.unit}',
         prefixStyle: MetalRateDetailStyles.body.copyWith(
             color: MetalRateColors.textDark, fontWeight: FontWeight.w800),

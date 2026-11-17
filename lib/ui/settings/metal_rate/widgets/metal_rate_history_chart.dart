@@ -4,14 +4,18 @@ class _HistoryTrend extends StatelessWidget {
   final MetalRateHistoryView view;
   final Color accent;
   final String purityLabel;
+  final List<String> purityLabels;
   final MetalRatePriceUnit priceUnit;
   final ValueChanged<MetalRateHistoryPeriod> onPeriodChanged;
+  final ValueChanged<String> onPurityChanged;
   const _HistoryTrend(
       {required this.view,
       required this.accent,
       required this.purityLabel,
+      required this.purityLabels,
       required this.priceUnit,
-      required this.onPeriodChanged});
+      required this.onPeriodChanged,
+      required this.onPurityChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -19,22 +23,57 @@ class _HistoryTrend extends StatelessWidget {
         view.points.isEmpty ? 0.0 : priceUnit.toMarket(view.points.last.rate);
     final change = priceUnit.toMarket(view.change);
     return Container(
-      height: 290,
+      height: 310,
       padding: const EdgeInsets.all(16),
       decoration: MetalRateDetailStyles.tint(accent),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(
-              child: Text('$purityLabel Selling Rate',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _historyText(size: 15))),
+            child: Text('Selling Rate Trend',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _historyText(size: 15)),
+          ),
           const SizedBox(width: 8),
           _HistoryPeriodFilter(
               selected: view.period,
               accent: accent,
               onChanged: onPeriodChanged),
         ]),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 30,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              for (final purity in purityLabels)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: InkWell(
+                    key: ValueKey('history-purity-$purity'),
+                    onTap: () => onPurityChanged(purity),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: purity == purityLabel
+                            ? accent.withValues(alpha: 0.16)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: purity == purityLabel
+                                ? accent
+                                : MetalRateColors.cardBorder),
+                      ),
+                      child: Text(_purityLabel(purity),
+                          style: _historyText(size: 11)),
+                    ),
+                  ),
+                ),
+            ]),
+          ),
+        ),
         const SizedBox(height: 8),
         Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,

@@ -1,7 +1,7 @@
 part of '../metal_rate_detail_screen.dart';
 
 class _HistoryEntries extends StatefulWidget {
-  final List<MetalRateHistoryEntry> entries;
+  final List<MetalRateRevision> entries;
   final Color accent;
   final MetalRatePriceUnit priceUnit;
   const _HistoryEntries(
@@ -20,8 +20,8 @@ class _HistoryEntriesState extends State<_HistoryEntries> {
     if (oldWidget.entries.length != widget.entries.length ||
         (oldWidget.entries.isNotEmpty &&
             widget.entries.isNotEmpty &&
-            oldWidget.entries.first.changedAt !=
-                widget.entries.first.changedAt)) {
+            oldWidget.entries.first.entry.changedAt !=
+                widget.entries.first.entry.changedAt)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _scrollController.hasClients) {
           _scrollController.jumpTo(0);
@@ -47,7 +47,7 @@ class _HistoryEntriesState extends State<_HistoryEntries> {
           }
         },
         child: Container(
-          height: 290,
+          height: 310,
           padding: const EdgeInsets.all(14),
           decoration: MetalRateDetailStyles.tint(widget.accent),
           child:
@@ -92,46 +92,53 @@ class _HistoryEntriesState extends State<_HistoryEntries> {
 }
 
 class _HistoryEntry extends StatelessWidget {
-  final MetalRateHistoryEntry entry;
+  final MetalRateRevision entry;
   final Color accent;
   final MetalRatePriceUnit priceUnit;
   const _HistoryEntry(
       {required this.entry, required this.accent, required this.priceUnit});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: MetalRateColors.cardBorder),
+  Widget build(BuildContext context) {
+    final changes = entry.changes;
+    final summary = changes.isEmpty
+        ? 'No rate values changed'
+        : changes.map((change) {
+            final before = priceUnit.toMarket(change.previousRate);
+            final after = priceUnit.toMarket(change.currentRate);
+            return '${change.label}: ${_money(before)} → ${_money(after)} / ${priceUnit.label}';
+          }).join('\n');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: MetalRateColors.cardBorder),
+      ),
+      child: Row(children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: MetalRateDetailStyles.tint(accent),
+          child: Icon(Icons.history_rounded, size: 18, color: accent),
         ),
-        child: Row(children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: MetalRateDetailStyles.tint(accent),
-            child: Icon(Icons.history_rounded, size: 18, color: accent),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(DateFormat('d MMM yyyy, h:mm a').format(entry.changedAt),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _historyText(size: 12)),
-              const SizedBox(height: 4),
-              Text(
-                'Sell ${_money(priceUnit.toMarket(entry.profile.primaryShopRatePer10g))}  ·  '
-                'Buy ${_money(priceUnit.toMarket(entry.profile.primaryBuyRatePer10g))} / ${priceUnit.label}',
+        const SizedBox(width: 10),
+        Expanded(
+            child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(DateFormat('d MMM yyyy, h:mm a').format(entry.entry.changedAt),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: _historyText(size: 12),
-              ),
-            ],
-          )),
-        ]),
-      );
+                style: _historyText(size: 12)),
+            const SizedBox(height: 4),
+            Text(
+              summary,
+              style: _historyText(size: 12),
+            ),
+          ],
+        )),
+      ]),
+    );
+  }
 }

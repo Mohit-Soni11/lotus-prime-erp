@@ -1,4 +1,5 @@
 import 'metal_rate_model.dart';
+import 'metal_rate_revision_change.dart';
 
 enum MetalRateHistoryPeriod { current, month, year }
 
@@ -15,6 +16,7 @@ class MetalRateHistoryView {
   final DateTime start;
   final DateTime end;
   final List<MetalRateHistoryEntry> revisions;
+  final List<MetalRateRevision> changeEntries;
   final List<MetalRateHistoryPoint> points;
 
   const MetalRateHistoryView._({
@@ -22,6 +24,7 @@ class MetalRateHistoryView {
     required this.start,
     required this.end,
     required this.revisions,
+    required this.changeEntries,
     required this.points,
   });
 
@@ -29,6 +32,7 @@ class MetalRateHistoryView {
     List<MetalRateHistoryEntry> history,
     MetalRateHistoryPeriod period, {
     DateTime? now,
+    String? purityLabel,
   }) {
     final end = now ?? DateTime.now();
     final start = switch (period) {
@@ -44,13 +48,24 @@ class MetalRateHistoryView {
         .where((entry) =>
             !entry.changedAt.isBefore(start) && !entry.changedAt.isAfter(end))
         .toList();
+    MetalRateProfile? previous;
+    final changes = <MetalRateRevision>[];
+    for (final entry in sorted) {
+      if (entry.changedAt.isAfter(end)) break;
+      if (entry.changedAt.isBefore(start)) {
+        previous = entry.profile;
+        continue;
+      }
+      changes.add(MetalRateRevision.compare(entry, previous));
+      previous = entry.profile;
+    }
     final points = <MetalRateHistoryPoint>[
-      if (baseline != null && baseline.profile.primaryShopRatePer10g > 0)
-        MetalRateHistoryPoint(start, baseline.profile.primaryShopRatePer10g),
+      if (baseline != null && _rateFor(baseline.profile, purityLabel) > 0)
+        MetalRateHistoryPoint(start, _rateFor(baseline.profile, purityLabel)),
       for (final entry in revisions)
-        if (entry.profile.primaryShopRatePer10g > 0)
+        if (_rateFor(entry.profile, purityLabel) > 0)
           MetalRateHistoryPoint(
-              entry.changedAt, entry.profile.primaryShopRatePer10g),
+              entry.changedAt, _rateFor(entry.profile, purityLabel)),
     ];
     if (points.isNotEmpty && points.last.time.isBefore(end)) {
       points.add(MetalRateHistoryPoint(end, points.last.rate));
@@ -60,6 +75,7 @@ class MetalRateHistoryView {
       start: start,
       end: end,
       revisions: revisions.reversed.toList(growable: false),
+      changeEntries: changes.reversed.toList(growable: false),
       points: points,
     );
   }
@@ -69,4 +85,14 @@ class MetalRateHistoryView {
   double get changePercent => points.isEmpty || points.first.rate == 0
       ? 0
       : change / points.first.rate * 100;
+
+  static double _rateFor(MetalRateProfile profile, String? purityLabel) {
+    if (purityLabel == null) return profile.primaryShopRatePer10g;
+    for (final plan in profile.purityPlans) {
+      if (plan.label == purityLabel) {
+        return profile.effectiveSellingRateFor(plan);
+      }
+    }
+    return 0;
+  }
 }

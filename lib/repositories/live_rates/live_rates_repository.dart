@@ -77,12 +77,7 @@ class LiveRatesRepository {
     final plans = profile.purityPlans.where((plan) => plan.label == label);
     if (plans.isEmpty) return 0;
     final plan = plans.first;
-    if (profile.metal == MetalRateMetal.silver && plan.label == '700') {
-      return plan.manualDisplayRatePer10g;
-    }
-    return plan.manualDisplayRatePer10g > 0
-        ? plan.manualDisplayRatePer10g
-        : profile.marketParityRateFor(plan);
+    return profile.effectiveSellingRateFor(plan);
   }
 
   String _format(double value) {

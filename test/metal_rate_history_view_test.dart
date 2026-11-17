@@ -1,8 +1,52 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_history_view.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
+import 'package:lotus_erp/models/setting/metal_rate/metal_rate_revision_change.dart';
 
 void main() {
+  test('revision details identify a changed silver jewellery rate', () {
+    final base = MetalRateProfile.defaultFor(MetalRateMetal.silver);
+    final before = base.copyWith(purityPlans: [
+      for (final plan in base.purityPlans)
+        plan.label == '700'
+            ? plan.copyWith(manualDisplayRatePer10g: 110000)
+            : plan,
+    ]);
+    final after = before.copyWith(purityPlans: [
+      for (final plan in before.purityPlans)
+        plan.label == '700'
+            ? plan.copyWith(manualDisplayRatePer10g: 130000)
+            : plan,
+    ]);
+    final entry = MetalRateHistoryEntry(
+      profile: after,
+      changedAt: DateTime(2026, 11, 17),
+      source: 'Metal Rate Master',
+    );
+    final revision = MetalRateRevision.compare(entry, before);
+
+    expect(revision.changes, hasLength(1));
+    expect(revision.changes.single.label, '700 selling');
+    expect(revision.changes.single.previousRate, 110000);
+    expect(revision.changes.single.currentRate, 130000);
+
+    final view = MetalRateHistoryView.build(
+      [
+        MetalRateHistoryEntry(
+          profile: before,
+          changedAt: DateTime(2026, 11, 16),
+          source: 'Metal Rate Master',
+        ),
+        entry,
+      ],
+      MetalRateHistoryPeriod.month,
+      now: DateTime(2026, 11, 17, 12),
+      purityLabel: '700',
+    );
+    expect(view.change, 20000);
+    expect(view.changeEntries.first.changes.single.label, '700 selling');
+  });
+
   MetalRateHistoryEntry revision(DateTime at, double rate) {
     final base = MetalRateProfile.defaultFor(MetalRateMetal.gold);
     return MetalRateHistoryEntry(

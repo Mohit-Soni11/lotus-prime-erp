@@ -181,4 +181,52 @@ void main() {
     expect(dashboard.oldGold22kBuy, '1,25,000');
     expect(dashboard.oldGold18kBuy, '1,25,000');
   });
+
+  test('partial ledger restores missing metals without changing saved rates',
+      () async {
+    final gold = MetalRateProfile.defaultFor(MetalRateMetal.gold)
+        .copyWith(physicalMarketRatePer10g: 139000);
+    await database.into(database.metalRateProfiles).insert(
+          MetalRateProfilesCompanion.insert(
+            metalKey: 'gold',
+            profileJson: jsonEncode(gold.toJson()),
+            revision: const Value(4),
+          ),
+        );
+
+    final profiles = await repository.loadProfiles();
+    expect(profiles, hasLength(4));
+    expect(profiles.first.marketBaseRatePer10g, 139000);
+    expect(
+        await database.select(database.metalRateProfiles).get(), hasLength(4));
+    final saved = await (database.select(database.metalRateProfiles)
+          ..where((row) => row.metalKey.equals('gold')))
+        .getSingle();
+    expect(saved.revision, 4);
+  });
+
+  test('corrupt rate payload is reported instead of replaced with defaults',
+      () async {
+    await database.into(database.metalRateProfiles).insert(
+          MetalRateProfilesCompanion.insert(
+            metalKey: 'gold',
+            profileJson: '{invalid-json',
+          ),
+        );
+
+    await expectLater(repository.loadProfiles(), throwsFormatException);
+    expect(await database.select(database.metalRateProfiles).get(), hasLength(1));
+  });
+
+  test('mismatched metal identity cannot overwrite another profile', () async {
+    final gold = MetalRateProfile.defaultFor(MetalRateMetal.gold);
+    await database.into(database.metalRateProfiles).insert(
+          MetalRateProfilesCompanion.insert(
+            metalKey: 'silver',
+            profileJson: jsonEncode(gold.toJson()),
+          ),
+        );
+
+    await expectLater(repository.loadProfiles(), throwsFormatException);
+  });
 }
