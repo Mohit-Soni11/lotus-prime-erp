@@ -46,9 +46,9 @@ class SettingsScreen extends StatelessWidget {
         break;
 
       case 'gold_rate_settings':
-        Navigator.push(
-          context,
+        Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(
+            fullscreenDialog: true,
             pageBuilder: (_, animation, __) => const MetalRateHubScreen(),
             transitionsBuilder: (_, animation, __, child) => FadeTransition(
               opacity: CurvedAnimation(

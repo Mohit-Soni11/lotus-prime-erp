@@ -105,6 +105,9 @@ void main() {
 
     expect(result.state, LiveRateState.available);
     expect(result.gold24k, '74,925');
-    expect(result.silverRateKg, isNot('--'));
+    expect(result.gold24kPerGram, '7,492.5');
+    expect(result.silver999PerGram, '949.05');
+    expect(result.silverRateKg, '9,49,050');
+    expect(result.silver925RateKg, '8,78,750');
   });
 }

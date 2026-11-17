@@ -31,7 +31,7 @@ class MetalRateStyles {
       );
 
   static TextStyle get systemOnline => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w700,
         color: MetalRateColors.onlineGreen,
         letterSpacing: 0.5,

@@ -1,50 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../logic/dashboard/live_rates/live_rates_logic.dart';
 import '../../models/live_rates/live_rates_model.dart';
+import '../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../theme/dashboard/live_rates/live_rates_theme.dart';
+import 'live_rates/metal_rate_panel.dart';
+import 'live_rates/purchase_rates_panel.dart';
+import 'live_rates/rates_header.dart';
 
 class LiveRatesCard extends StatefulWidget {
-  const LiveRatesCard({super.key});
+  const LiveRatesCard({super.key, this.ratesStream});
+
+  final Stream<LiveRatesModel>? ratesStream;
 
   @override
   State<LiveRatesCard> createState() => _LiveRatesCardState();
 }
 
 class _LiveRatesCardState extends State<LiveRatesCard> {
-  late final LiveRatesLogic _logic;
+  late final Stream<LiveRatesModel> _ratesStream;
   bool _showPurchaseRates = false;
 
   @override
   void initState() {
     super.initState();
-    _logic = LiveRatesLogic();
+    _ratesStream = widget.ratesStream ?? LiveRatesLogic().ratesStream;
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<LiveRatesModel>(
-      stream: _logic.ratesStream,
-      initialData: _logic.initialData,
-      builder: (context, snapshot) {
-        final rates = snapshot.data ?? LiveRatesModel.loading();
-        return Container(
-          decoration: LiveRatesStyles.cardDecoration,
-          padding: const EdgeInsets.all(16),
-          child: rates.isLoading
-              ? const _RatesLoadingState()
-              : rates.isAvailable
-                  ? _RatesContent(
-                      rates: rates,
-                      showPurchaseRates: _showPurchaseRates,
-                      onTogglePurchaseRates: () => setState(
-                        () => _showPurchaseRates = !_showPurchaseRates,
-                      ),
-                    )
-                  : _RatesUnavailableState(rates: rates),
-        );
-      },
+    return Container(
+      decoration: LiveRatesStyles.card,
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const RatesHeader(),
+          const SizedBox(height: 10),
+          StreamBuilder<LiveRatesModel>(
+            stream: _ratesStream,
+            initialData: LiveRatesModel.loading(),
+            builder: (context, snapshot) {
+              final rates = snapshot.data ?? LiveRatesModel.loading();
+              if (rates.isLoading) {
+                return const SizedBox(
+                  height: 135,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: LiveRatesColors.gold,
+                    ),
+                  ),
+                );
+              }
+              if (!rates.isAvailable) {
+                return SizedBox(
+                  height: 135,
+                  child: Center(
+                    child: Text(
+                      rates.message ?? 'Metal rates are unavailable.',
+                      textAlign: TextAlign.center,
+                      style: LiveRatesStyles.date,
+                    ),
+                  ),
+                );
+              }
+              return _RatesContent(
+                rates: rates,
+                showPurchaseRates: _showPurchaseRates,
+                onTogglePurchaseRates: () => setState(
+                  () => _showPurchaseRates = !_showPurchaseRates,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -62,203 +92,93 @@ class _RatesContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final updated = rates.rateDate == null
-        ? 'Update time unavailable'
-        : DateFormat('dd MMM, hh:mm a').format(rates.rateDate!);
+    final goldRows = [
+      MetalRateRow(
+        purity: '24K',
+        perGram: rates.gold24kPerGram,
+        perBaseUnit: rates.gold24k,
+      ),
+      MetalRateRow(
+        purity: '22K',
+        perGram: rates.gold22kPerGram,
+        perBaseUnit: rates.gold22k,
+      ),
+      MetalRateRow(
+        purity: '18K',
+        perGram: rates.gold18kPerGram,
+        perBaseUnit: rates.gold18k,
+      ),
+    ];
+    final silverRows = [
+      MetalRateRow(
+        purity: '999',
+        perGram: rates.silver999PerGram,
+        perBaseUnit: rates.silverRateKg,
+      ),
+      MetalRateRow(
+        purity: '925',
+        perGram: rates.silver925PerGram,
+        perBaseUnit: rates.silver925RateKg,
+      ),
+    ];
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.currency_exchange_rounded,
-                color: LiveRatesColors.goldMain),
-            const SizedBox(width: 8),
-            const Text('Metal Rates', style: LiveRatesStyles.cardTitleStyle),
-            const Spacer(),
-            _SourceChip(source: rates.source),
-          ],
-        ),
-        const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
-            final compact = constraints.maxWidth < 620;
-            final gold = _RatePanel(
-              title: 'GOLD',
-              unit: '₹ / 10g',
-              color: LiveRatesColors.goldMain,
-              rows: [
-                ('24K', rates.gold24k),
-                ('22K', rates.gold22k),
-                ('18K', rates.gold18k),
-              ],
+            final gold = MetalRatePanel(
+              metal: MetalRateMetal.gold,
+              rows: goldRows,
             );
-            final silver = _RatePanel(
-              title: 'SILVER',
-              unit: '₹ / 10g',
-              color: LiveRatesColors.silverMain,
-              rows: [
-                ('999', rates.silverIdols),
-                ('925', rates.silverJewellery),
-                ('Per kg', rates.silverRateKg),
-              ],
+            final silver = MetalRatePanel(
+              metal: MetalRateMetal.silver,
+              rows: silverRows,
             );
-            if (compact) {
+            if (constraints.maxWidth < 720) {
               return Column(
-                  children: [gold, const SizedBox(height: 12), silver]);
+                children: [gold, const SizedBox(height: 9), silver],
+              );
             }
-            return Row(children: [
-              Expanded(child: gold),
-              const SizedBox(width: 12),
-              Expanded(child: silver),
-            ]);
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: gold),
+                const SizedBox(width: 9),
+                Expanded(child: silver),
+              ],
+            );
           },
         ),
-        const SizedBox(height: 12),
-        TextButton.icon(
-          onPressed: onTogglePurchaseRates,
-          icon: Icon(showPurchaseRates
-              ? Icons.expand_less_rounded
-              : Icons.expand_more_rounded),
-          label: Text(showPurchaseRates
-              ? 'Hide purchase rates'
-              : 'View purchase rates'),
+        const SizedBox(height: 3),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: onTogglePurchaseRates,
+            style: TextButton.styleFrom(
+              foregroundColor: LiveRatesColors.silver,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 7),
+            ),
+            iconAlignment: IconAlignment.end,
+            icon: Icon(
+              showPurchaseRates
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              size: 17,
+            ),
+            label: Text(
+              showPurchaseRates
+                  ? LiveRatesStrings.hidePurchase
+                  : LiveRatesStrings.viewPurchase,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ),
         ),
         if (showPurchaseRates) ...[
-          const SizedBox(height: 4),
-          _PurchaseRatesPanel(rates: rates),
+          const SizedBox(height: 3),
+          PurchaseRatesPanel(rates: rates),
         ],
-        const SizedBox(height: 10),
-        Text('Last updated: $updated', style: LiveRatesStyles.timestampStyle),
       ],
     );
   }
-}
-
-class _RatePanel extends StatelessWidget {
-  const _RatePanel({
-    required this.title,
-    required this.unit,
-    required this.color,
-    required this.rows,
-  });
-
-  final String title;
-  final String unit;
-  final Color color;
-  final List<(String, String)> rows;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.28)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: LiveRatesStyles.metalTitleStyle.copyWith(color: color)),
-            const SizedBox(height: 3),
-            Text(unit, style: LiveRatesStyles.unitStyle),
-            const SizedBox(height: 10),
-            ...rows.map((row) => Padding(
-                  padding: const EdgeInsets.only(bottom: 7),
-                  child: Row(children: [
-                    Expanded(
-                        child:
-                            Text(row.$1, style: LiveRatesStyles.subLabelStyle)),
-                    Text('₹${row.$2}', style: LiveRatesStyles.subPriceStyle),
-                  ]),
-                )),
-          ],
-        ),
-      );
-}
-
-class _PurchaseRatesPanel extends StatelessWidget {
-  const _PurchaseRatesPanel({required this.rates});
-  final LiveRatesModel rates;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: LiveRatesColors.expandedBg,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Wrap(
-          spacing: 18,
-          runSpacing: 8,
-          children: [
-            _PurchaseRate(label: '24K buy', value: rates.oldGold24kBuy),
-            _PurchaseRate(label: '22K buy', value: rates.oldGold22kBuy),
-            _PurchaseRate(label: '18K buy', value: rates.oldGold18kBuy),
-            _PurchaseRate(label: 'Silver buy', value: rates.oldSilverBuy),
-          ],
-        ),
-      );
-}
-
-class _PurchaseRate extends StatelessWidget {
-  const _PurchaseRate({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) =>
-      Text('$label: ₹$value', style: LiveRatesStyles.subLabelStyle);
-}
-
-class _RatesLoadingState extends StatelessWidget {
-  const _RatesLoadingState();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox(
-        height: 160,
-        child: Center(
-          child: CircularProgressIndicator(color: LiveRatesColors.goldMain),
-        ),
-      );
-}
-
-class _RatesUnavailableState extends StatelessWidget {
-  const _RatesUnavailableState({required this.rates});
-  final LiveRatesModel rates;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 160,
-        child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.price_check_outlined,
-                size: 32, color: LiveRatesColors.textSecondary),
-            const SizedBox(height: 10),
-            Text(rates.message ?? 'Rates unavailable.',
-                style: LiveRatesStyles.subLabelStyle,
-                textAlign: TextAlign.center),
-          ]),
-        ),
-      );
-}
-
-class _SourceChip extends StatelessWidget {
-  const _SourceChip({required this.source});
-  final String source;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: LiveRatesColors.upGreen.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(source,
-            style: LiveRatesStyles.timestampStyle.copyWith(
-              color: LiveRatesColors.upGreen,
-              fontStyle: FontStyle.normal,
-            )),
-      );
 }

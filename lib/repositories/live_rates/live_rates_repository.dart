@@ -41,9 +41,15 @@ class LiveRatesRepository {
       gold24k: _format(gold24),
       gold22k: _format(gold22),
       gold18k: _format(gold18),
+      gold24kPerGram: _format(gold24 / 10),
+      gold22kPerGram: _format(gold22 / 10),
+      gold18kPerGram: _format(gold18 / 10),
       silverRateKg: _format(silver999 * 100),
       silverJewellery: _format(silver925),
       silverIdols: _format(silver999),
+      silver999PerGram: _format(silver999 / 10),
+      silver925PerGram: _format(silver925 / 10),
+      silver925RateKg: _format(silver925 * 100),
       oldGold24kBuy: _format(_buyRate(gold, '24K')),
       oldGold22kBuy: _format(_buyRate(gold, '22K')),
       oldGold18kBuy: _format(_buyRate(gold, '18K')),
@@ -78,7 +84,11 @@ class LiveRatesRepository {
     return plans.isEmpty ? 0 : plans.first.buyRatePer10g;
   }
 
-  String _format(double value) => value <= 0
-      ? '--'
-      : NumberFormat.decimalPattern('en_IN').format(value.round());
+  String _format(double value) {
+    if (value <= 0) return '--';
+    final formatter = NumberFormat.decimalPattern('en_IN')
+      ..minimumFractionDigits = 0
+      ..maximumFractionDigits = 2;
+    return formatter.format(value);
+  }
 }

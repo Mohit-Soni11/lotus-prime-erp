@@ -5,6 +5,8 @@
 // =============================================================================
 
 export 'metal_rate_colors.dart';
+export 'metal_rate_detail_styles.dart';
 export 'metal_rate_icons.dart';
+export 'metal_rate_hub_styles.dart';
 export 'metal_rate_strings.dart';
 export 'metal_rate_styles.dart';

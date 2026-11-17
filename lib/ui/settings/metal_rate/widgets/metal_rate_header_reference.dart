@@ -7,6 +7,7 @@ class _HeaderCard extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onEdit;
   final VoidCallback onSave;
+  final VoidCallback onCancel;
   final VoidCallback onReset;
 
   const _HeaderCard({
@@ -16,149 +17,214 @@ class _HeaderCard extends StatelessWidget {
     required this.isSaving,
     required this.onEdit,
     required this.onSave,
+    required this.onCancel,
     required this.onReset,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration:
-          MetalRateStyles.panel(borderColor: accent.withValues(alpha: 0.32)),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 820;
-          final identity = Row(
+    final firstPurity = profile.purityPlans.isEmpty
+        ? ''
+        : _purityLabel(profile.purityPlans.first.label);
+    final summary = Wrap(spacing: 10, runSpacing: 10, children: [
+      _HeaderMetric(
+          label: 'Local Base',
+          value: _money(profile.marketBaseRatePer10g),
+          color: accent),
+      _HeaderMetric(
+        label: '$firstPurity Sell',
+        value: _money(profile.primaryShopRatePer10g),
+        color: MetalRateDetailStyles.greenInk,
+      ),
+      _HeaderMetric(
+        label: '$firstPurity Buy',
+        value: _money(profile.primaryBuyRatePer10g),
+        color: MetalRateDetailStyles.orangeInk,
+      ),
+      _HeaderMetric(
+        label: '${profile.purityPlans.length} Purities',
+        value: '',
+        color: MetalRateDetailStyles.violetInk,
+      ),
+    ]);
+    final actions = isEditing
+        ? Wrap(spacing: 8, runSpacing: 8, children: [
+            _HeaderButton(
+                label: isSaving ? 'Saving…' : 'Save Rates',
+                icon: Icons.save_rounded,
+                color: MetalRateDetailStyles.greenInk,
+                onPressed: isSaving ? null : onSave),
+            _HeaderButton(
+                label: 'Cancel',
+                icon: Icons.close_rounded,
+                color: MetalRateColors.textBody,
+                onPressed: isSaving ? null : onCancel),
+            _HeaderButton(
+                label: 'Reset',
+                icon: Icons.restart_alt_rounded,
+                color: MetalRateDetailStyles.orangeInk,
+                onPressed: isSaving ? null : onReset),
+          ])
+        : Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _HeaderLogo(profile: profile, accent: accent),
-              const SizedBox(width: 16),
-              Expanded(
-                  child: _HeaderTextBlock(profile: profile, accent: accent)),
-            ],
-          );
-          final liveControl = _LiveRateControl(
-            accent: accent,
-            isEditing: isEditing,
-            isSaving: isSaving,
-            onEdit: onEdit,
-            onSave: onSave,
-            onReset: onReset,
-          );
-
-          if (compact) {
-            return Column(
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  decoration: MetalRateDetailStyles.tint(
+                      MetalRateDetailStyles.greenInk),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.trending_up_rounded,
+                        size: 18, color: MetalRateDetailStyles.greenInk),
+                    const SizedBox(width: 8),
+                    Text('LIVE RATES',
+                        style: MetalRateDetailStyles.body.copyWith(
+                            color: MetalRateDetailStyles.greenInk,
+                            fontWeight: FontWeight.w900)),
+                  ]),
+                ),
+                _HeaderButton(
+                    label: 'Edit Rates',
+                    icon: Icons.edit_rounded,
+                    color: accent,
+                    onPressed: onEdit,
+                    filled: true),
+              ]);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: MetalRateDetailStyles.panel(),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final compact = constraints.maxWidth < 1320;
+        final identity = Row(mainAxisSize: MainAxisSize.min, children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(profile.metal.assetPath,
+                width: 88,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                    width: 88,
+                    height: 80,
+                    color: accent,
+                    child: const Icon(Icons.monetization_on_rounded,
+                        color: Colors.white))),
+          ),
+          const SizedBox(width: 17),
+          Flexible(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('${profile.metal.label} Rate Master',
+                    style: MetalRateDetailStyles.title),
+                const SizedBox(height: 3),
+                Text(
+                    'Manage local reference, counter selling and old-metal purchase rates.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: MetalRateDetailStyles.body),
+                const SizedBox(height: 7),
+                Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.schedule_rounded,
+                      size: 15, color: MetalRateColors.textBody),
+                  const SizedBox(width: 6),
+                  Flexible(
+                      child: Text(
+                    'Last updated: ${DateFormat('dd MMM yyyy, hh:mm a').format(profile.updatedAt)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MetalRateDetailStyles.body,
+                  )),
+                ]),
+              ])),
+        ]);
+        if (compact) {
+          return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 identity,
+                const SizedBox(height: 16),
+                summary,
                 const SizedBox(height: 14),
-                Align(alignment: Alignment.centerRight, child: liveControl),
-              ],
-            );
-          }
+                actions,
+              ]);
+        }
+        return Row(children: [
+          Expanded(flex: 4, child: identity),
+          const SizedBox(width: 16),
+          Container(width: 1, height: 66, color: MetalRateColors.cardBorder),
+          const SizedBox(width: 20),
+          Expanded(flex: 4, child: summary),
+          const SizedBox(width: 16),
+          Container(width: 1, height: 56, color: MetalRateColors.cardBorder),
+          const SizedBox(width: 20),
+          actions,
+        ]);
+      }),
+    );
+  }
+}
 
-          return Row(
+class _HeaderMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _HeaderMetric(
+      {required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minWidth: 108, minHeight: 60),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        decoration: MetalRateDetailStyles.tint(color),
+        child: Column(
+            mainAxisAlignment: value.isEmpty
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: identity),
-              const SizedBox(width: 16),
-              liveControl,
-            ],
-          );
-        },
-      ),
-    );
-  }
+              Text(label,
+                  style: MetalRateDetailStyles.body.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                      fontSize: value.isEmpty ? 15 : 13)),
+              if (value.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(value,
+                    style: MetalRateDetailStyles.value.copyWith(fontSize: 15)),
+              ],
+            ]),
+      );
 }
 
-class _HeaderLogo extends StatelessWidget {
-  final MetalRateProfile profile;
-  final Color accent;
-
-  const _HeaderLogo({
-    required this.profile,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 78,
-      height: 78,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: MetalRateColors.shellBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withValues(alpha: 0.32)),
-      ),
-      child: Image.asset(
-        profile.metal.assetPath,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Icon(
-          MetalRateIcons.moduleIcon,
-          color: accent,
-          size: 34,
-        ),
-      ),
-    );
-  }
-}
-
-class _HeaderTextBlock extends StatelessWidget {
-  final MetalRateProfile profile;
-  final Color accent;
-
-  const _HeaderTextBlock({
-    required this.profile,
-    required this.accent,
-  });
+class _HeaderButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onPressed;
+  final bool filled;
+  const _HeaderButton(
+      {required this.label,
+      required this.icon,
+      required this.color,
+      required this.onPressed,
+      this.filled = false});
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${profile.metal.label} Rate Master',
-          style: GoogleFonts.manrope(
-            color: MetalRateColors.textDark,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-          ),
+  Widget build(BuildContext context) => FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+        style: FilledButton.styleFrom(
+          backgroundColor: filled ? color : color.withValues(alpha: 0.1),
+          foregroundColor: filled ? Colors.white : color,
+          padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Manage counter selling rates, old-metal purchase rates, and daily rate history.',
-          style: MetalRateStyles.cardSubtitle,
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _MetricChip(
-              label: 'Local Base',
-              value: _money(profile.marketBaseRatePer10g),
-              color: accent,
-            ),
-            _MetricChip(
-              label: 'Primary Sell',
-              value: _money(profile.primaryShopRatePer10g),
-              color: MetalRateColors.success,
-            ),
-            _MetricChip(
-              label: 'Primary Buy',
-              value: _money(profile.primaryBuyRatePer10g),
-              color: MetalRateColors.warning,
-            ),
-            _MetricChip(
-              label: 'Rate Rows',
-              value: '${profile.purityPlans.length}',
-              color: MetalRateColors.violet,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+      );
 }
 
 class _MarketReferenceSection extends StatelessWidget {
@@ -166,7 +232,6 @@ class _MarketReferenceSection extends StatelessWidget {
   final Color accent;
   final MetalRateController controller;
   final bool enabled;
-
   const _MarketReferenceSection({
     required this.profile,
     required this.accent,
@@ -175,377 +240,124 @@ class _MarketReferenceSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      icon: MetalRateIcons.market,
-      title: 'Market Reference',
-      subtitle:
-          'Local physical market is the calculation base. MCX is only an optional reference.',
-      color: accent,
-      child: Column(
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 780;
-              final width = compact
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - 20) / 3;
-
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _AmountInputTile(
-                    width: width,
-                    label: _spotReferenceLabel(profile.metal),
-                    value: profile.mcxRatePer10g,
-                    color: MetalRateColors.violet,
-                    helper: 'Optional reference only',
-                    enabled: enabled,
-                    onChanged: (value) => controller.updateReferenceRate(
-                      profile.metal,
-                      value,
-                    ),
-                  ),
-                  _AmountInputTile(
-                    width: width,
-                    label: 'Local Physical Market',
-                    value: profile.physicalMarketRatePer10g,
-                    color: accent,
-                    helper: 'Primary market reference',
-                    enabled: enabled,
-                    onChanged: (value) => controller.updatePhysicalRate(
-                      profile.metal,
-                      value,
-                    ),
-                  ),
-                  _ValueTile(
-                    width: width,
-                    label: 'Local Rate Base',
-                    value: _money(profile.marketBaseRatePer10g),
-                    color: MetalRateColors.success,
-                    helper: 'Used for parity reference',
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          const _InfoLine(
-            text:
-                'Billing uses Counter Selling Rate. Local Physical Market is maintained only as a reference for parity checks.',
-            color: MetalRateColors.warning,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LiveRateControl extends StatelessWidget {
-  final Color accent;
-  final bool isEditing;
-  final bool isSaving;
-  final VoidCallback onEdit;
-  final VoidCallback onSave;
-  final VoidCallback onReset;
-
-  const _LiveRateControl({
-    required this.accent,
-    required this.isEditing,
-    required this.isSaving,
-    required this.onEdit,
-    required this.onSave,
-    required this.onReset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      child: isEditing
-          ? _EditControlPanel(
-              key: const ValueKey('editing'),
-              accent: accent,
-              isSaving: isSaving,
-              onSave: onSave,
-              onReset: onReset,
-            )
-          : _LiveRateBadge(
-              key: const ValueKey('live'),
-              accent: accent,
-              onTap: onEdit,
+  Widget build(BuildContext context) => _DetailSection(
+        icon: Icons.show_chart_rounded,
+        title: 'Market Reference',
+        subtitle:
+            'MCX is reference only. Billing uses counter selling rates. Local physical market is the primary reference.',
+        accent: accent,
+        child: LayoutBuilder(builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 960
+              ? 3
+              : constraints.maxWidth >= 650
+                  ? 2
+                  : 1;
+          final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+          final unit = _rateUnit(profile.metal);
+          return Wrap(spacing: 12, runSpacing: 12, children: [
+            _ReferenceTile(
+              width: width,
+              icon: Icons.layers_rounded,
+              label: _spotReferenceLabel(profile.metal),
+              badge: 'Reference Only',
+              value: profile.mcxRatePer10g,
+              color: MetalRateDetailStyles.violetInk,
+              unit: unit,
+              enabled: enabled,
+              onChanged: (value) =>
+                  controller.updateReferenceRate(profile.metal, value),
             ),
-    );
-  }
-}
-
-class _LiveRateBadge extends StatefulWidget {
-  final Color accent;
-  final VoidCallback onTap;
-
-  const _LiveRateBadge({
-    super.key,
-    required this.accent,
-    required this.onTap,
-  });
-
-  @override
-  State<_LiveRateBadge> createState() => _LiveRateBadgeState();
-}
-
-class _LiveRateBadgeState extends State<_LiveRateBadge>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseCtrl;
-  bool _hovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: 188,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: MetalRateColors.onlineGreen.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _hovered
-                  ? MetalRateColors.onlineGreen
-                  : MetalRateColors.onlineGreen.withValues(alpha: 0.28),
-              width: _hovered ? 1.3 : 1,
+            _ReferenceTile(
+              width: width,
+              icon: Icons.storefront_rounded,
+              label: 'Local Physical Market',
+              badge: 'Primary Reference',
+              value: profile.physicalMarketRatePer10g,
+              color: accent,
+              unit: unit,
+              enabled: enabled,
+              onChanged: (value) =>
+                  controller.updatePhysicalRate(profile.metal, value),
             ),
-            boxShadow: [
-              if (_hovered)
-                BoxShadow(
-                  color: MetalRateColors.onlineGreen.withValues(alpha: 0.18),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
-                ),
-            ],
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    _LiveWave(controller: _pulseCtrl, delay: 0),
-                    _LiveWave(controller: _pulseCtrl, delay: 0.5),
-                    const Icon(
-                      MetalRateIcons.market,
-                      color: MetalRateColors.onlineGreen,
-                      size: 15,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'LIVE RATE',
-                      style: MetalRateStyles.smallLabel.copyWith(
-                        color: MetalRateColors.onlineGreen,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Click to edit',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: MetalRateColors.textBody,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveWave extends StatelessWidget {
-  final AnimationController controller;
-  final double delay;
-
-  const _LiveWave({
-    required this.controller,
-    required this.delay,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (_, __) {
-        final value = (controller.value + delay) % 1.0;
-        return Opacity(
-          opacity: 1.0 - value,
-          child: Transform.scale(
-            scale: 1 + (value * 1.4),
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: MetalRateColors.onlineGreen.withValues(alpha: 0.45),
-                  width: 1.2,
-                ),
-              ),
+            _ReferenceTile(
+              width: width,
+              icon: Icons.track_changes_rounded,
+              label: 'Local Rate Base',
+              badge: 'Parity Calculation Base',
+              value: profile.marketBaseRatePer10g,
+              color: MetalRateDetailStyles.greenInk,
+              unit: unit,
+              enabled: false,
+              onChanged: (_) {},
             ),
-          ),
-        );
-      },
-    );
-  }
+          ]);
+        }),
+      );
 }
 
-class _EditControlPanel extends StatelessWidget {
-  final Color accent;
-  final bool isSaving;
-  final VoidCallback onSave;
-  final VoidCallback onReset;
-
-  const _EditControlPanel({
-    super.key,
-    required this.accent,
-    required this.isSaving,
-    required this.onSave,
-    required this.onReset,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 244,
-      padding: const EdgeInsets.all(12),
-      decoration: MetalRateStyles.softPanel(accent),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(MetalRateIcons.edit, color: accent, size: 16),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  'EDIT MODE',
-                  style: MetalRateStyles.smallLabel.copyWith(color: accent),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _HeaderActionButton(
-                  label: isSaving ? 'Saving' : 'Save',
-                  icon: MetalRateIcons.save,
-                  color: MetalRateColors.success,
-                  onTap: isSaving ? null : onSave,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _HeaderActionButton(
-                  label: 'Reset',
-                  icon: MetalRateIcons.reset,
-                  color: MetalRateColors.warning,
-                  onTap: isSaving ? null : onReset,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeaderActionButton extends StatelessWidget {
-  final String label;
+class _ReferenceTile extends StatelessWidget {
+  final double width;
   final IconData icon;
+  final String label;
+  final String badge;
+  final double value;
   final Color color;
-  final VoidCallback? onTap;
-
-  const _HeaderActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  final String unit;
+  final bool enabled;
+  final ValueChanged<double> onChanged;
+  const _ReferenceTile(
+      {required this.width,
+      required this.icon,
+      required this.label,
+      required this.badge,
+      required this.value,
+      required this.color,
+      required this.unit,
+      required this.enabled,
+      required this.onChanged});
 
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Opacity(
-        opacity: onTap == null ? 0.55 : 1,
-        child: Container(
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.11),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withValues(alpha: 0.25)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 15),
-              const SizedBox(width: 6),
+  Widget build(BuildContext context) => Container(
+        width: width,
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+        decoration: MetalRateDetailStyles.tint(color),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MetalRateDetailStyles.body
+                        .copyWith(color: color, fontWeight: FontWeight.w900))),
+          ]),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(
+                child: _RateField(
+                    key: ValueKey(label),
+                    value: value,
+                    accent: color,
+                    enabled: enabled,
+                    onChanged: onChanged,
+                    unit: unit)),
+            if (!enabled) ...[
+              const SizedBox(width: 8),
               Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
+                  child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.09),
+                    borderRadius: BorderRadius.circular(7)),
+                child: Text(badge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MetalRateDetailStyles.body
+                        .copyWith(color: color, fontSize: 11)),
+              )),
             ],
-          ),
-        ),
-      ),
-    );
-  }
+          ]),
+        ]),
+      );
 }

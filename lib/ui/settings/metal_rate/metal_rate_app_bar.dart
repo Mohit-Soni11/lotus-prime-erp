@@ -89,7 +89,7 @@ class _MetalRateAppBarState extends State<MetalRateAppBar>
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                widget.screenTitle,
+                widget.screenTitle.toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: MetalRateStyles.appBarTitle,
@@ -197,50 +197,51 @@ class _RadarStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 14,
-          height: 14,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _Wave(controller: controller, delay: 0),
-              _Wave(controller: controller, delay: 0.5),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: MetalRateColors.onlineGreen,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: MetalRateColors.onlineGreen,
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: MetalRateColors.onlineGreen.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: MetalRateColors.onlineGreen.withValues(alpha: 0.30),
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: MetalRateColors.onlineGreen.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: MetalRateColors.onlineGreen.withValues(alpha: 0.30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _Wave(controller: controller, delay: 0),
+                _Wave(controller: controller, delay: 0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: MetalRateColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: MetalRateColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Text(
+          const SizedBox(width: 8),
+          Text(
             MetalRateStrings.systemOnline,
             style: MetalRateStyles.systemOnline,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

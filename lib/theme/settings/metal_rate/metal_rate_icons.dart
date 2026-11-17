@@ -10,7 +10,7 @@ class MetalRateIcons {
   MetalRateIcons._();
 
   static const IconData backArrow = Icons.arrow_back_rounded;
-  static const IconData moduleIcon = Icons.auto_graph_rounded;
+  static const IconData moduleIcon = Icons.currency_exchange_rounded;
   static const IconData market = Icons.show_chart_rounded;
   static const IconData benchmark = Icons.workspace_premium_rounded;
   static const IconData engine = Icons.psychology_alt_rounded;
