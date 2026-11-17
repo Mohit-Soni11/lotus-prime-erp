@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
@@ -119,7 +120,7 @@ void main() {
         .firstWhere((rate) => rate.state != LiveRateState.loading);
 
     expect(result.state, LiveRateState.missing);
-    expect(result.gold24k, '--');
+    expect(result.goldRates, isEmpty);
     expect(result.message, isNotEmpty);
   });
 
@@ -141,11 +142,97 @@ void main() {
         .firstWhere((rate) => rate.state != LiveRateState.loading);
 
     expect(result.state, LiveRateState.available);
-    expect(result.gold24k, '75,000');
-    expect(result.gold24kPerGram, '7,500');
-    expect(result.silver999PerGram, '950');
-    expect(result.silverRateKg, '9,50,000');
-    expect(result.silver925RateKg, '8,78,750');
+    expect(result.goldRates, hasLength(5));
+    expect(result.silverRates, hasLength(4));
+    expect(result.goldRates.first.perBaseUnit, '75,000');
+    expect(result.goldRates.first.perGram, '7,500');
+    expect(result.silverRates.first.perGram, '950');
+    expect(result.silverRates.first.perBaseUnit, '9,50,000');
+    expect(result.silverRates[1].perBaseUnit, '8,78,750');
+  });
+
+  test('dashboard includes an extra purity even when primary rates are unset',
+      () async {
+    final gold = await repository.loadProfile(MetalRateMetal.gold);
+    await repository.saveProfile(gold.copyWith(
+      purityPlans: [
+        for (final plan in gold.purityPlans)
+          plan.label == '14K'
+              ? plan.copyWith(manualDisplayRatePer10g: 89000)
+              : plan,
+      ],
+    ));
+
+    final result = await LiveRatesRepository(repository: repository)
+        .watchRates()
+        .firstWhere((rate) => rate.state != LiveRateState.loading);
+
+    expect(result.state, LiveRateState.available);
+    expect(result.goldRates[3].purity, '14K');
+    expect(result.goldRates[3].perBaseUnit, '89,000');
+    expect(result.goldRates.first.perBaseUnit, '--');
+  });
+
+  test('dashboard follows saved counter selling rates without a restart',
+      () async {
+    final gold = await repository.loadProfile(MetalRateMetal.gold);
+    final silver = await repository.loadProfile(MetalRateMetal.silver);
+    await repository.saveProfile(gold.copyWith(
+      physicalMarketRatePer10g: 139000,
+      purityPlans: [
+        for (final plan in gold.purityPlans)
+          plan.label == '22K'
+              ? plan.copyWith(manualDisplayRatePer10g: 132050)
+              : plan,
+      ],
+    ));
+    await repository.saveProfile(silver.copyWith(
+      physicalMarketRatePer10g: 175000,
+      purityPlans: [
+        for (final plan in silver.purityPlans)
+          plan.label == '925'
+              ? plan.copyWith(manualDisplayRatePer10g: 165000)
+              : plan,
+      ],
+    ));
+
+    final stream = StreamIterator(
+      LiveRatesRepository(repository: repository).watchRates(),
+    );
+    addTearDown(stream.cancel);
+    expect(await stream.moveNext(), isTrue);
+    expect(stream.current.state, LiveRateState.loading);
+    expect(await stream.moveNext(), isTrue);
+    expect(stream.current.goldRates[1].perBaseUnit, '1,32,050');
+    expect(stream.current.silverRates[1].perBaseUnit, '1,65,000');
+
+    final latestGold = await repository.loadProfile(MetalRateMetal.gold);
+    await repository.saveProfile(latestGold.copyWith(
+      purityPlans: [
+        for (final plan in latestGold.purityPlans)
+          plan.label == '22K'
+              ? plan.copyWith(manualDisplayRatePer10g: 134000)
+              : plan,
+      ],
+    ));
+
+    expect(await stream.moveNext().timeout(const Duration(seconds: 5)), isTrue);
+    expect(stream.current.goldRates[1].perBaseUnit, '1,34,000');
+    expect(stream.current.silverRates[1].perBaseUnit, '1,65,000');
+
+    final latestSilver = await repository.loadProfile(MetalRateMetal.silver);
+    await repository.saveProfile(latestSilver.copyWith(
+      purityPlans: [
+        for (final plan in latestSilver.purityPlans)
+          plan.label == '925'
+              ? plan.copyWith(manualDisplayRatePer10g: 168000)
+              : plan,
+      ],
+    ));
+
+    expect(await stream.moveNext().timeout(const Duration(seconds: 5)), isTrue);
+    expect(stream.current.goldRates[1].perBaseUnit, '1,34,000');
+    expect(stream.current.silverRates[1].perBaseUnit, '1,68,000');
   });
 
   test('one saved old-metal rate applies to every gold purity', () async {
@@ -161,6 +248,10 @@ void main() {
       ],
     );
     await repository.saveProfile(savedProfile);
+    final silver = await repository.loadProfile(MetalRateMetal.silver);
+    await repository.saveProfile(silver.copyWith(
+      oldMetalPurchaseRatePer10g: 120000,
+    ));
 
     final reloaded = await repository.loadProfile(MetalRateMetal.gold);
     expect(reloaded.marketParityRateFor(reloaded.purityPlans.first), 139000);
@@ -177,9 +268,8 @@ void main() {
     final dashboard = await LiveRatesRepository(repository: repository)
         .watchRates()
         .firstWhere((rates) => rates.state != LiveRateState.loading);
-    expect(dashboard.oldGold24kBuy, '1,25,000');
-    expect(dashboard.oldGold22kBuy, '1,25,000');
-    expect(dashboard.oldGold18kBuy, '1,25,000');
+    expect(dashboard.oldGoldBuy, '1,25,000');
+    expect(dashboard.oldSilverBuy, '1,20,000');
   });
 
   test('partial ledger restores missing metals without changing saved rates',
@@ -215,7 +305,8 @@ void main() {
         );
 
     await expectLater(repository.loadProfiles(), throwsFormatException);
-    expect(await database.select(database.metalRateProfiles).get(), hasLength(1));
+    expect(
+        await database.select(database.metalRateProfiles).get(), hasLength(1));
   });
 
   test('mismatched metal identity cannot overwrite another profile', () async {

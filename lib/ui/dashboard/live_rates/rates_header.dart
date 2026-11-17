@@ -74,7 +74,7 @@ class _RatesHeaderState extends State<RatesHeader>
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.calendar_today_outlined,
-                color: LiveRatesColors.muted, size: 14),
+                color: LiveRatesColors.muted, size: 16),
             const SizedBox(width: 6),
             Text(date, style: LiveRatesStyles.date),
           ],
@@ -90,11 +90,7 @@ class _RatesHeaderState extends State<RatesHeader>
               SizedBox(width: 6),
               Text(
                 LiveRatesStrings.live,
-                style: TextStyle(
-                  color: LiveRatesColors.green,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: LiveRatesStyles.live,
               ),
             ],
           ),

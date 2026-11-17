@@ -66,10 +66,11 @@ void main() {
     final dashboard = await LiveRatesRepository(repository: repository)
         .watchRates()
         .firstWhere((rates) => rates.state != LiveRateState.loading);
-    expect(dashboard.silverRateKg, '1,75,000');
-    expect(dashboard.silver999PerGram, '175');
-    expect(dashboard.silver925RateKg, '1,65,000');
-    expect(dashboard.silverJewellery, '1,10,000');
+    expect(dashboard.silverRates, hasLength(4));
+    expect(dashboard.silverRates.first.perBaseUnit, '1,75,000');
+    expect(dashboard.silverRates.first.perGram, '175');
+    expect(dashboard.silverRates[1].perBaseUnit, '1,65,000');
+    expect(dashboard.silverRates.last.perBaseUnit, '1,10,000');
     expect(dashboard.oldSilverBuy, '12,000');
   });
 

@@ -90,49 +90,31 @@ class _RatesContent extends StatelessWidget {
   final bool showPurchaseRates;
   final VoidCallback onTogglePurchaseRates;
 
+  List<LiveMetalRate> get _silverDisplayRows {
+    final firstRows = rates.silverRates.take(2);
+    final remaining = rates.silverRates.skip(2);
+    return [
+      ...firstRows,
+      ...remaining.where((rate) => rate.description != null),
+      ...remaining.where((rate) => rate.description == null),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final goldRows = [
-      MetalRateRow(
-        purity: '24K',
-        perGram: rates.gold24kPerGram,
-        perBaseUnit: rates.gold24k,
-      ),
-      MetalRateRow(
-        purity: '22K',
-        perGram: rates.gold22kPerGram,
-        perBaseUnit: rates.gold22k,
-      ),
-      MetalRateRow(
-        purity: '18K',
-        perGram: rates.gold18kPerGram,
-        perBaseUnit: rates.gold18k,
-      ),
-    ];
-    final silverRows = [
-      MetalRateRow(
-        purity: '999',
-        perGram: rates.silver999PerGram,
-        perBaseUnit: rates.silverRateKg,
-      ),
-      MetalRateRow(
-        purity: '925',
-        perGram: rates.silver925PerGram,
-        perBaseUnit: rates.silver925RateKg,
-      ),
-    ];
-
     return Column(
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
             final gold = MetalRatePanel(
               metal: MetalRateMetal.gold,
-              rows: goldRows,
+              rows: rates.goldRates,
+              collapsedRowCount: 3,
             );
             final silver = MetalRatePanel(
               metal: MetalRateMetal.silver,
-              rows: silverRows,
+              rows: _silverDisplayRows,
+              collapsedRowCount: 3,
             );
             if (constraints.maxWidth < 720) {
               return Column(
@@ -149,7 +131,7 @@ class _RatesContent extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerRight,
           child: TextButton.icon(
@@ -157,7 +139,14 @@ class _RatesContent extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: LiveRatesColors.silver,
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 7),
+              backgroundColor: LiveRatesColors.silver.withValues(alpha: 0.08),
+              side: BorderSide(
+                color: LiveRatesColors.silver.withValues(alpha: 0.28),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             ),
             iconAlignment: IconAlignment.end,
             icon: Icon(
@@ -170,14 +159,20 @@ class _RatesContent extends StatelessWidget {
               showPurchaseRates
                   ? LiveRatesStrings.hidePurchase
                   : LiveRatesStrings.viewPurchase,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+              style: LiveRatesStyles.action,
             ),
           ),
         ),
-        if (showPurchaseRates) ...[
-          const SizedBox(height: 3),
-          PurchaseRatesPanel(rates: rates),
-        ],
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          child: showPurchaseRates
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: PurchaseRatesPanel(rates: rates),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
       ],
     );
   }

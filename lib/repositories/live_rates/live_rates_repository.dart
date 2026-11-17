@@ -24,15 +24,10 @@ class LiveRatesRepository {
   LiveRatesModel _toDashboardModel(List<MetalRateProfile> profiles) {
     final gold = _find(profiles, MetalRateMetal.gold);
     final silver = _find(profiles, MetalRateMetal.silver);
-    final gold24 = _sellingRate(gold, '24K');
-    final gold22 = _sellingRate(gold, '22K');
-    final gold18 = _sellingRate(gold, '18K');
-    final silver999 = _sellingRate(silver, '999');
-    final silver925 = _sellingRate(silver, '925');
-    final silver700 = _sellingRate(silver, '700');
-    final silverUnit = MetalRatePriceUnit.forMetal(MetalRateMetal.silver);
-    if ([gold24, gold22, gold18, silver999, silver925, silver700]
-        .every((rate) => rate <= 0)) {
+    final goldRates = _counterSellingRows(gold);
+    final silverRates = _counterSellingRows(silver);
+    if ([...goldRates, ...silverRates]
+        .every((rate) => rate.perBaseUnit == '--')) {
       return LiveRatesModel.missing();
     }
 
@@ -41,27 +36,31 @@ class LiveRatesRepository {
         : silver.updatedAt;
     return LiveRatesModel(
       state: LiveRateState.available,
-      gold24k: _format(gold24),
-      gold22k: _format(gold22),
-      gold18k: _format(gold18),
-      gold24kPerGram: _format(gold24 / 10),
-      gold22kPerGram: _format(gold22 / 10),
-      gold18kPerGram: _format(gold18 / 10),
-      silverRateKg: _format(silverUnit.toMarket(silver999)),
-      silverJewellery: _format(silver700),
-      silverIdols: _format(silver999),
-      silver999PerGram: _format(silverUnit.toBillingRate(silver999)),
-      silver925PerGram: _format(silverUnit.toBillingRate(silver925)),
-      silver925RateKg: _format(silverUnit.toMarket(silver925)),
-      oldGold24kBuy: _format(gold.primaryBuyRatePer10g),
-      oldGold22kBuy: _format(gold.primaryBuyRatePer10g),
-      oldGold18kBuy: _format(gold.primaryBuyRatePer10g),
-      oldSilverBuy: _format(silverUnit.toMarket(silver.primaryBuyRatePer10g)),
+      goldRates: goldRates,
+      silverRates: silverRates,
+      oldGoldBuy: _format(gold.primaryBuyRatePer10g),
+      oldSilverBuy: _format(silver.primaryBuyRatePer10g),
       rateDate: updatedAt,
       source: gold.marketSource == silver.marketSource
           ? gold.marketSource
           : 'Metal Rate Master',
     );
+  }
+
+  List<LiveMetalRate> _counterSellingRows(MetalRateProfile profile) {
+    final unit = MetalRatePriceUnit.forMetal(profile.metal);
+    return profile.purityPlans.map((plan) {
+      final marketRate = profile.effectiveSellingRateFor(plan);
+      return LiveMetalRate(
+        purity: plan.label,
+        perGram: _format(unit.toBillingRate(marketRate)),
+        perBaseUnit: _format(unit.toMarket(marketRate)),
+        description:
+            profile.metal == MetalRateMetal.silver && plan.label == '700'
+                ? 'Local Jewellery'
+                : null,
+      );
+    }).toList(growable: false);
   }
 
   MetalRateProfile _find(
@@ -72,13 +71,6 @@ class LiveRatesRepository {
         (profile) => profile.metal == metal,
         orElse: () => MetalRateProfile.defaultFor(metal),
       );
-
-  double _sellingRate(MetalRateProfile profile, String label) {
-    final plans = profile.purityPlans.where((plan) => plan.label == label);
-    if (plans.isEmpty) return 0;
-    final plan = plans.first;
-    return profile.effectiveSellingRateFor(plan);
-  }
 
   String _format(double value) {
     if (value <= 0) return '--';

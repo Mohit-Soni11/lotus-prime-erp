@@ -9,7 +9,7 @@ class LiveRatesColors {
   static const gold = Color(0xFFE4B94D);
   static const silver = Color(0xFFC9D9EA);
   static const text = Color(0xFFF5F7FB);
-  static const muted = Color(0xFFAFBBCB);
+  static const muted = Color(0xFFD4DEEA);
   static const green = Color(0xFF31DE94);
   static const divider = Color(0x30FFFFFF);
 }
@@ -69,32 +69,52 @@ class LiveRatesStyles {
 
   static const title = TextStyle(
     color: LiveRatesColors.text,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: FontWeight.w800,
   );
   static const date = TextStyle(
     color: LiveRatesColors.muted,
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
   );
   static const panelTitle = TextStyle(
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: FontWeight.w800,
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   );
   static const column = TextStyle(
     color: LiveRatesColors.muted,
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
   );
   static const purity = TextStyle(
     color: LiveRatesColors.text,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: FontWeight.w800,
   );
   static const rate = TextStyle(
     color: LiveRatesColors.text,
+    fontSize: 14,
+    fontWeight: FontWeight.w800,
+  );
+  static const purchaseLabel = TextStyle(
+    color: LiveRatesColors.text,
     fontSize: 13,
+    fontWeight: FontWeight.w800,
+  );
+  static const purchaseMeta = TextStyle(
+    color: LiveRatesColors.muted,
+    fontSize: 12,
     fontWeight: FontWeight.w700,
+  );
+  static const action = TextStyle(
+    color: LiveRatesColors.silver,
+    fontSize: 13,
+    fontWeight: FontWeight.w800,
+  );
+  static const live = TextStyle(
+    color: LiveRatesColors.green,
+    fontSize: 13,
+    fontWeight: FontWeight.w800,
   );
 }
