@@ -21,7 +21,7 @@ void main() {
     oldGold24kBuy: '1,48,000',
     oldGold22kBuy: '1,34,000',
     oldGold18kBuy: '1,09,000',
-    oldSilverBuy: '2,550',
+    oldSilverBuy: '2,55,000',
     rateDate: DateTime(2026, 11, 15),
     source: 'Manual Rate Master',
   );
@@ -56,6 +56,7 @@ void main() {
     await tester.pump();
     expect(find.text('Hide Purchase Rates'), findsOneWidget);
     expect(find.textContaining('₹1,48,000/10g'), findsOneWidget);
+    expect(find.textContaining('₹2,55,000/kg'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     tester.view.physicalSize = const Size(600, 700);

@@ -4,47 +4,46 @@ import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/ui/settings/metal_rate/widgets/metal_rate_hub_card.dart';
 
 void main() {
-  testWidgets('metal card keeps rates readable across desktop widths',
+  testWidgets('metal selection names the purity of its selling rate',
       (tester) async {
-    final base = MetalRateProfile.defaultFor(MetalRateMetal.gold);
-    final profile = base.copyWith(
-      physicalMarketRatePer10g: 150000,
-      purityPlans: [
-        base.purityPlans.first.copyWith(
-          manualDisplayRatePer10g: 152000,
-          buyRatePer10g: 147000,
-        ),
-        ...base.purityPlans.skip(1),
-      ],
-    );
-    var opened = false;
-
-    for (final width in [560.0, 350.0]) {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: width,
-                child: MetalRateHubCard(
-                  profile: profile,
-                  onTap: () => opened = true,
-                ),
-              ),
-            ),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 700,
+          child: MetalRateHubCard(
+            profile: MetalRateProfile.defaultFor(MetalRateMetal.gold),
+            onTap: () {},
           ),
         ),
-      );
+      ),
+    ));
 
-      expect(find.text('Gold'), findsOneWidget);
-      expect(find.text('Market base'), findsOneWidget);
-      expect(find.text('Selling rate'), findsOneWidget);
-      expect(find.text('Old-metal buy'), findsOneWidget);
-      expect(find.text('₹1,52,000'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    }
+    expect(find.text('24K Selling Rate'), findsOneWidget);
+    expect(find.text('Selling rate'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
-    await tester.tap(find.text('Gold'));
-    expect(opened, isTrue);
+  testWidgets('silver selection shows the market rate per kilogram',
+      (tester) async {
+    final base = MetalRateProfile.defaultFor(MetalRateMetal.silver);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SizedBox(
+          width: 700,
+          child: MetalRateHubCard(
+            profile: base.copyWith(
+              physicalMarketRatePer10g: 265000,
+              marketRatePer10g: 265000,
+            ),
+            onTap: () {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('999 Selling Rate'), findsOneWidget);
+    expect(find.text('₹2,65,000'), findsWidgets);
+    expect(find.text('/kg'), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
   });
 }

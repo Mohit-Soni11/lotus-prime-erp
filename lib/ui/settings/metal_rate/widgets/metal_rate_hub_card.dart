@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../models/setting/metal_rate/metal_rate_model.dart';
+import '../../../../models/setting/metal_rate/metal_rate_price_unit.dart';
 import '../../../../theme/settings/metal_rate/metal_rate_theme.dart';
 
 class MetalRateHubCard extends StatefulWidget {
@@ -26,7 +27,11 @@ class _MetalRateHubCardState extends State<MetalRateHubCard> {
     final profile = widget.profile;
     final accent = _accentFor(profile.metal);
     final source = profile.marketSource.trim();
-    final unit = profile.metal == MetalRateMetal.diamond ? '/ct' : '/10g';
+    final priceUnit = MetalRatePriceUnit.forMetal(profile.metal);
+    final unit = '/${priceUnit.label}';
+    final primaryPurity = profile.purityPlans.isEmpty
+        ? profile.metal.label
+        : profile.purityPlans.first.label.toUpperCase();
 
     return Semantics(
       button: true,
@@ -79,19 +84,23 @@ class _MetalRateHubCardState extends State<MetalRateHubCard> {
                     final metrics = [
                       _RateMetric(
                         label: 'Market base',
-                        amount: profile.marketBaseRatePer10g,
+                        amount:
+                            priceUnit.toMarket(profile.marketBaseRatePer10g),
                         unit: unit,
                         accent: accent,
                       ),
                       _RateMetric(
-                        label: 'Selling rate',
-                        amount: profile.primaryShopRatePer10g,
+                        label: '$primaryPurity Selling Rate',
+                        amount:
+                            priceUnit.toMarket(profile.primaryShopRatePer10g),
                         unit: unit,
-                        accent: accent,
+                        accent: MetalRateColors.success,
+                        emphasized: true,
                       ),
                       _RateMetric(
                         label: 'Old-metal buy',
-                        amount: profile.primaryBuyRatePer10g,
+                        amount:
+                            priceUnit.toMarket(profile.primaryBuyRatePer10g),
                         unit: unit,
                         accent: accent,
                       ),
@@ -152,12 +161,14 @@ class _RateMetric extends StatelessWidget {
     required this.amount,
     required this.unit,
     required this.accent,
+    this.emphasized = false,
   });
 
   final String label;
   final double amount;
   final String unit;
   final Color accent;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
@@ -172,13 +183,21 @@ class _RateMetric extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: MetalRateHubStyles.metricLabel),
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: MetalRateHubStyles.metricLabel.copyWith(
+                color: MetalRateColors.textDark,
+                fontWeight: FontWeight.w800,
+              )),
           const SizedBox(height: 4),
           Text(
             amount > 0 ? '₹${formatter.format(amount)}' : 'Not set',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: MetalRateHubStyles.metricValue,
+            style: MetalRateHubStyles.metricValue.copyWith(
+              fontSize: emphasized ? 18 : 16,
+            ),
           ),
           Text(
             unit,

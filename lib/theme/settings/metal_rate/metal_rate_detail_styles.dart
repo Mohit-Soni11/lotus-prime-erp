@@ -8,6 +8,7 @@ class MetalRateDetailStyles {
 
   static const canvas = Color(0xFFF8F5F1);
   static const goldInk = Color(0xFF9A6700);
+  static const silverInk = Color(0xFF425466);
   static const greenInk = Color(0xFF087A30);
   static const orangeInk = Color(0xFFB9510A);
   static const violetInk = Color(0xFF5726A5);

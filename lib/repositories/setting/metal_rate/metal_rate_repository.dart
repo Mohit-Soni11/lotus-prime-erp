@@ -12,7 +12,6 @@ class MetalRateRepository {
   MetalRateRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   static const _legacyProfilesKey = 'metal_rate_profiles_v2';
-  static const _historyLimit = 25;
   final AppDatabase _db;
 
   Future<List<MetalRateProfile>> loadProfiles() async {
@@ -90,13 +89,28 @@ class MetalRateRepository {
         changeReason: 'Restored default profile',
       );
 
-  Future<List<MetalRateHistoryEntry>> loadHistory(MetalRateMetal metal) async {
+  Future<List<MetalRateHistoryEntry>> loadHistory(
+    MetalRateMetal metal, {
+    DateTime? from,
+  }) async {
     await _ensureLedgerInitialised();
     final rows = await (_db.select(_db.metalRateRevisions)
-          ..where((table) => table.metalKey.equals(metal.key))
-          ..orderBy([(table) => OrderingTerm.desc(table.revision)])
-          ..limit(_historyLimit))
+          ..where((table) => from == null
+              ? table.metalKey.equals(metal.key)
+              : table.metalKey.equals(metal.key) &
+                  table.effectiveAt.isBiggerOrEqualValue(from))
+          ..orderBy([(table) => OrderingTerm.desc(table.revision)]))
         .get();
+    if (from != null) {
+      final baseline = await (_db.select(_db.metalRateRevisions)
+            ..where((table) =>
+                table.metalKey.equals(metal.key) &
+                table.effectiveAt.isSmallerThanValue(from))
+            ..orderBy([(table) => OrderingTerm.desc(table.revision)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (baseline != null) rows.add(baseline);
+    }
     return rows
         .map((row) => MetalRateHistoryEntry(
               profile: _profileFromPayload(row.profileJson, metal),
@@ -216,10 +230,10 @@ class MetalRateRepository {
       );
     }
 
-    final silver999 = _parseRate(rate.silverIdols) > 0
-        ? _parseRate(rate.silverIdols)
-        : _parseRate(rate.silverRateKg) / 100;
-    final silver925 = _parseRate(rate.silverJewellery);
+    final silver999 = _parseRate(rate.silverRateKg) > 0
+        ? _parseRate(rate.silverRateKg)
+        : _parseRate(rate.silverIdols) * 100;
+    final silver925 = _parseRate(rate.silverJewellery) * 100;
     if (silver999 <= 0 && silver925 <= 0) return null;
     return base.copyWith(
       marketSource: rate.source,
@@ -231,7 +245,7 @@ class MetalRateRepository {
             (plan) => switch (plan.label) {
               '999' => plan.copyWith(
                   manualDisplayRatePer10g: silver999,
-                  buyRatePer10g: _parseRate(rate.oldSilverBuy),
+                  buyRatePer10g: _parseRate(rate.oldSilverBuy) * 100,
                 ),
               '925' => plan.copyWith(manualDisplayRatePer10g: silver925),
               _ => plan,
@@ -268,6 +282,8 @@ class MetalRateRepository {
       profile.mcxRatePer10g,
       profile.physicalMarketRatePer10g,
       profile.marketRatePer10g,
+      if (profile.oldMetalPurchaseRatePer10g != null)
+        profile.oldMetalPurchaseRatePer10g!,
       profile.gstPercent,
       profile.importDutyPercent,
       profile.logisticsPercent,

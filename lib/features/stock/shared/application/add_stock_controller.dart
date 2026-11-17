@@ -310,7 +310,7 @@ class AddStockController extends ChangeNotifier {
         final key = AddStockPurityUtils.normaliseRateKey(plan.label);
         final rate = plan.manualDisplayRatePer10g > 0
             ? plan.manualDisplayRatePer10g
-            : masterProfile.marketBaseRatePer10g * plan.purityFactor;
+            : masterProfile.marketParityRateFor(plan);
         if (key.isNotEmpty && rate > 0) {
           masterRates[key] = rate;
         }

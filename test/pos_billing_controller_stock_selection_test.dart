@@ -61,6 +61,37 @@ void main() {
     controller.dispose();
   });
 
+  test('70 percent silver stock selects the 700 jewellery rate grade', () {
+    final controller = PosBillingController();
+    final item = SaleItemModel(metal: MetalType.silver);
+    controller.saleItems.add(item);
+
+    controller.applyStockSuggestionToRow(
+      rowIndex: 0,
+      suggestion: const PosStockLookupModel(
+        stockItemId: 2,
+        stockUnitId: 20,
+        sku: 'PUR-SILVER-700-U001',
+        itemName: 'Silver Payal',
+        description: '',
+        huid: '',
+        purity: '70',
+        metal: MetalType.silver,
+        categoryLabel: 'Payal',
+        grossWeight: 10,
+        lessWeight: 0,
+        netWeight: 10,
+        quantity: 1,
+        availableQuantity: 1,
+        quantityUnitLabel: 'pair',
+        status: 'Available',
+      ),
+    );
+
+    expect(item.purityCtrl.text, '700');
+    controller.dispose();
+  });
+
   test('stock selection fills sale row with gross, less and net snapshot', () {
     final controller = PosBillingController();
     final item = SaleItemModel(metal: MetalType.silver);

@@ -311,6 +311,7 @@ class MetalRateProfile {
   final double mcxRatePer10g;
   final double physicalMarketRatePer10g;
   final double marketRatePer10g;
+  final double? oldMetalPurchaseRatePer10g;
   final double gstPercent;
   final double importDutyPercent;
   final double logisticsPercent;
@@ -329,6 +330,7 @@ class MetalRateProfile {
     required this.mcxRatePer10g,
     required this.physicalMarketRatePer10g,
     required this.marketRatePer10g,
+    this.oldMetalPurchaseRatePer10g,
     required this.gstPercent,
     required this.importDutyPercent,
     required this.logisticsPercent,
@@ -350,6 +352,22 @@ class MetalRateProfile {
       return marketRatePer10g;
     }
     return 0.0;
+  }
+
+  bool isMarketBasePlan(MetalRatePurityPlan plan) {
+    final primaryLabel = metal == MetalRateMetal.gold
+        ? '24K'
+        : purityPlans.isEmpty
+            ? ''
+            : purityPlans.first.label.toUpperCase().replaceAll('KT', 'K');
+    final planLabel = plan.label.toUpperCase().replaceAll('KT', 'K');
+    return planLabel == primaryLabel;
+  }
+
+  double marketParityRateFor(MetalRatePurityPlan plan) {
+    final base = marketBaseRatePer10g;
+    if (base <= 0) return 0;
+    return isMarketBasePlan(plan) ? base : base * plan.purityFactor;
   }
 
   double brandAverageRateFor(MetalRatePurityPlan plan) {
@@ -402,10 +420,13 @@ class MetalRateProfile {
     final first = purityPlans.first;
     return first.manualDisplayRatePer10g > 0
         ? first.manualDisplayRatePer10g
-        : marketBaseRatePer10g * first.purityFactor;
+        : marketParityRateFor(first);
   }
 
   double get primaryBuyRatePer10g {
+    if (oldMetalPurchaseRatePer10g != null) {
+      return oldMetalPurchaseRatePer10g!;
+    }
     if (purityPlans.isEmpty) {
       return 0.0;
     }
@@ -436,13 +457,14 @@ class MetalRateProfile {
       holdingCostPercent;
 
   MetalRateRecommendation recommendationFor(MetalRatePurityPlan plan) {
+    final referenceFactor = isMarketBasePlan(plan) ? 1.0 : plan.purityFactor;
     final mcx = (mcxRatePer10g > 0 ? mcxRatePer10g : marketBaseRatePer10g) *
-        plan.purityFactor;
+        referenceFactor;
     final physical = (physicalMarketRatePer10g > 0
             ? physicalMarketRatePer10g
             : marketBaseRatePer10g) *
-        plan.purityFactor;
-    final market = marketBaseRatePer10g * plan.purityFactor;
+        referenceFactor;
+    final market = marketParityRateFor(plan);
     final brandAverage = brandAverageRateFor(plan);
     final brand = brandAverage <= 0 ? market : brandAverage;
     final brandMaking = averageBrandMakingFor(plan);
@@ -521,6 +543,7 @@ class MetalRateProfile {
     double? mcxRatePer10g,
     double? physicalMarketRatePer10g,
     double? marketRatePer10g,
+    double? oldMetalPurchaseRatePer10g,
     double? gstPercent,
     double? importDutyPercent,
     double? logisticsPercent,
@@ -540,6 +563,8 @@ class MetalRateProfile {
       physicalMarketRatePer10g:
           physicalMarketRatePer10g ?? this.physicalMarketRatePer10g,
       marketRatePer10g: marketRatePer10g ?? this.marketRatePer10g,
+      oldMetalPurchaseRatePer10g:
+          oldMetalPurchaseRatePer10g ?? this.oldMetalPurchaseRatePer10g,
       gstPercent: gstPercent ?? this.gstPercent,
       importDutyPercent: importDutyPercent ?? this.importDutyPercent,
       logisticsPercent: logisticsPercent ?? this.logisticsPercent,
@@ -561,6 +586,7 @@ class MetalRateProfile {
         'mcxRatePer10g': mcxRatePer10g,
         'physicalMarketRatePer10g': physicalMarketRatePer10g,
         'marketRatePer10g': marketRatePer10g,
+        'oldMetalPurchaseRatePer10g': oldMetalPurchaseRatePer10g,
         'gstPercent': gstPercent,
         'importDutyPercent': importDutyPercent,
         'logisticsPercent': logisticsPercent,
@@ -576,8 +602,9 @@ class MetalRateProfile {
       };
 
   factory MetalRateProfile.fromJson(Map<String, dynamic> json) {
+    final metal = MetalRateMetalX.fromKey(json['metal'] as String? ?? 'gold');
     return MetalRateProfile(
-      metal: MetalRateMetalX.fromKey(json['metal'] as String? ?? 'gold'),
+      metal: metal,
       marketSource: json['marketSource'] as String? ?? 'Manual',
       mcxRatePer10g: _toDouble(
         json['mcxRatePer10g'],
@@ -588,6 +615,9 @@ class MetalRateProfile {
         fallback: _toDouble(json['marketRatePer10g']),
       ),
       marketRatePer10g: _toDouble(json['marketRatePer10g']),
+      oldMetalPurchaseRatePer10g: json['oldMetalPurchaseRatePer10g'] == null
+          ? null
+          : _toDouble(json['oldMetalPurchaseRatePer10g']),
       gstPercent: _toDouble(json['gstPercent']),
       importDutyPercent: _toDouble(json['importDutyPercent']),
       logisticsPercent: _toDouble(json['logisticsPercent']),
@@ -605,11 +635,14 @@ class MetalRateProfile {
           .map((item) =>
               MetalRateBrandBenchmark.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
-      purityPlans: ((json['purityPlans'] as List?) ?? const [])
-          .whereType<Map>()
-          .map((item) =>
-              MetalRatePurityPlan.fromJson(Map<String, dynamic>.from(item)))
-          .toList(),
+      purityPlans: _withSilverJewelleryPlan(
+        metal,
+        ((json['purityPlans'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((item) =>
+                MetalRatePurityPlan.fromJson(Map<String, dynamic>.from(item)))
+            .toList(),
+      ),
     );
   }
 
@@ -719,6 +752,13 @@ class MetalRateProfile {
               targetMarginPercent: 0,
               makingChargePerGram: 0,
             ),
+            MetalRatePurityPlan(
+              label: '700',
+              purityPercent: 70.0,
+              supplierPremiumPercent: 0,
+              targetMarginPercent: 0,
+              makingChargePerGram: 0,
+            ),
           ],
         );
       case MetalRateMetal.diamond:
@@ -813,6 +853,31 @@ class MetalRateProfile {
       purityPlans: purities,
     );
   }
+}
+
+List<MetalRatePurityPlan> _withSilverJewelleryPlan(
+  MetalRateMetal metal,
+  List<MetalRatePurityPlan> plans,
+) {
+  if (metal != MetalRateMetal.silver) {
+    return plans;
+  }
+  final retained = plans
+      .where((plan) =>
+          plan.label.trim() != '750' || plan.manualDisplayRatePer10g > 0)
+      .toList();
+  if (retained.any((plan) => plan.label.trim() == '700')) {
+    return retained;
+  }
+  return [
+    ...retained,
+    const MetalRatePurityPlan(
+      label: '700',
+      purityPercent: 70,
+      supplierPremiumPercent: 0,
+      targetMarginPercent: 0,
+    ),
+  ];
 }
 
 double _roundRetail(double value) {

@@ -27,7 +27,7 @@ class _PurityData {
       case MetalType.gold:
         return ['24KT', '22KT', '18KT', '14KT', '9KT'];
       case MetalType.silver:
-        return ['999', '925', '800'];
+        return ['999', '925', '800', '700'];
       case MetalType.platinum:
         return ['950PT', '900PT', '850PT'];
       case MetalType.diamond:
@@ -385,7 +385,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     return SizedBox(
       height: 38,
       child: Tooltip(
-        message: '${widget.item.unitDisplayName} · Invoice: ${widget.item.invoiceUnitLabel}',
+        message:
+            '${widget.item.unitDisplayName} · Invoice: ${widget.item.invoiceUnitLabel}',
         waitDuration: const Duration(milliseconds: 400),
         child: TextFormField(
           controller: widget.item.pcsCtrl,

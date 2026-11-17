@@ -6,6 +6,7 @@
 // =============================================================================
 
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
+import '../../../models/setting/metal_rate/metal_rate_price_unit.dart';
 import 'metal_rate_repository.dart';
 
 enum MetalRateQuoteSide { selling, buying }
@@ -38,6 +39,9 @@ class MetalRateQuote {
   });
 
   bool get hasRate => billingRate > 0;
+
+  double get marketRate =>
+      MetalRatePriceUnit.forMetal(metal).toMarket(ratePer10g);
 
   String get rateSourceLabel =>
       '${source.trim().isEmpty ? 'Metal Rate Master' : source} - $purityLabel';
@@ -108,7 +112,7 @@ class MetalRateQuoteService {
 
     final ratePer10g = side == MetalRateQuoteSide.selling
         ? _sellingRatePer10g(profile, plan)
-        : plan.buyRatePer10g;
+        : profile.primaryBuyRatePer10g;
 
     if (ratePer10g <= 0) {
       return null;
@@ -120,7 +124,7 @@ class MetalRateQuoteService {
       purityLabel: plan.label,
       purityPercent: plan.purityPercent,
       ratePer10g: ratePer10g,
-      billingRate: _billingRate(metal, ratePer10g),
+      billingRate: MetalRatePriceUnit.forMetal(metal).toBillingRate(ratePer10g),
       billingUnit: metal == MetalRateMetal.diamond ? 'ct' : 'g',
       makingChargePercent: plan.makingChargePercent,
       makingChargePerGram: plan.makingChargePerGram,
@@ -162,7 +166,8 @@ class MetalRateQuoteService {
         }
       }
 
-      if (closest != null && closestGap <= 7.5) {
+      final tolerance = profile.metal == MetalRateMetal.silver ? 0.5 : 7.5;
+      if (closest != null && closestGap <= tolerance) {
         return closest;
       }
     }
@@ -176,20 +181,16 @@ class MetalRateQuoteService {
     MetalRateProfile profile,
     MetalRatePurityPlan plan,
   ) {
+    if (profile.metal == MetalRateMetal.silver && plan.label == '700') {
+      return plan.manualDisplayRatePer10g;
+    }
     if (plan.manualDisplayRatePer10g > 0) {
       return plan.manualDisplayRatePer10g;
     }
     if (profile.marketBaseRatePer10g <= 0) {
       return 0.0;
     }
-    return profile.marketBaseRatePer10g * plan.purityFactor;
-  }
-
-  double _billingRate(MetalRateMetal metal, double ratePer10g) {
-    if (metal == MetalRateMetal.diamond) {
-      return ratePer10g;
-    }
-    return ratePer10g / 10.0;
+    return profile.marketParityRateFor(plan);
   }
 }
 

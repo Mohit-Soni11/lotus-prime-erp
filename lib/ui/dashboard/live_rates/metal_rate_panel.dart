@@ -79,10 +79,7 @@ class MetalRatePanel extends StatelessWidget {
                   color: LiveRatesColors.divider,
                 ),
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: isGold ? 7 : 14,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 child: _columns(
                   row.purity,
                   _amount(row.perGram, '/g'),

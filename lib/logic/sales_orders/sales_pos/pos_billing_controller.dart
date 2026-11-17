@@ -890,7 +890,14 @@ class PosBillingController extends ChangeNotifier {
   String _displayPurityForSuggestion(PosStockLookupModel suggestion) {
     final raw = suggestion.purity.trim().toUpperCase();
     return switch (raw.replaceAll(' ', '')) {
-      '75' || '75.0' || '75.00' => '18KT',
+      '75' ||
+      '75.0' ||
+      '75.00' =>
+        suggestion.metal == MetalType.silver ? '750' : '18KT',
+      '70' ||
+      '70.0' ||
+      '70.00' =>
+        suggestion.metal == MetalType.silver ? '700' : raw,
       '91.67' || '91.6' || '91.60' => '22KT',
       '99.9' ||
       '99.90' ||
@@ -1034,7 +1041,7 @@ class PosBillingController extends ChangeNotifier {
       case MetalRateMetal.platinum:
         return quote.ratePer10g;
       case MetalRateMetal.silver:
-        return quote.ratePer10g * 100.0;
+        return quote.marketRate;
       case MetalRateMetal.diamond:
         return quote.billingRate;
     }

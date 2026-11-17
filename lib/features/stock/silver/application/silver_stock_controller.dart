@@ -40,7 +40,7 @@ class SilverStockController extends AddStockController {
   String? _activeSilverRowId;
   String? _billPhotoPath;
   bool _isPickingBillPhoto = false;
-  double _silverRatePer10g = 0.0;
+  double _silverRatePerKg = 0.0;
   DateTime? _silverRateDate;
   bool _isLoadingSilverRate = false;
   bool _roundOffInvoiceFine = false;
@@ -78,9 +78,9 @@ class SilverStockController extends AddStockController {
 
   bool get isLoadingSilverRate => _isLoadingSilverRate;
   DateTime? get silverRateDate => _silverRateDate;
-  double get silverRatePer10g => _silverRatePer10g;
+  double get silverRatePerKg => _silverRatePerKg;
   double get silverRatePerGram =>
-      _silverRatePer10g > 0 ? _silverRatePer10g / 10.0 : 0.0;
+      _silverRatePerKg > 0 ? _silverRatePerKg / 1000.0 : 0.0;
   bool get hasSilverRateSnapshot => silverRatePerGram > 0;
   double get totalFineWeight =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
@@ -718,7 +718,7 @@ class SilverStockController extends AddStockController {
         if (planKey == selectedKey) {
           masterRate = plan.manualDisplayRatePer10g > 0
               ? plan.manualDisplayRatePer10g
-              : masterProfile.marketBaseRatePer10g * plan.purityFactor;
+              : masterProfile.marketParityRateFor(plan);
           break;
         }
       }
@@ -726,14 +726,14 @@ class SilverStockController extends AddStockController {
         final first = masterProfile.purityPlans.first;
         masterRate = first.manualDisplayRatePer10g > 0
             ? first.manualDisplayRatePer10g
-            : masterProfile.marketBaseRatePer10g * first.purityFactor;
+            : masterProfile.marketParityRateFor(first);
       }
 
       if (masterRate > 0) {
-        _silverRatePer10g = masterRate;
+        _silverRatePerKg = masterRate;
         _silverRateDate = masterProfile.updatedAt;
       } else {
-        _silverRatePer10g = 0.0;
+        _silverRatePerKg = 0.0;
         _silverRateDate = null;
       }
 
@@ -743,7 +743,7 @@ class SilverStockController extends AddStockController {
         row.applyPurchaseRate(silverRatePerGram, onlyIfEmpty: false);
       }
     } catch (_) {
-      _silverRatePer10g = 0.0;
+      _silverRatePerKg = 0.0;
       _silverRateDate = null;
     }
 

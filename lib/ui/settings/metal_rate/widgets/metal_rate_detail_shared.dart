@@ -3,18 +3,14 @@ part of '../metal_rate_detail_screen.dart';
 class _DetailSection extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
   final Color accent;
   final Widget child;
-  final Widget? trailing;
 
   const _DetailSection({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.accent,
     required this.child,
-    this.trailing,
   });
 
   @override
@@ -25,43 +21,23 @@ class _DetailSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LayoutBuilder(builder: (context, constraints) {
-              final heading = Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: MetalRateDetailStyles.tint(accent),
-                  child: Icon(icon, color: accent, size: 20),
+            Row(children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: MetalRateDetailStyles.tint(accent),
+                child: Icon(icon, color: accent, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MetalRateDetailStyles.title.copyWith(fontSize: 18),
                 ),
-                const SizedBox(width: 12),
-                Text(title,
-                    style: MetalRateDetailStyles.title.copyWith(fontSize: 18)),
-              ]);
-              if (constraints.maxWidth < 900) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    heading,
-                    const SizedBox(height: 8),
-                    Text(subtitle, style: MetalRateDetailStyles.body),
-                    if (trailing != null) ...[
-                      const SizedBox(height: 9),
-                      trailing!,
-                    ],
-                  ],
-                );
-              }
-              return Row(children: [
-                heading,
-                const SizedBox(width: 22),
-                Container(
-                    width: 1, height: 22, color: MetalRateColors.cardBorder),
-                const SizedBox(width: 22),
-                Expanded(
-                    child: Text(subtitle, style: MetalRateDetailStyles.body)),
-                if (trailing != null) trailing!,
-              ]);
-            }),
+              ),
+            ]),
             const SizedBox(height: 15),
             child,
           ],
@@ -130,7 +106,10 @@ class _RateFieldState extends State<_RateField> {
         ),
         if (widget.unit != null) ...[
           const SizedBox(width: 4),
-          Text('/ ${widget.unit}', style: MetalRateDetailStyles.body),
+          Text('/ ${widget.unit}',
+              style: MetalRateDetailStyles.body.copyWith(
+                  color: MetalRateColors.textDark,
+                  fontWeight: FontWeight.w800)),
         ],
       ]);
     }
@@ -143,6 +122,10 @@ class _RateFieldState extends State<_RateField> {
       decoration: InputDecoration(
         prefixText: '₹ ',
         suffixText: widget.unit == null ? null : '/ ${widget.unit}',
+        prefixStyle: MetalRateDetailStyles.body.copyWith(
+            color: MetalRateColors.textDark, fontWeight: FontWeight.w800),
+        suffixStyle: MetalRateDetailStyles.body.copyWith(
+            color: MetalRateColors.textDark, fontWeight: FontWeight.w800),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         filled: true,
@@ -159,13 +142,13 @@ class _RateFieldState extends State<_RateField> {
 
 Color _metalAccent(MetalRateMetal metal) => switch (metal) {
       MetalRateMetal.gold => MetalRateDetailStyles.goldInk,
-      MetalRateMetal.silver => MetalRateColors.silver,
+      MetalRateMetal.silver => MetalRateDetailStyles.silverInk,
       MetalRateMetal.diamond => MetalRateColors.diamond,
       MetalRateMetal.platinum => MetalRateColors.platinum,
     };
 
 String _rateUnit(MetalRateMetal metal) =>
-    metal == MetalRateMetal.diamond ? 'ct' : '10g';
+    MetalRatePriceUnit.forMetal(metal).label;
 
 double _parseNumber(String value) =>
     double.tryParse(value.replaceAll(',', '').trim()) ?? 0;

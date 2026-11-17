@@ -11,10 +11,10 @@ class PurchaseRatesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = [
-      ('Gold 24K', rates.oldGold24kBuy),
-      ('Gold 22K', rates.oldGold22kBuy),
-      ('Gold 18K', rates.oldGold18kBuy),
-      ('Silver 999', rates.oldSilverBuy),
+      ('Gold 24K', rates.oldGold24kBuy, '10g'),
+      ('Gold 22K', rates.oldGold22kBuy, '10g'),
+      ('Gold 18K', rates.oldGold18kBuy, '10g'),
+      ('Silver', rates.oldSilverBuy, 'kg'),
     ];
 
     return Container(
@@ -48,7 +48,8 @@ class PurchaseRatesPanel extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: entry.$2 == '--' ? '--' : '₹${entry.$2}/10g',
+                      text:
+                          entry.$2 == '--' ? '--' : '₹${entry.$2}/${entry.$3}',
                       style: const TextStyle(
                         color: LiveRatesColors.text,
                         fontSize: 11,
