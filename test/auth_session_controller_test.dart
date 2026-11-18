@@ -30,7 +30,7 @@ class _FakeGateway implements AuthSessionGateway {
 
   @override
   Future<AuthResult> loginUser({
-    required String email,
+    required String username,
     required String password,
   }) async {
     if (nextLogin.isSuccess) emit('owner-1');
@@ -39,7 +39,7 @@ class _FakeGateway implements AuthSessionGateway {
 
   @override
   Future<AuthResult> registerOwner({
-    required String email,
+    required String username,
     required String password,
     required String ownerName,
     required String mobile,
@@ -110,7 +110,7 @@ void main() {
   test('account creation cannot open the protected workspace', () async {
     gateway.pendingRegistration = Completer<AuthResult>();
     final registration = session.registerOwner(
-      email: 'owner@example.com',
+      username: 'owner',
       password: 'password123',
       ownerName: 'Owner',
       mobile: '9999999999',
@@ -128,7 +128,7 @@ void main() {
   test('validated sign-in opens workspace', () async {
     gateway.emit(null);
     final result = await session.loginUser(
-      email: 'owner@example.com',
+      username: 'owner',
       password: 'password123',
     );
     expect(result.isSuccess, isTrue);

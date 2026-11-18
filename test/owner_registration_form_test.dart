@@ -29,7 +29,7 @@ void main() {
               child: OwnerRegistrationForm(
                 nameController: controllers[0],
                 mobileController: controllers[1],
-                emailController: controllers[2],
+                usernameController: controllers[2],
                 passwordController: controllers[3],
                 confirmPasswordController: controllers[4],
                 isLoading: false,

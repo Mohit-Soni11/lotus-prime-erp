@@ -11,7 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../auth/services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -109,7 +109,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
 
     final ok = await _ctrl.processRelease(
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-      releasedBy: _currentOperatorName(),
+      releasedBy: await _currentOperatorName(),
     );
 
     if (ok && mounted) {
@@ -121,15 +121,11 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     }
   }
 
-  String _currentOperatorName() {
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName?.trim();
-    if (displayName != null && displayName.isNotEmpty) return displayName;
-    final email = user?.email?.trim();
-    if (email != null && email.isNotEmpty) return email;
-    final phone = user?.phoneNumber?.trim();
-    if (phone != null && phone.isNotEmpty) return phone;
-    return 'Authenticated User';
+  Future<String> _currentOperatorName() async {
+    final profile = await AuthService().getUserDetails();
+    return (profile?['name'] as String?)?.trim().isNotEmpty == true
+        ? profile!['name'] as String
+        : 'Local Operator';
   }
 
   Future<bool> _showConfirmDialog() async {

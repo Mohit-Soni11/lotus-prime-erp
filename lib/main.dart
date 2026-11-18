@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,7 +12,6 @@ import 'core/logging/app_logger.dart';
 import 'core/router/app_router.dart';
 import 'database/db/app_database.dart';
 import 'features/finance/ledger/data/finance_day_closure_repository.dart';
-import 'firebase_options.dart';
 import 'theme/dashboard/app/uv.dart';
 
 Future<void> main() async {
@@ -70,18 +68,12 @@ Future<void> _bootstrapApplication() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   initAuthRouting();
 
   await FinanceDayClosureRepository(AppDatabase()).migrateLegacyLocks();
 }
 
 String _formatStartupError(Object error) {
-  if (error is FirebaseException) {
-    return 'Firebase startup failed. Check project configuration and internet connectivity.';
-  }
   return 'Startup failed. Please review local configuration and restart the app.';
 }
 
@@ -204,7 +196,7 @@ class BootstrapFailureScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Check Firebase setup, local permissions, and environment flags before relaunching.',
+                      'Check local database access and application settings before relaunching.',
                       style: TextStyle(
                         color: Color(0xFF8FA0B3),
                         height: 1.4,

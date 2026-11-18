@@ -12,7 +12,6 @@ class AuthInputField extends StatelessWidget {
     required this.validator,
     this.isPassword = false,
     this.isMobile = false,
-    this.isEmail = false,
     this.passwordVisible = false,
     this.onVisibilityToggle,
   });
@@ -23,7 +22,6 @@ class AuthInputField extends StatelessWidget {
   final FormFieldValidator<String> validator;
   final bool isPassword;
   final bool isMobile;
-  final bool isEmail;
   final bool passwordVisible;
   final VoidCallback? onVisibilityToggle;
 
@@ -35,11 +33,7 @@ class AuthInputField extends StatelessWidget {
       obscureText: isPassword && !passwordVisible,
       enableSuggestions: !isPassword,
       autocorrect: !isPassword,
-      keyboardType: isMobile
-          ? TextInputType.phone
-          : isEmail
-              ? TextInputType.emailAddress
-              : TextInputType.text,
+      keyboardType: isMobile ? TextInputType.phone : TextInputType.text,
       inputFormatters: isMobile
           ? [
               FilteringTextInputFormatter.digitsOnly,

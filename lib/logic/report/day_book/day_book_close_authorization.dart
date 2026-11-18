@@ -1,18 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../../ui/auth/services/auth_service.dart';
 
 class DayBookCloseAuthorization {
   DayBookCloseAuthorization({
     String? Function()? currentUid,
     Future<Map<String, dynamic>?> Function(String uid)? loadProfile,
-  })  : _currentUid =
-            currentUid ?? (() => FirebaseAuth.instance.currentUser?.uid),
-        _loadProfile = loadProfile ??
-            ((uid) async => (await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(uid)
-                    .get())
-                .data());
+  })  : _currentUid = currentUid ?? (() => AuthService().currentUserId),
+        _loadProfile = loadProfile ?? ((uid) => AuthService().getUserDetails());
 
   final String? Function() _currentUid;
   final Future<Map<String, dynamic>?> Function(String uid) _loadProfile;

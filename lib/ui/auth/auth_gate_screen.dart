@@ -25,9 +25,9 @@ class AuthGateScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.wifi_off_rounded, size: 40),
+                    const Icon(Icons.storage_rounded, size: 40),
                     const SizedBox(height: 16),
-                    Text('Session check unavailable', style: UV.styles.h2),
+                    Text('Local account unavailable', style: UV.styles.h2),
                     const SizedBox(height: 8),
                     Text(
                       session.message,

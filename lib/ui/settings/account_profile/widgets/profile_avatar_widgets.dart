@@ -13,9 +13,6 @@ extension _ProfileAvatarWidgets on _AccountProfileScreenState {
   }
 
   Widget _buildAvatarCard() {
-    final networkUrl = _userData?['profileImageUrl'] as String?;
-    final hasNetwork =
-        !_photoRemoved && networkUrl != null && networkUrl.startsWith('http');
     final hasLocal = _pickedImageFile != null;
 
     return Container(
@@ -45,12 +42,7 @@ extension _ProfileAvatarWidgets on _AccountProfileScreenState {
                 child: ClipOval(
                   child: hasLocal
                       ? Image.file(_pickedImageFile!, fit: BoxFit.cover)
-                      : hasNetwork
-                          ? Image.network(networkUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildInitialsAvatar())
-                          : _buildInitialsAvatar(),
+                      : _buildInitialsAvatar(),
                 ),
               ),
               Positioned(

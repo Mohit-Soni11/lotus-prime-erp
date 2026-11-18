@@ -4,10 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   camera_windows
-  cloud_firestore
   file_selector_windows
-  firebase_auth
-  firebase_core
   permission_handler_windows
   printing
   screen_retriever

@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../ui/auth/services/auth_service.dart';
@@ -30,8 +28,6 @@ class AccountProfileScreen extends StatefulWidget {
 class _AccountProfileScreenState extends State<AccountProfileScreen>
     with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ProfilePhotoStore _photoStore = ProfilePhotoStore();
 
   Map<String, dynamic>? _userData;
@@ -99,22 +95,14 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     setState(() => _isLoading = true);
     try {
       final data = await _authService.getUserDetails();
-      final uid = _auth.currentUser?.uid;
-      var photo = uid == null ? null : await _photoStore.read(uid);
-      if (photo == null) {
-        final legacyPath = data?['profileImageUrl'];
-        if (legacyPath is String &&
-            !legacyPath.startsWith('http') &&
-            await File(legacyPath).exists()) {
-          photo = File(legacyPath);
-        }
-      }
+      final uid = _authService.currentUserId;
+      final photo = uid == null ? null : await _photoStore.read(uid);
       if (mounted) {
         setState(() {
           _userData = data;
           _nameCtrl.text = data?['name'] ?? '';
           _mobileCtrl.text = data?['mobile'] ?? '';
-          _emailCtrl.text = _auth.currentUser?.email ?? data?['email'] ?? '';
+          _emailCtrl.text = data?['username'] ?? '';
           _pickedImageFile = photo;
           _photoRemoved = false;
           _isLoading = false;
@@ -189,21 +177,15 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
-      final uid = _auth.currentUser?.uid;
+      final uid = _authService.currentUserId;
       if (uid == null) {
         _showFeedback('Your session has ended. Sign in again.', isError: true);
         return;
       }
 
-      await _auth.currentUser?.updateDisplayName(_nameCtrl.text.trim());
-
-      final Map<String, dynamic> update = {
-        'name': _nameCtrl.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      if (_canEditMobile) update['mobile'] = _mobileCtrl.text.trim();
-      if (_photoRemoved) update['profileImageUrl'] = FieldValue.delete();
-      await _firestore.collection('users').doc(uid).update(update);
+      final result = await _authService.updateProfile(
+          name: _nameCtrl.text.trim(), mobile: _mobileCtrl.text.trim());
+      if (!result.isSuccess) throw StateError(result.message);
 
       if (_photoRemoved) {
         await _photoStore.remove(uid);
@@ -236,17 +218,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     }
     setState(() => _isSaving = true);
     try {
-      final user = _auth.currentUser;
-      if (user == null || user.email == null) {
-        _showFeedback('Your session has ended. Sign in again.', isError: true);
+      final result = await _authService.changePassword(
+          currentPassword: _currPassCtrl.text, newPassword: _newPassCtrl.text);
+      if (!result.isSuccess) {
+        if (mounted) _showFeedback(result.message, isError: true);
         return;
       }
-      final cred = EmailAuthProvider.credential(
-        email: user.email!,
-        password: _currPassCtrl.text,
-      );
-      await user.reauthenticateWithCredential(cred);
-      await user.updatePassword(_newPassCtrl.text);
 
       if (mounted) {
         _showFeedback(AccountProfileStrings.successPassword, isError: false);
@@ -255,11 +232,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
         _confirmPassCtrl.clear();
         setState(() => _showPasswordSection = false);
       }
-    } on FirebaseAuthException catch (e) {
-      final msg = e.code == 'wrong-password' || e.code == 'invalid-credential'
-          ? AccountProfileStrings.errorWrongPass
-          : 'Password change failed. Try again.';
-      if (mounted) _showFeedback(msg, isError: true);
     } catch (_) {
       if (mounted) {
         _showFeedback('Password change failed. Try again.', isError: true);

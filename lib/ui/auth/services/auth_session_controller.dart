@@ -29,7 +29,7 @@ class AuthSessionController extends ChangeNotifier {
           _onAuthUserChanged,
           onError: (Object _) => _setStatus(
             AuthSessionStatus.unavailable,
-            'Could not check your session. Check your connection and retry.',
+            'Could not open your local account. Please retry.',
           ),
         );
   }
@@ -55,7 +55,6 @@ class AuthSessionController extends ChangeNotifier {
       case SessionCheckStatus.unavailable:
         _setStatus(AuthSessionStatus.unavailable, check.message);
       case SessionCheckStatus.rejected:
-      case SessionCheckStatus.verificationRequired:
         try {
           await _gateway.signOut();
           if (generation == _generation) {
@@ -71,13 +70,14 @@ class AuthSessionController extends ChangeNotifier {
   }
 
   Future<AuthResult> loginUser({
-    required String email,
+    required String username,
     required String password,
   }) async {
     _interactiveOperation = true;
     ++_generation;
     try {
-      final result = await _gateway.loginUser(email: email, password: password);
+      final result =
+          await _gateway.loginUser(username: username, password: password);
       final authorized = result.isSuccess && _gateway.currentUserId != null;
       _setStatus(authorized
           ? AuthSessionStatus.authorized
@@ -104,7 +104,7 @@ class AuthSessionController extends ChangeNotifier {
   }
 
   Future<AuthResult> registerOwner({
-    required String email,
+    required String username,
     required String password,
     required String ownerName,
     required String mobile,
@@ -113,7 +113,7 @@ class AuthSessionController extends ChangeNotifier {
     ++_generation;
     try {
       return await _gateway.registerOwner(
-        email: email,
+        username: username,
         password: password,
         ownerName: ownerName,
         mobile: mobile,
@@ -151,7 +151,7 @@ class AuthSessionController extends ChangeNotifier {
     } catch (_) {
       _setStatus(
         AuthSessionStatus.unavailable,
-        'Could not sign out. Check your connection and retry.',
+        'Could not sign out. Please retry.',
       );
     } finally {
       _interactiveOperation = false;

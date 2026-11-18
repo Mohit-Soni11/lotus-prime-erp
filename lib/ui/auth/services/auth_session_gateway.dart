@@ -8,12 +8,12 @@ abstract interface class AuthSessionGateway {
   Future<SessionCheck> validateCurrentSession();
 
   Future<AuthResult> loginUser({
-    required String email,
+    required String username,
     required String password,
   });
 
   Future<AuthResult> registerOwner({
-    required String email,
+    required String username,
     required String password,
     required String ownerName,
     required String mobile,

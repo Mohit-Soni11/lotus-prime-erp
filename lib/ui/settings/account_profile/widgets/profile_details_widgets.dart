@@ -28,16 +28,9 @@ extension _ProfileDetailsWidgets on _AccountProfileScreenState {
               color: AccountProfileColors.bodyBorder.withValues(alpha: 0.6),
               height: 1),
           const SizedBox(height: 14),
-          _infoRow('User ID', _auth.currentUser?.uid ?? 'â€”'),
-          _infoRow(
-            'Email Verified',
-            (_auth.currentUser?.emailVerified ?? false)
-                ? 'âœ“ Verified'
-                : 'âœ— Not Verified',
-            valueColor: (_auth.currentUser?.emailVerified ?? false)
-                ? AccountProfileColors.successText
-                : AccountProfileColors.danger,
-          ),
+          _infoRow('User ID', _authService.currentUserId ?? '—'),
+          _infoRow('Account', 'Local owner account',
+              valueColor: AccountProfileColors.successText),
         ],
       ),
     );

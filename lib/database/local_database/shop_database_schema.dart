@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 8;
+  static const int currentVersion = 9;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -71,6 +71,7 @@ class ShopDatabaseSchema {
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
       )
     ''');
+    await _createLocalOwnerAccount(db);
   }
 
   static Future<void> upgrade(
@@ -156,7 +157,28 @@ class ShopDatabaseSchema {
         'TEXT',
       );
     }
+    if (oldVersion < 9) {
+      await _createLocalOwnerAccount(db);
+    }
   }
+
+  static Future<void> _createLocalOwnerAccount(Database db) => db.execute('''
+    CREATE TABLE IF NOT EXISTS local_owner_account (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      uid TEXT NOT NULL UNIQUE,
+      username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+      name TEXT NOT NULL,
+      mobile TEXT NOT NULL,
+      password_salt BLOB NOT NULL,
+      password_hash BLOB NOT NULL,
+      recovery_salt BLOB NOT NULL,
+      recovery_hash BLOB NOT NULL,
+      failed_attempts INTEGER NOT NULL DEFAULT 0,
+      locked_until TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  ''');
 
   static Future<bool> _tableExists(Database db, String tableName) async {
     final rows = await db.rawQuery(

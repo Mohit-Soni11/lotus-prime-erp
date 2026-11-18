@@ -96,6 +96,35 @@ void main() {
     }
   });
 
+  test('v8 shop data survives the offline account migration', () async {
+    final directory =
+        await Directory.systemTemp.createTemp('lotus_shop_auth_upgrade_');
+    final path = join(directory.path, 'erp_master_db.db');
+    try {
+      final oldDatabase = await openDatabase(
+        path,
+        version: 8,
+        onCreate: (database, _) async {
+          await database.execute(
+              'CREATE TABLE shop_profile (tenant_id TEXT PRIMARY KEY, display_name TEXT)');
+          await database.insert('shop_profile', {
+            'tenant_id': 'SHOP-1',
+            'display_name': 'Existing Shop',
+          });
+        },
+      );
+      await oldDatabase.close();
+
+      final upgraded = await openShopDatabase(path);
+      expect((await upgraded.query('shop_profile')).single['display_name'],
+          'Existing Shop');
+      expect(await upgraded.query('local_owner_account'), isEmpty);
+      await upgraded.close();
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
+
   test('Shop Profile data survives a database restart', () async {
     final directory =
         await Directory.systemTemp.createTemp('lotus_shop_restart_');

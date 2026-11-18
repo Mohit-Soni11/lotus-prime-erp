@@ -7,7 +7,7 @@ import 'auth_input_field.dart';
 class SignInForm extends StatelessWidget {
   const SignInForm({
     super.key,
-    required this.emailController,
+    required this.usernameController,
     required this.passwordController,
     required this.isLoading,
     required this.passwordVisible,
@@ -16,7 +16,7 @@ class SignInForm extends StatelessWidget {
     required this.onSubmit,
   });
 
-  final TextEditingController emailController;
+  final TextEditingController usernameController;
   final TextEditingController passwordController;
   final bool isLoading;
   final bool passwordVisible;
@@ -28,11 +28,10 @@ class SignInForm extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         children: [
           AuthInputField(
-            label: 'Email Address',
-            icon: UV.icons.email,
-            controller: emailController,
-            validator: AuthFieldValidator.email,
-            isEmail: true,
+            label: 'Username',
+            icon: UV.icons.person,
+            controller: usernameController,
+            validator: AuthFieldValidator.username,
           ),
           SizedBox(height: UV.layout.pMd),
           AuthInputField(
@@ -73,7 +72,7 @@ class OwnerRegistrationForm extends StatelessWidget {
     super.key,
     required this.nameController,
     required this.mobileController,
-    required this.emailController,
+    required this.usernameController,
     required this.passwordController,
     required this.confirmPasswordController,
     required this.isLoading,
@@ -84,7 +83,7 @@ class OwnerRegistrationForm extends StatelessWidget {
 
   final TextEditingController nameController;
   final TextEditingController mobileController;
-  final TextEditingController emailController;
+  final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final bool isLoading;
@@ -124,11 +123,10 @@ class OwnerRegistrationForm extends StatelessWidget {
           }),
           SizedBox(height: UV.layout.pMd),
           AuthInputField(
-            label: 'Email Address',
-            icon: UV.icons.email,
-            controller: emailController,
-            validator: AuthFieldValidator.email,
-            isEmail: true,
+            label: 'Username',
+            icon: UV.icons.person,
+            controller: usernameController,
+            validator: AuthFieldValidator.username,
           ),
           SizedBox(height: UV.layout.pMd),
           AuthInputField(

@@ -35,10 +35,10 @@ extension _ProfileFormWidgets on _AccountProfileScreenState {
             const SizedBox(height: 14),
             _buildInputField(
               controller: _emailCtrl,
-              label: AccountProfileStrings.labelEmail,
-              icon: AccountProfileIcons.email,
+              label: 'Username',
+              icon: AccountProfileIcons.person,
               enabled: false,
-              hintText: AccountProfileStrings.labelEmailNote,
+              hintText: 'Local sign-in name',
             ),
             const SizedBox(height: 24),
             SizedBox(

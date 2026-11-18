@@ -4,11 +4,10 @@ class AuthFieldValidator {
   static String? requiredText(String? value) =>
       (value?.trim().isEmpty ?? true) ? 'This field is required.' : null;
 
-  static String? email(String? value) {
+  static String? username(String? value) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Email address is required.';
-    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)) {
-      return 'Enter a valid email address.';
+    if (!RegExp(r'^[A-Za-z0-9._-]{3,32}$').hasMatch(text)) {
+      return 'Use 3–32 letters, numbers, dots, hyphens or underscores.';
     }
     return null;
   }

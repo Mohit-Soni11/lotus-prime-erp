@@ -7,7 +7,6 @@ import '../../core/feedback/app_feedback.dart';
 import '../../theme/dashboard/app/uv.dart';
 import 'services/auth_service.dart';
 import 'services/auth_session_controller.dart';
-import 'services/installation_account_binding.dart';
 import 'widgets/auth_brand_panel.dart';
 import 'widgets/auth_forms.dart';
 import 'widgets/password_reset_dialog.dart';
@@ -22,9 +21,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _session = AuthSessionController.instance;
   final _authService = AuthService();
-  final _installation = InstallationAccountBinding();
   final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
+  final _username = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   final _name = TextEditingController();
@@ -33,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLogin = true;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
-  bool _canCreateOwner = true;
+  bool _canCreateOwner = false;
 
   @override
   void initState() {
@@ -43,8 +41,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadRegistrationAvailability() async {
     try {
-      final canCreateOwner = await _installation.canCreateOwner();
-      if (mounted) setState(() => _canCreateOwner = canCreateOwner);
+      final canCreateOwner = !await _authService.hasOwnerAccount();
+      if (mounted) {
+        setState(() {
+          _canCreateOwner = canCreateOwner;
+          _isLogin = !canCreateOwner;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _canCreateOwner = false);
     }
@@ -52,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _email.dispose();
+    _username.dispose();
     _password.dispose();
     _confirmPassword.dispose();
     _name.dispose();
@@ -166,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SingleChildScrollView(
                   child: _isLogin
                       ? SignInForm(
-                          emailController: _email,
+                          usernameController: _username,
                           passwordController: _password,
                           isLoading: _isLoading,
                           passwordVisible: _isPasswordVisible,
@@ -177,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       : OwnerRegistrationForm(
                           nameController: _name,
                           mobileController: _mobile,
-                          emailController: _email,
+                          usernameController: _username,
                           passwordController: _password,
                           confirmPasswordController: _confirmPassword,
                           isLoading: _isLoading,
@@ -254,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     final result = await _session.loginUser(
-      email: _email.text,
+      username: _username.text,
       password: _password.text,
     );
     if (!mounted) return;
@@ -271,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     final result = await _session.registerOwner(
-      email: _email.text,
+      username: _username.text,
       password: _password.text,
       ownerName: _name.text,
       mobile: _mobile.text,
@@ -281,7 +284,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result.accountCreated) {
       _password.clear();
       _confirmPassword.clear();
-      setState(() => _isLogin = true);
+      setState(() {
+        _isLogin = true;
+        _canCreateOwner = false;
+      });
+      await _showRecoveryCode(result.recoveryCode!);
+      return;
     }
     AppFeedback.show(
       context,
@@ -291,4 +299,21 @@ class _LoginScreenState extends State<LoginScreen> {
       message: result.message,
     );
   }
+
+  Future<void> _showRecoveryCode(String code) => showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Save your recovery code'),
+          content: SelectableText(
+            'Keep this code in a safe place. It is shown only once and is required to reset your password offline.\n\n$code',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('I saved it'),
+            ),
+          ],
+        ),
+      );
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../ui/auth/services/auth_service.dart';
 import 'package:drift/drift.dart' as drift;
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -737,14 +737,7 @@ class ContactRecoveryController extends ChangeNotifier {
       'GRVREC-$loanId-${DateTime.now().microsecondsSinceEpoch}';
 
   String _operatorIdentity() {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return 'LOCAL_OPERATOR';
-      final email = user.email?.trim();
-      return email == null || email.isEmpty ? user.uid : '$email (${user.uid})';
-    } catch (_) {
-      return 'LOCAL_OPERATOR';
-    }
+    return AuthService().currentUserId ?? 'LOCAL_OPERATOR';
   }
 
   void dismissInlineMessage() {

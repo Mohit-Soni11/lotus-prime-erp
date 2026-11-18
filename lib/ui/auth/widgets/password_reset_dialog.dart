@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/dashboard/app/uv.dart';
 import '../services/auth_result.dart';
 import '../services/auth_service.dart';
 import 'auth_field_validator.dart';
@@ -15,82 +14,112 @@ class PasswordResetDialog extends StatefulWidget {
 }
 
 class _PasswordResetDialogState extends State<PasswordResetDialog> {
-  final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isSending = false;
+  final _recoveryCode = TextEditingController();
+  final _password = TextEditingController();
+  final _confirm = TextEditingController();
+  bool _busy = false;
+  String? _error;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _recoveryCode.dispose();
+    _password.dispose();
+    _confirm.dispose();
     super.dispose();
   }
 
-  Future<void> _send() async {
+  Future<void> _reset() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSending = true);
-    final result =
-        await widget.authService.resetPassword(_emailController.text);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final result = await widget.authService.resetPassword(
+      recoveryCode: _recoveryCode.text,
+      newPassword: _password.text,
+    );
     if (!mounted) return;
-    Navigator.pop(context, result);
+    setState(() => _busy = false);
+    if (!result.isSuccess) {
+      setState(() => _error = result.message);
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Save your new recovery code'),
+        content: SelectableText(
+          'Your old code no longer works. Save this one securely:\n\n${result.recoveryCode}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('I saved it'),
+          )
+        ],
+      ),
+    );
+    if (mounted) Navigator.pop(context, result);
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        backgroundColor: UV.colors.bgSecondary,
-        title: Text('Reset Password', style: UV.styles.h2),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Enter your email address to receive a password reset link.',
-                style: UV.styles.body,
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: _emailController,
-                validator: AuthFieldValidator.email,
-                keyboardType: TextInputType.emailAddress,
-                style: UV.styles.body,
-                onFieldSubmitted: (_) => _send(),
-                decoration: InputDecoration(
-                  hintText: 'name@example.com',
-                  hintStyle: UV.styles.hint,
-                  filled: true,
-                  fillColor: UV.colors.bgPrimary,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+        title: const Text('Reset local password'),
+        content: SizedBox(
+          width: 380,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                    'Enter the recovery code saved when this account was created.'),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _recoveryCode,
+                  decoration: const InputDecoration(labelText: 'Recovery code'),
+                  validator: AuthFieldValidator.requiredText,
                 ),
-              ),
-            ],
+                TextFormField(
+                  controller: _password,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'New password'),
+                  validator: AuthFieldValidator.newPassword,
+                ),
+                TextFormField(
+                  controller: _confirm,
+                  obscureText: true,
+                  decoration:
+                      const InputDecoration(labelText: 'Confirm password'),
+                  validator: (value) =>
+                      AuthFieldValidator.confirmPassword(value, _password.text),
+                ),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(_error!,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error)),
+                  ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: _isSending ? null : () => Navigator.pop(context),
-            child: Text('Cancel', style: UV.styles.action),
-          ),
-          TextButton(
-            onPressed: _isSending ? null : _send,
-            child: _isSending
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text('Send Link', style: UV.styles.action),
-          ),
+              onPressed: _busy ? null : () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: _busy ? null : _reset,
+              child: Text(_busy ? 'Resetting…' : 'Reset password')),
         ],
       );
 }
 
 Future<AuthResult?> showPasswordResetDialog(
-  BuildContext context,
-  AuthService authService,
-) =>
+        BuildContext context, AuthService authService) =>
     showDialog<AuthResult>(
-      context: context,
-      builder: (_) => PasswordResetDialog(authService: authService),
-    );
+        context: context,
+        builder: (_) => PasswordResetDialog(authService: authService));

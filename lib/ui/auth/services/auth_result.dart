@@ -1,25 +1,21 @@
 enum AuthResultCode {
   success,
-  verificationRequired,
-  verificationDeliveryFailed,
   failure,
 }
 
 class AuthResult {
-  const AuthResult(this.code, this.message);
+  const AuthResult(this.code, this.message, {this.recoveryCode});
 
   final AuthResultCode code;
   final String message;
+  final String? recoveryCode;
 
   bool get isSuccess => code == AuthResultCode.success;
-  bool get accountCreated =>
-      code == AuthResultCode.success ||
-      code == AuthResultCode.verificationDeliveryFailed;
+  bool get accountCreated => code == AuthResultCode.success;
 }
 
 enum SessionCheckStatus {
   authorized,
-  verificationRequired,
   rejected,
   unavailable,
 }
