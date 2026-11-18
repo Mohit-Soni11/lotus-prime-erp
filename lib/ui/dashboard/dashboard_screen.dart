@@ -104,6 +104,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onNavChange: (action) {
                 if (action == 'New Sale') {
                   widget.onNavigate(AppRoutes.newSaleRoute);
+                } else if (action == 'My Profile') {
+                  widget.onNavigate(AppRoutes.accountProfileRoute);
                 }
               },
             ),

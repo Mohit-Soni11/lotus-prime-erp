@@ -12,7 +12,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../constants/app_routes.dart';
 import 'notice_recovery_navigation.dart';
@@ -21,10 +20,13 @@ import 'workspace_transition_page.dart';
 import '../../theme/dashboard/app/uv.dart';
 
 import '../../ui/auth/login_screen.dart';
+import '../../ui/auth/auth_gate_screen.dart';
+import '../../ui/auth/services/auth_session_controller.dart';
 
 import '../../ui/dashboard/dashboard_screen.dart';
 
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
+import '../../ui/settings/account_profile/account_profile_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_desk_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_batch_detail_screen.dart';
@@ -78,7 +80,16 @@ import '../../features/purchase/customer_metal_purchase/presentation/screens/cus
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_ledger_screen.dart';
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_voucher_detail_screen.dart';
 
-final _authNotifier = ValueNotifier<bool>(false);
+part 'routes/standalone_pledge_routes.dart';
+part 'routes/standalone_sales_routes.dart';
+part 'routes/standalone_stock_routes.dart';
+part 'routes/dashboard_settings_routes.dart';
+part 'routes/customer_routes.dart';
+part 'routes/supplier_sales_routes.dart';
+part 'routes/inventory_routes.dart';
+part 'routes/finance_routes.dart';
+part 'routes/report_routes.dart';
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void _goBackOr(BuildContext context, String fallbackPath) {
@@ -91,12 +102,8 @@ void _goBackOr(BuildContext context, String fallbackPath) {
   context.go(currentPath == fallbackPath ? RoutePaths.dashboard : fallbackPath);
 }
 
-/// Call this once during app bootstrap (main.dart) to wire Firebase auth
-/// state changes into the router's refreshListenable.
 void initAuthRouting() {
-  FirebaseAuth.instance.authStateChanges().listen((user) {
-    _authNotifier.value = user != null;
-  });
+  AuthSessionController.instance.start();
 }
 
 class _ComingSoonScreen extends StatelessWidget {
@@ -142,635 +149,48 @@ class _ComingSoonScreen extends StatelessWidget {
 // 5. ROUTER FACTORY
 
 GoRouter createAppRouter() {
+  final session = AuthSessionController.instance;
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: RoutePaths.dashboard,
-    refreshListenable: _authNotifier,
+    refreshListenable: session,
     redirect: (context, state) {
-      final isLoggedIn = _authNotifier.value;
       final isLoginRoute = state.matchedLocation == RoutePaths.login;
+      final isCheckRoute = state.matchedLocation == RoutePaths.authCheck;
 
-      if (!isLoggedIn && !isLoginRoute) {
-        return RoutePaths.login;
-      }
-
-      if (isLoggedIn && isLoginRoute) {
-        return RoutePaths.dashboard;
-      }
-
-      // No redirect needed
-      return null;
+      return switch (session.status) {
+        AuthSessionStatus.checking ||
+        AuthSessionStatus.unavailable =>
+          isCheckRoute ? null : RoutePaths.authCheck,
+        AuthSessionStatus.signedOut => isLoginRoute ? null : RoutePaths.login,
+        AuthSessionStatus.authorized =>
+          isLoginRoute || isCheckRoute ? RoutePaths.dashboard : null,
+      };
     },
     routes: [
+      GoRoute(
+        path: RoutePaths.authCheck,
+        builder: (_, __) => const AuthGateScreen(),
+      ),
       GoRoute(
         path: RoutePaths.login,
         builder: (_, __) => const LoginScreen(),
       ),
-      GoRoute(
-        path: RoutePaths.girviNew,
-        pageBuilder: (context, state) {
-          final editLoanId = int.tryParse(
-            state.uri.queryParameters['editLoanId'] ?? '',
-          );
-          final returnCustomerId = int.tryParse(
-            state.uri.queryParameters['returnCustomerId'] ?? '',
-          );
-
-          return WorkspaceTransitionPage(
-            key: state.pageKey,
-            child: NewGirviScreen(
-              editLoanId: editLoanId,
-              onBack: () => returnCustomerId == null
-                  ? WorkspaceNavigation.backTo(context, RoutePaths.dashboard)
-                  : context.go(RoutePaths.customerProfileFor(returnCustomerId)),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.girviInterest,
-        pageBuilder: (context, state) {
-          final returnTo = state.uri.queryParameters['returnTo'];
-          final returnCustomerId = int.tryParse(
-            state.uri.queryParameters['returnCustomerId'] ?? '',
-          );
-          final fallbackPath = switch (returnTo) {
-            'riskCollections' => RoutePaths.customerDefaulters,
-            'girviNotice' => RoutePaths.girviNotice,
-            'girviLedger' => RoutePaths.girviList,
-            'customerProfile' when returnCustomerId != null =>
-              RoutePaths.customerProfileFor(returnCustomerId),
-            _ => RoutePaths.dashboard,
-          };
-          return WorkspaceTransitionPage(
-            key: state.pageKey,
-            child: InterestCalcScreen(
-              initialTicketNo: state.uri.queryParameters['ticketNo'],
-              onBack: () =>
-                  returnTo == 'customerProfile' && returnCustomerId != null
-                      ? context.go(fallbackPath)
-                      : WorkspaceNavigation.backTo(context, fallbackPath),
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.girviList,
-        pageBuilder: (context, state) => WorkspaceTransitionPage(
-          key: state.pageKey,
-          child: GirviListScreen(
-            onBack: () => WorkspaceNavigation.backTo(
-              context,
-              RoutePaths.dashboard,
-            ),
-            onNewGirvi: () async {
-              await context.push(RoutePaths.girviNew);
-            },
-          ),
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.girviAccountDetail,
-        pageBuilder: (context, state) {
-          final loanId =
-              int.tryParse(state.pathParameters['loanId'] ?? '') ?? 0;
-          final returnTo = state.uri.queryParameters['returnTo'];
-          final returnCustomerId = int.tryParse(
-            state.uri.queryParameters['returnCustomerId'] ?? '',
-          );
-          return WorkspaceTransitionPage(
-            key: state.pageKey,
-            child: GirviAccountDetailScreen(
-              loanId: loanId,
-              returnTo: returnTo,
-              returnCustomerId: returnCustomerId,
-              onBack: () {
-                final fallbackPath = switch (returnTo) {
-                  'riskCollections' => RoutePaths.customerDefaulters,
-                  'girviNotice' => RoutePaths.girviNotice,
-                  'customerProfile' when returnCustomerId != null =>
-                    RoutePaths.customerProfileFor(returnCustomerId),
-                  _ => RoutePaths.girviList,
-                };
-                if (returnTo == 'customerProfile' && returnCustomerId != null) {
-                  context.go(fallbackPath);
-                } else {
-                  WorkspaceNavigation.backTo(context, fallbackPath);
-                }
-              },
-            ),
-          );
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.customerDefaulters,
-        pageBuilder: (context, state) => WorkspaceTransitionPage(
-          key: state.pageKey,
-          child: DefaulterListScreen(
-            onBack: () => WorkspaceNavigation.backTo(
-              context,
-              RoutePaths.dashboard,
-            ),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.girviNotice,
-        pageBuilder: (context, state) => WorkspaceTransitionPage(
-          key: state.pageKey,
-          child: ContactRecoveryScreen(
-            initialTicketNo: state.uri.queryParameters['ticketNo'],
-            onBack: () => NoticeRecoveryNavigation.goBack(context, state.uri),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.salesPos,
-        builder: (context, state) {
-          final editBillId = int.tryParse(
-            state.uri.queryParameters['editBillId'] ?? '',
-          );
-          final initialCustomerId = int.tryParse(
-            state.uri.queryParameters['customerId'] ?? '',
-          );
-          final convertAdvanceId = int.tryParse(
-            state.uri.queryParameters['convertAdvanceId'] ?? '',
-          );
-          final returnCustomerId = int.tryParse(
-            state.uri.queryParameters['returnCustomerId'] ?? '',
-          );
-
-          return PosMasterSaleScreen(
-            editBillId: editBillId,
-            convertAdvanceId: convertAdvanceId,
-            initialCustomerId: initialCustomerId,
-            onBack: () {
-              if (returnCustomerId != null) {
-                context.go(RoutePaths.customerProfileFor(returnCustomerId));
-                return;
-              }
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              context.go(RoutePaths.dashboard);
-            },
-          );
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.salesBooking,
-        builder: (context, state) {
-          final editAdvanceId = int.tryParse(
-            state.uri.queryParameters['editAdvanceId'] ?? '',
-          );
-          final returnCustomerId = int.tryParse(
-            state.uri.queryParameters['returnCustomerId'] ?? '',
-          );
-
-          return BookingAdvanceScreen(
-            editOrderId: editAdvanceId,
-            onBack: () {
-              if (returnCustomerId != null) {
-                context.go(RoutePaths.customerProfileFor(returnCustomerId));
-                return;
-              }
-              context.go(RoutePaths.dashboard);
-            },
-          );
-        },
-      ),
-      GoRoute(
-        path: RoutePaths.stockAdd,
-        builder: (context, _) => AddStockHubScreen(
-          onBack: () => context.go(RoutePaths.dashboard),
-        ),
-      ),
+      ...standalonePledgeRoutes(),
+      ...standaloneSalesRoutes(),
+      ...standaloneStockRoutes(),
       ShellRoute(
         pageBuilder: (context, state, child) => WorkspaceTransitionPage(
           key: state.pageKey,
           child: AppShell(child: child),
         ),
         routes: [
-          GoRoute(
-            path: RoutePaths.dashboard,
-            builder: (context, state) => DashboardScreen(
-              onNavigate: (routeId) => WorkspaceNavigation.open(
-                context,
-                RouteMapper.toPath(routeId),
-              ),
-              onNavigateWithId: (routeId, {customerId}) {
-                if (routeId == AppRoutes.customerProfileRoute &&
-                    customerId != null) {
-                  context.go(RoutePaths.customerProfileFor(customerId));
-                } else {
-                  WorkspaceNavigation.open(
-                    context,
-                    RouteMapper.toPath(routeId),
-                  );
-                }
-              },
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.settings,
-            builder: (context, state) => SettingsScreen(
-              onNavigate: (routeId) => context.go(RouteMapper.toPath(routeId)),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.printTemplates,
-            builder: (context, state) => const PrintTemplatesScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.settingsMetalCostAnalyser,
-            builder: (context, state) => MetalValuationDeskScreen(
-              onBack: () => _goBackOr(context, RoutePaths.settings),
-            ),
-          ),
-          GoRoute(
-            path: '${RoutePaths.settingsMetalCostAnalyser}/metal/:metal',
-            builder: (context, state) => MetalValuationGradeScreen(
-              metalType: state.pathParameters['metal'] ?? '',
-              onBack: () => context.go(RoutePaths.settingsMetalCostAnalyser),
-            ),
-          ),
-          GoRoute(
-            path:
-                '${RoutePaths.settingsMetalCostAnalyser}/metal/:metal/batch/:batch',
-            builder: (context, state) {
-              final metal = state.pathParameters['metal'] ?? '';
-              return MetalValuationBatchDetailScreen(
-                metalType: metal,
-                batchCode: state.pathParameters['batch'] ?? '',
-                onBack: () => context.go(
-                  '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal',
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.customerList,
-            builder: (context, state) => CustomerListScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onAddCustomer: () => context.go(RoutePaths.customerAdd),
-              onCustomerTap: (customerId) =>
-                  context.go(RoutePaths.customerProfileFor(customerId)),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.customerAdd,
-            builder: (context, state) => AddCustomerScreen(
-              onBack: () => _goBackOr(context, RoutePaths.customerList),
-              onSaved: () => context.go(RoutePaths.customerList),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.customerProfile,
-            builder: (context, state) {
-              final id = int.parse(state.pathParameters['id']!);
-              final initialBillId =
-                  int.tryParse(state.uri.queryParameters['billId'] ?? '');
-              final initialGirviId =
-                  int.tryParse(state.uri.queryParameters['girviId'] ?? '');
-              final initialAdvanceId =
-                  int.tryParse(state.uri.queryParameters['advanceId'] ?? '');
-              return CustomerProfileScreen(
-                customerId: id,
-                initialBillId: initialBillId,
-                initialGirviId: initialGirviId,
-                initialAdvanceId: initialAdvanceId,
-                onBack: () => _goBackOr(context, RoutePaths.customerList),
-                onDeleted: () => context.go(RoutePaths.customerList),
-                onNewSale: (customerId) => context.go(Uri(
-                  path: RoutePaths.salesPos,
-                  queryParameters: {
-                    'customerId': '$customerId',
-                    'returnCustomerId': '$customerId',
-                  },
-                ).toString()),
-                onEditBill: (billId) => context.go(
-                  Uri(
-                    path: RoutePaths.salesPos,
-                    queryParameters: {
-                      'editBillId': '$billId',
-                      'returnCustomerId': '$id',
-                    },
-                  ).toString(),
-                ),
-                onEditGirvi: (loanId) => context.go(
-                  Uri(
-                    path: RoutePaths.girviNew,
-                    queryParameters: {
-                      'editLoanId': '$loanId',
-                      'returnCustomerId': '$id',
-                    },
-                  ).toString(),
-                ),
-                onCollectGirviInterest: (customerId, ticketNo) => context.go(
-                  Uri(
-                    path: RoutePaths.girviInterest,
-                    queryParameters: {
-                      'ticketNo': ticketNo,
-                      'returnTo': 'customerProfile',
-                      'returnCustomerId': '$customerId',
-                    },
-                  ).toString(),
-                ),
-                onOpenGirviAccount: (loanId) => context.go(
-                  Uri(
-                    path: '${RoutePaths.girviAccountBase}/$loanId',
-                    queryParameters: {
-                      'returnTo': 'customerProfile',
-                      'returnCustomerId': '$id',
-                    },
-                  ).toString(),
-                ),
-                onEditAdvance: (orderId) => context.go(
-                  Uri(
-                    path: RoutePaths.salesBooking,
-                    queryParameters: {
-                      'editAdvanceId': '$orderId',
-                      'returnCustomerId': '$id',
-                    },
-                  ).toString(),
-                ),
-                onCancelAdvance: (orderNo, customerId) => context.go(
-                  Uri(
-                    path: RoutePaths.salesReturnExchange,
-                    queryParameters: {
-                      'bookingOrderNo': orderNo,
-                      'returnCustomerId': '$customerId',
-                    },
-                  ).toString(),
-                ),
-                onConvertAdvanceToSale: (orderId, customerId) => context.go(
-                  Uri(
-                    path: RoutePaths.salesPos,
-                    queryParameters: {
-                      'convertAdvanceId': '$orderId',
-                      'returnCustomerId': '$customerId',
-                    },
-                  ).toString(),
-                ),
-                onCollectDue: (customerId, billNo) => context.go(
-                  Uri(
-                    path: RoutePaths.financeDueCollection,
-                    queryParameters: {
-                      'customerId': '$customerId',
-                      'billNo': billNo,
-                      'returnCustomerId': '$customerId',
-                    },
-                  ).toString(),
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.supplierList,
-            builder: (context, state) => SupplierListScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onAddSupplier: () => context.push(RoutePaths.supplierAdd),
-              onSupplierTap: (supplierId) =>
-                  context.go(RoutePaths.supplierProfileFor(supplierId)),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.supplierAdd,
-            builder: (context, state) => AddSupplierScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onSaved: () => context.go(RoutePaths.supplierList),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.supplierProfile,
-            builder: (context, state) {
-              final id = int.parse(state.pathParameters['id']!);
-              final initialVoucherId =
-                  int.tryParse(state.uri.queryParameters['voucherId'] ?? '');
-              return SupplierProfileScreen(
-                supplierId: id,
-                initialVoucherId: initialVoucherId,
-                onBack: () => _goBackOr(context, RoutePaths.supplierList),
-                onDeleted: () => context.go(RoutePaths.supplierList),
-                onNewStock: () => context.go(RoutePaths.stockAdd),
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.salesReturnExchange,
-            builder: (context, state) {
-              final returnCustomerId = int.tryParse(
-                state.uri.queryParameters['returnCustomerId'] ?? '',
-              );
-              return ReturnReversalDeskScreen(
-                initialBookingOrderNo:
-                    state.uri.queryParameters['bookingOrderNo'],
-                onBack: () => returnCustomerId == null
-                    ? _goBackOr(context, RoutePaths.dashboard)
-                    : context.go(
-                        RoutePaths.customerProfileFor(returnCustomerId),
-                      ),
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.purchaseEntry,
-            builder: (context, state) => PurchaseEntryScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockInventory,
-            builder: (context, state) => InventoryScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              initialMetalLabel: state.uri.queryParameters['metal'],
-              initialBatchCode: state.uri.queryParameters['batch'],
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockSummary,
-            builder: (context, state) => StockSummaryScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockActivity,
-            builder: (context, state) => StockActivityScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockSearch,
-            builder: (context, state) => StockSearchScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockValuation,
-            redirect: (context, state) => RoutePaths.settingsMetalCostAnalyser,
-          ),
-          GoRoute(
-            path: RoutePaths.stockTransfer,
-            builder: (context, state) => StockTransferScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockLowAlert,
-            builder: (context, state) => LowStockAlertScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeCashBook,
-            builder: (context, state) => AccountBookScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeCashLedger,
-            builder: (context, state) => CashBookScreen(
-              onBack: () => _goBackOr(context, RoutePaths.financeCashBook),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeBankLedger,
-            builder: (context, state) => BankBookScreen(
-              title: 'Bank Ledger',
-              onBack: () => _goBackOr(context, RoutePaths.financeCashBook),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeBankBook,
-            builder: (_, __) => const BankBookScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.financeExpense,
-            builder: (context, state) => ExpenseScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              initialDate:
-                  DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
-              initialReference: state.uri.queryParameters['reference'],
-              initialDraftAmount:
-                  state.extra is double ? state.extra as double : null,
-              initialDraft: state.extra is ExpenseDraft
-                  ? state.extra as ExpenseDraft
-                  : null,
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeJournal,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.journalEntryRoute),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeDueReport,
-            builder: (context, state) => DueReportScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.financeDueCollection,
-            builder: (context, state) {
-              final initialCustomerId = int.tryParse(
-                state.uri.queryParameters['customerId'] ?? '',
-              );
-              final returnCustomerId = int.tryParse(
-                state.uri.queryParameters['returnCustomerId'] ?? '',
-              );
-              final initialBillNo = state.uri.queryParameters['billNo'];
-
-              return DueCollectionEntryScreen(
-                initialCustomerId: initialCustomerId,
-                initialBillNo: initialBillNo,
-                onBack: () {
-                  if (returnCustomerId != null) {
-                    context.go(RoutePaths.customerProfileFor(returnCustomerId));
-                    return;
-                  }
-                  _goBackOr(context, RoutePaths.dashboard);
-                },
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.financeDueReceipts,
-            builder: (context, state) => DueReceiptHistoryScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.reportDayBook,
-            builder: (context, state) => DayBookScreen(
-              initialDate:
-                  DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.reportSales,
-            builder: (context, state) => SalesReportScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.reportPurchase,
-            builder: (context, state) =>
-                const CustomerMetalPurchaseLedgerScreen(
-              title: 'Metal Purchase Report',
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.customerMetalCheckoutReport,
-            builder: (context, state) =>
-                const CustomerMetalCheckoutReportScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.customerMetalPurchaseVoucher,
-            builder: (context, state) {
-              final voucherId = int.tryParse(
-                state.pathParameters['voucherId'] ?? '',
-              );
-              if (voucherId == null) {
-                return const CustomerMetalPurchaseLedgerScreen();
-              }
-              return CustomerMetalPurchaseVoucherDetailScreen(
-                voucherId: voucherId,
-                onBack: () => _goBackOr(
-                  context,
-                  RoutePaths.reportPurchase,
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.reportPnl,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.profitLossRoute),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.reportGst,
-            builder: (context, state) => GstReportHubScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.billingSetup,
-            builder: (context, state) => const BillingSetupWorkspaceScreen(),
-          ),
-          GoRoute(
-            path: '${RoutePaths.settingsMetalCostAnalyser}/audit',
-            redirect: (context, state) => RoutePaths.settingsMetalCostAnalyser,
-          ),
-          GoRoute(
-            path: RoutePaths.accountProfile,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.accountProfileRoute),
-            ),
-          ),
+          ...dashboardSettingsRoutes(),
+          ...customerRoutes(),
+          ...supplierSalesRoutes(),
+          ...inventoryRoutes(),
+          ...financeRoutes(),
+          ...reportRoutes(),
         ],
       ),
     ],

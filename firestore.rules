@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      function isSelf() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      allow get: if isSelf();
+      allow list, delete: if false;
+
+      allow create: if isSelf()
+        && request.resource.data.keys().hasOnly([
+          'uid', 'name', 'email', 'mobile', 'role', 'createdAt',
+          'isActive'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'OWNER'
+        && request.resource.data.isActive == true;
+
+      allow update: if isSelf()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'mobile', 'profileImageUrl', 'updatedAt',
+          'lastLoginAt'
+        ]);
+    }
+  }
+}

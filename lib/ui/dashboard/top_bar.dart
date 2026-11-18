@@ -8,7 +8,7 @@ import '../../logic/dashboard/dashboard_repository.dart';
 import '../../models/dashboard/notification_item.dart';
 import '../../models/dashboard/search_result.dart';
 import '../../constants/enums.dart';
-import '../auth/services/auth_service.dart';
+import '../auth/services/auth_session_controller.dart';
 
 class TopBar extends StatefulWidget {
   final Function(String) onNavChange;
@@ -31,7 +31,6 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
   SearchScope selectedScope = SearchScope.all;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  final AuthService _authService = AuthService();
 
   // ðŸ”¥ SENIOR UPGRADE: Debounce Timer (Performance Saver)
   Timer? _debounce;
@@ -413,7 +412,9 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
     );
 
     if (selectedValue == "logout") {
-      await _authService.logout();
+      await AuthSessionController.instance.signOut();
+    } else if (selectedValue == 'profile') {
+      widget.onNavChange('My Profile');
     }
   }
 

@@ -1,11 +1,16 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../../core/feedback/app_feedback.dart';
 import '../../theme/dashboard/app/uv.dart';
 import 'services/auth_service.dart';
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
+import 'services/auth_session_controller.dart';
+import 'services/installation_account_binding.dart';
+import 'widgets/auth_brand_panel.dart';
+import 'widgets/auth_forms.dart';
+import 'widgets/password_reset_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,542 +20,275 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final AuthService _authService = AuthService();
+  final _session = AuthSessionController.instance;
+  final _authService = AuthService();
+  final _installation = InstallationAccountBinding();
   final _formKey = GlobalKey<FormState>();
-
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _companyController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
+  final _name = TextEditingController();
+  final _mobile = TextEditingController();
 
   bool _isLogin = true;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+  bool _canCreateOwner = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegistrationAvailability();
+  }
+
+  Future<void> _loadRegistrationAvailability() async {
+    try {
+      final canCreateOwner = await _installation.canCreateOwner();
+      if (mounted) setState(() => _canCreateOwner = canCreateOwner);
+    } catch (_) {
+      if (mounted) setState(() => _canCreateOwner = false);
+    }
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _nameController.dispose();
-    _companyController.dispose();
-    _phoneController.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
+    _name.dispose();
+    _mobile.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: UV.colors.bgPrimary,
-      body: Stack(
-        children: [
-          Positioned(
-              top: -100,
-              left: -100,
-              child: _buildGlowOrb(UV.colors.glowPrimary)),
-          Positioned(
-            bottom: -100,
-            right: -100,
-            child: _buildGlowOrb(UV.colors.glowAccent),
-          ),
-          Center(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: UV.layout.cardMaxWidth,
-                maxHeight: UV.layout.cardMaxHeight,
-              ),
-              margin: EdgeInsets.all(UV.layout.pMd),
-              decoration: BoxDecoration(
-                color: UV.colors.glassBase,
-                borderRadius: BorderRadius.circular(UV.layout.radiusLg),
-                border: Border.all(color: UV.colors.glassBorder),
-                boxShadow: [UV.colors.softShadow],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(UV.layout.radiusLg),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: UV.layout.blurMd,
-                    sigmaY: UV.layout.blurMd,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isCompact = constraints.maxWidth < 880;
-                      if (isCompact) {
-                        return Column(
-                          children: [
-                            SizedBox(height: 220, child: _buildLeftPanel()),
-                            Expanded(child: _buildRightPanel()),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          Expanded(flex: 4, child: _buildLeftPanel()),
-                          Expanded(flex: 6, child: _buildRightPanel()),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeftPanel() {
-    return Container(
-      color: UV.colors.overlayDark,
-      padding: EdgeInsets.all(UV.layout.pLg),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            UV.icons.defaultStore,
-            size: UV.layout.iconXl,
-            color: UV.colors.primary,
-          ),
-          SizedBox(height: UV.layout.pMd),
-          Text("LOTUS ERP", style: UV.styles.hero, textAlign: TextAlign.center),
-          SizedBox(height: UV.layout.pSm),
-          Text(
-            "Professional Jewellery Operations Platform",
-            style: UV.styles.label,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: UV.layout.pMd,
-              vertical: UV.layout.pXs,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(color: UV.colors.successBorder),
-              borderRadius: BorderRadius.circular(UV.layout.radiusCircular),
-              color: UV.colors.successBg,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: UV.colors.bgPrimary,
+        body: LayoutBuilder(
+          builder: (context, viewport) {
+            final width = math.min(
+              UV.layout.cardMaxWidth,
+              math.max(0.0, viewport.maxWidth - 32),
+            );
+            final height = math.min(
+              UV.layout.cardMaxHeight,
+              math.max(560.0, viewport.maxHeight - 32),
+            );
+            return Stack(
               children: [
-                Icon(
-                  UV.icons.success,
-                  color: UV.colors.success,
-                  size: UV.layout.iconSm,
+                Positioned(
+                  top: -100,
+                  left: -100,
+                  child: _glowOrb(UV.colors.glowPrimary),
                 ),
-                SizedBox(width: UV.layout.pXs),
-                Text(
-                  "Enterprise Secure",
-                  style: UV.styles.hint.copyWith(
-                    color: UV.colors.success,
-                    fontWeight: FontWeight.bold,
+                Positioned(
+                  bottom: -100,
+                  right: -100,
+                  child: _glowOrb(UV.colors.glowAccent),
+                ),
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                    child: Center(
+                      child: Container(
+                        width: width,
+                        height: height,
+                        margin: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: UV.colors.glassBase,
+                          borderRadius:
+                              BorderRadius.circular(UV.layout.radiusLg),
+                          border: Border.all(color: UV.colors.glassBorder),
+                          boxShadow: [UV.colors.softShadow],
+                        ),
+                        child: ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(UV.layout.radiusLg),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(
+                              sigmaX: UV.layout.blurMd,
+                              sigmaY: UV.layout.blurMd,
+                            ),
+                            child: width < 880
+                                ? Column(
+                                    children: [
+                                      const SizedBox(
+                                        height: 175,
+                                        child: AuthBrandPanel(),
+                                      ),
+                                      Expanded(child: _rightPanel()),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      const Expanded(
+                                        flex: 4,
+                                        child: AuthBrandPanel(),
+                                      ),
+                                      Expanded(flex: 6, child: _rightPanel()),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+            );
+          },
+        ),
+      );
 
-  Widget _buildRightPanel() {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: UV.layout.pXl,
-        vertical: UV.layout.pLg,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(),
-            Text(
-              _isLogin ? "Welcome Back" : "Create Your Account",
-              style: UV.styles.h1,
-            ),
-            SizedBox(height: UV.layout.pXs),
-            Text(
-              _isLogin
-                  ? "Sign in to manage billing, inventory, and daily operations."
-                  : "Set up your showroom account and start working securely.",
-              style: UV.styles.label,
-            ),
-            SizedBox(height: UV.layout.pLg),
-            Expanded(
-              child: SingleChildScrollView(
-                child: _isLogin ? _buildLoginForm() : _buildRegisterForm(),
+  Widget _rightPanel() => Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: UV.layout.pXl,
+          vertical: UV.layout.pLg,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Spacer(),
+              Text(
+                _isLogin ? 'Welcome Back' : 'Create Your Account',
+                style: UV.styles.h1,
               ),
-            ),
-            SizedBox(height: UV.layout.pMd),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _isLogin ? "New here?" : "Already have an account?",
-                  style: UV.styles.body,
+              SizedBox(height: UV.layout.pXs),
+              Text(
+                _isLogin
+                    ? 'Sign in to manage billing, inventory, and daily operations.'
+                    : 'Create the owner account for this shop installation.',
+                style: UV.styles.label,
+              ),
+              SizedBox(height: UV.layout.pLg),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _isLogin
+                      ? SignInForm(
+                          emailController: _email,
+                          passwordController: _password,
+                          isLoading: _isLoading,
+                          passwordVisible: _isPasswordVisible,
+                          onTogglePassword: _togglePassword,
+                          onForgotPassword: _resetPassword,
+                          onSubmit: _handleLogin,
+                        )
+                      : OwnerRegistrationForm(
+                          nameController: _name,
+                          mobileController: _mobile,
+                          emailController: _email,
+                          passwordController: _password,
+                          confirmPasswordController: _confirmPassword,
+                          isLoading: _isLoading,
+                          passwordVisible: _isPasswordVisible,
+                          onTogglePassword: _togglePassword,
+                          onSubmit: _handleRegister,
+                        ),
                 ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isLogin = !_isLogin;
-                      _formKey.currentState?.reset();
-                    });
-                  },
-                  child: Text(
-                    _isLogin ? "Create Account" : "Back to Sign In",
-                    style: UV.styles.action,
+              ),
+              SizedBox(height: UV.layout.pMd),
+              if (_canCreateOwner || !_isLogin)
+                Align(
+                  alignment: Alignment.center,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        _isLogin ? 'New here?' : 'Already have an account?',
+                        style: UV.styles.body,
+                      ),
+                      TextButton(
+                        onPressed: _isLoading ? null : _switchForm,
+                        child: Text(
+                          _isLogin ? 'Create Account' : 'Back to Sign In',
+                          style: UV.styles.action,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginForm() {
-    return Column(
-      children: [
-        _buildInput("Email Address", UV.icons.email, _emailController),
-        SizedBox(height: UV.layout.pMd),
-        _buildInput(
-          "Password",
-          UV.icons.lock,
-          _passwordController,
-          isPass: true,
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: _showForgotPasswordDialog,
-            child: Text(
-              "Forgot Password?",
-              style: UV.styles.body.copyWith(
-                color: UV.colors.primary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            ],
           ),
         ),
-        const SizedBox(height: 10),
-        _buildGradientButton("SIGN IN", _handleLogin),
-      ],
-    );
-  }
+      );
 
-  Widget _buildRegisterForm() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildInput(
-                "Owner Name",
-                UV.icons.person,
-                _nameController,
-              ),
-            ),
-            SizedBox(width: UV.layout.pSm),
-            Expanded(
-              child: _buildInput(
-                "Mobile",
-                UV.icons.phone,
-                _phoneController,
-                isNumber: true,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: UV.layout.pMd),
-        _buildInput("Company Name", UV.icons.business, _companyController),
-        SizedBox(height: UV.layout.pMd),
-        _buildInput("Email Address", UV.icons.email, _emailController),
-        SizedBox(height: UV.layout.pMd),
-        _buildInput(
-          "Password",
-          UV.icons.lock,
-          _passwordController,
-          isPass: true,
-        ),
-        const SizedBox(height: 30),
-        _buildGradientButton("CREATE ACCOUNT", _handleRegister),
-      ],
-    );
-  }
-
-  String? _validateField(
-    String label,
-    String? value, {
-    bool isPass = false,
-    bool isNumber = false,
-  }) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return "This field is required.";
-
-    if (label == "Email Address") {
-      final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-      if (!emailRegex.hasMatch(text)) {
-        return "Enter a valid email address.";
-      }
-    }
-
-    if (isPass && text.length < 6) {
-      return "Password must be at least 6 characters.";
-    }
-
-    if (isNumber && text.length != 10) {
-      return "Enter a valid 10-digit mobile number.";
-    }
-
-    return null;
-  }
-
-  Widget _buildInput(
-    String label,
-    IconData icon,
-    TextEditingController controller, {
-    bool isPass = false,
-    bool isNumber = false,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: isPass ? !_isPasswordVisible : false,
-      keyboardType: isNumber
-          ? TextInputType.number
-          : label == "Email Address"
-              ? TextInputType.emailAddress
-              : TextInputType.text,
-      inputFormatters: isNumber
-          ? [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ]
-          : [],
-      style: UV.styles.body,
-      validator: (v) => _validateField(
-        label,
-        v,
-        isPass: isPass,
-        isNumber: isNumber,
-      ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: UV.styles.hint,
-        prefixIcon: Icon(
-          icon,
-          color: UV.colors.primary.withValues(alpha: 0.7),
-          size: UV.layout.iconMd,
-        ),
-        suffixIcon: isPass
-            ? IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? UV.icons.visible : UV.icons.visibleOff,
-                  color: UV.colors.textSecondary,
-                  size: UV.layout.iconMd,
-                ),
-                onPressed: () => setState(
-                  () => _isPasswordVisible = !_isPasswordVisible,
-                ),
-              )
-            : null,
-        filled: true,
-        fillColor: UV.colors.bgSecondary,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UV.layout.radiusSm),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(UV.layout.radiusSm),
-          borderSide: BorderSide(color: UV.colors.inputBorderFocus),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGradientButton(String text, VoidCallback onTap) {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: UV.colors.goldGradient,
-        borderRadius: BorderRadius.circular(UV.layout.radiusSm),
-        boxShadow: [
-          BoxShadow(
-            color: UV.colors.primary.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+  Widget _glowOrb(Color color) => Container(
+        width: UV.layout.glowOrbSize,
+        height: UV.layout.glowOrbSize,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: UV.layout.blurGlow,
+            sigmaY: UV.layout.blurGlow,
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(UV.layout.radiusSm),
-          ),
+          child: Container(color: Colors.transparent),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.black,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(text, style: UV.styles.button),
-      ),
-    );
+      );
+
+  void _togglePassword() =>
+      setState(() => _isPasswordVisible = !_isPasswordVisible);
+
+  void _switchForm() {
+    if (_isLogin && !_canCreateOwner) return;
+    _formKey.currentState?.reset();
+    _password.clear();
+    _confirmPassword.clear();
+    setState(() {
+      _isLogin = !_isLogin;
+      _isPasswordVisible = false;
+    });
   }
 
-  Widget _buildGlowOrb(Color color) {
-    return Container(
-      width: UV.layout.glowOrbSize,
-      height: UV.layout.glowOrbSize,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: UV.layout.blurGlow,
-          sigmaY: UV.layout.blurGlow,
-        ),
-        child: Container(color: Colors.transparent),
-      ),
-    );
-  }
-
-  void _showForgotPasswordDialog() {
-    final resetEmailController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: UV.colors.bgSecondary,
-        title: Text("Reset Password", style: UV.styles.h2),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Enter your email address to receive a password reset link.",
-              style: UV.styles.body,
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: resetEmailController,
-              style: UV.styles.body,
-              decoration: InputDecoration(
-                hintText: "name@example.com",
-                hintStyle: UV.styles.hint,
-                filled: true,
-                fillColor: UV.colors.bgPrimary,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "Cancel",
-              style: UV.styles.action.copyWith(color: Colors.grey),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (resetEmailController.text.trim().isEmpty) return;
-              Navigator.pop(context);
-
-              final res = await _authService.resetPassword(
-                resetEmailController.text.trim(),
-              );
-
-              if (!context.mounted) return;
-              AppFeedback.show(
-                context,
-                type: res == "SUCCESS"
-                    ? AppFeedbackType.success
-                    : AppFeedbackType.error,
-                message: res == "SUCCESS"
-                    ? "Password reset link sent. Please check your email."
-                    : res,
-              );
-            },
-            child: Text("Send Link", style: UV.styles.action),
-          ),
-        ],
-      ),
+  Future<void> _resetPassword() async {
+    final result = await showPasswordResetDialog(context, _authService);
+    if (!mounted || result == null) return;
+    AppFeedback.show(
+      context,
+      type: result.isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
+      message: result.message,
     );
   }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-    final res = await _authService.loginUser(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+    final result = await _session.loginUser(
+      email: _email.text,
+      password: _password.text,
     );
-
     if (!mounted) return;
     setState(() => _isLoading = false);
-
-    if (res == "SUCCESS") {
-      AppFeedback.show(
-        context,
-        type: AppFeedbackType.success,
-        message: "Signed in successfully. Redirecting...",
-        duration: const Duration(seconds: 1),
-      );
-      return;
-    }
-
+    if (result.isSuccess) return;
     AppFeedback.show(
       context,
       type: AppFeedbackType.error,
-      message: res,
+      message: result.message,
     );
   }
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-    final res = await _authService.registerOwner(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-      ownerName: _nameController.text.trim(),
-      mobile: _phoneController.text.trim(),
-      companyName: _companyController.text.trim(),
+    final result = await _session.registerOwner(
+      email: _email.text,
+      password: _password.text,
+      ownerName: _name.text,
+      mobile: _mobile.text,
     );
-
     if (!mounted) return;
     setState(() => _isLoading = false);
-
-    if (res == "SUCCESS") {
-      AppFeedback.show(
-        context,
-        type: AppFeedbackType.warning,
-        message:
-            "Account created successfully. Please verify your email and sign in.",
-      );
+    if (result.accountCreated) {
+      _password.clear();
+      _confirmPassword.clear();
       setState(() => _isLogin = true);
-      return;
     }
-
     AppFeedback.show(
       context,
-      type: AppFeedbackType.error,
-      message: res,
+      type: result.accountCreated
+          ? AppFeedbackType.warning
+          : AppFeedbackType.error,
+      message: result.message,
     );
   }
 }

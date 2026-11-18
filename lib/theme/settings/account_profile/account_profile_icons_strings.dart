@@ -70,7 +70,7 @@ class AccountProfileStrings {
   static const String successPassword = 'Password changed successfully!';
   static const String errorPassMismatch = 'New passwords do not match';
   static const String errorPassLength =
-      'Password must be at least 6 characters';
+      'Password must be at least 8 characters';
   static const String errorWrongPass = 'Current password is incorrect';
   static const String errorNameRequired = 'Full name is required';
 }

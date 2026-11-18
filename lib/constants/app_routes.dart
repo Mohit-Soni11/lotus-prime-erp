@@ -120,6 +120,7 @@ class RoutePaths {
   RoutePaths._();
 
   static const String login = '/login';
+  static const String authCheck = '/auth-check';
   static const String app = '/app';
 
   // Core
