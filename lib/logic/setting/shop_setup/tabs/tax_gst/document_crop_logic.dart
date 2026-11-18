@@ -11,7 +11,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart' as native_crop;
-import 'package:path_provider/path_provider.dart';
+import 'package:lotus_erp/core/storage/app_storage_paths.dart';
 import 'package:path/path.dart' as p;
 import '../../../../../core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
@@ -144,7 +144,7 @@ class DocumentCropLogic {
   }
 
   Future<Directory> _managedStorageDir() async {
-    final supportDir = await getApplicationSupportDirectory();
+    final supportDir = await AppStoragePaths.supportDirectory();
     final storageDir = Directory(p.join(supportDir.path, 'shop_documents'));
     await storageDir.create(recursive: true);
     return storageDir;

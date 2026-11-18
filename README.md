@@ -8,7 +8,7 @@ and reporting.
 
 - Flutter and Dart
 - Drift with SQLite for local persistence
-- Firebase for authentication and cloud services
+- Offline local owner authentication with encrypted session storage
 - GoRouter for declarative navigation
 - Provider and ChangeNotifier in the current UI state layer
 
@@ -20,6 +20,11 @@ flutter analyze
 flutter test
 flutter build windows
 ```
+
+## Windows Installation
+
+See [installer/INSTALL.md](installer/INSTALL.md) for the Version 1 installer,
+data location, backup procedure, and the update process.
 
 ## Engineering Standards
 

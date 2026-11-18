@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../../../../core/storage/app_storage_paths.dart';
 
 enum SupplierBillAttachmentMode { imageOnly, imageOrPdf }
 
@@ -36,7 +36,7 @@ final class SupplierBillAttachmentService {
     }
 
     final source = File(sourcePath);
-    final docDir = await getApplicationDocumentsDirectory();
+    final docDir = await AppStoragePaths.documentsDirectory();
     final targetDir = Directory(
       p.join(docDir.path, 'lotus_erp', 'supplier_bills'),
     );

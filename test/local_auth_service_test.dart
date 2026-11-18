@@ -3,7 +3,21 @@ import 'package:lotus_erp/database/local_database/shop_database_helper.dart';
 import 'package:lotus_erp/database/local_database/shop_database_schema.dart';
 import 'package:lotus_erp/ui/auth/services/auth_service.dart';
 import 'package:lotus_erp/ui/auth/services/local_account_repository.dart';
+import 'package:lotus_erp/ui/auth/services/local_session_store.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+class _MemorySessionStore implements LocalSessionStore {
+  String? userId;
+
+  @override
+  Future<String?> readUserId() async => userId;
+
+  @override
+  Future<void> writeUserId(String value) async => userId = value;
+
+  @override
+  Future<void> clear() async => userId = null;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +37,8 @@ void main() {
     addTearDown(db.close);
     final accounts =
         LocalAccountRepository(helper: ShopDatabaseHelper.forTesting(db));
-    final auth = AuthService.forTesting(accounts);
+    final sessions = _MemorySessionStore();
+    final auth = AuthService.forTesting(accounts, sessionStore: sessions);
 
     expect(await auth.hasOwnerAccount(), isFalse);
     final created = await auth.registerOwner(
@@ -54,6 +69,9 @@ void main() {
             .isSuccess,
         isTrue);
     expect((await auth.getUserDetails())?['name'], 'Shop Owner');
+    final reopened = AuthService.forTesting(accounts, sessionStore: sessions);
+    expect(await reopened.authUserIds().first, auth.currentUserId);
+    expect((await reopened.validateCurrentSession()).isAuthorized, isTrue);
     expect(
         (await auth.changePassword(
                 currentPassword: 'wrong', newPassword: 'newPassword123'))
@@ -66,6 +84,9 @@ void main() {
             .isSuccess,
         isTrue);
     await auth.signOut();
+    final afterLogout =
+        AuthService.forTesting(accounts, sessionStore: sessions);
+    expect(await afterLogout.authUserIds().first, isNull);
     expect(
         (await auth.loginUser(
                 username: 'owner', password: 'initialPassword123'))

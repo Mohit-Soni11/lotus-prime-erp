@@ -16,7 +16,7 @@ extension NewGirviPhotoActions on _NewGirviScreenState {
     if (selectedPaths.isEmpty || !mounted) return;
 
     try {
-      final appDir = await getApplicationDocumentsDirectory();
+      final appDir = await AppStoragePaths.documentsDirectory();
       final photoDir =
           Directory(p.join(appDir.path, 'lotus_erp', 'girvi_item_photos'));
       if (!photoDir.existsSync()) {
@@ -162,7 +162,7 @@ extension NewGirviPhotoActions on _NewGirviScreenState {
 
     try {
       final source = File(path);
-      final appDir = await getApplicationDocumentsDirectory();
+      final appDir = await AppStoragePaths.documentsDirectory();
       final photoDir =
           Directory(p.join(appDir.path, 'lotus_erp', 'girvi_item_photos'));
       if (!photoDir.existsSync()) {

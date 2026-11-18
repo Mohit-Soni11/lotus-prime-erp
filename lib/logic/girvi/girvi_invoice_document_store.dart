@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../../core/storage/app_storage_paths.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -62,7 +62,7 @@ class GirviInvoiceDocumentStore {
     required int? loanId,
     required String ticketNo,
   }) async {
-    final directory = await getApplicationSupportDirectory();
+    final directory = await AppStoragePaths.supportDirectory();
     final safeLoan = loanId == null ? 'unlinked' : 'loan_$loanId';
     final safeTicket = ticketNo.trim().replaceAll(
           RegExp(r'[^A-Za-z0-9_-]+'),
@@ -80,7 +80,7 @@ class GirviInvoiceDocumentStore {
   }
 
   Future<File> _legacyInvoiceFile(String ticketNo) async {
-    final directory = await getApplicationSupportDirectory();
+    final directory = await AppStoragePaths.supportDirectory();
     final safeTicket = ticketNo.trim().replaceAll(
           RegExp(r'[^A-Za-z0-9_-]+'),
           '_',

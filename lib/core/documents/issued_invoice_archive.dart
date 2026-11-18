@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../storage/app_storage_paths.dart';
 
 enum IssuedInvoiceKind { sales, booking, returnVoucher }
 
@@ -127,7 +127,7 @@ class IssuedInvoiceArchive {
     final encodedNumber =
         base64UrlEncode(utf8.encode(normalizedNumber)).replaceAll('=', '');
     final support =
-        await (directoryProvider?.call() ?? getApplicationSupportDirectory());
+        await (directoryProvider?.call() ?? AppStoragePaths.supportDirectory());
     return File(p.join(
       support.path,
       'lotus_erp',

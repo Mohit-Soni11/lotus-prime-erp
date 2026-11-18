@@ -645,16 +645,16 @@ void main() {
     final grade = snapshot.grades.single;
 
     expect(grade.gradeLabel, 'Bichiya');
-    expect(grade.quantityUnitLabel, 'pair');
-    expect(grade.availableQuantityLabel, '21 pairs');
-    expect(grade.soldQuantityLabel, '1 pair');
+    expect(grade.quantityUnitLabel, 'packet');
+    expect(grade.availableQuantityLabel, '21 packets');
+    expect(grade.soldQuantityLabel, '1 packet');
     expect(grade.availableNetWeight, closeTo(90, 0.001));
     expect(grade.availableCost, closeTo(5400, 0.001));
 
     final batch = (await repository.fetchGradeBatchRows('Silver')).single.batch;
-    expect(batch.quantityUnitLabel, 'pair');
-    expect(batch.availableQuantityLabel, '21 pairs');
-    expect(batch.soldQuantityLabel, '1 pair');
+    expect(batch.quantityUnitLabel, 'packet');
+    expect(batch.availableQuantityLabel, '21 packets');
+    expect(batch.soldQuantityLabel, '1 packet');
   });
 
   test(
@@ -921,9 +921,9 @@ void main() {
     final grade = snapshot.grades.single;
 
     expect(grade.gradeLabel, 'Bichiya Packet');
-    expect(grade.quantityUnitLabel, 'pair');
-    expect(grade.availableQuantityLabel, '21 pairs');
-    expect(grade.soldQuantityLabel, '1 pair');
+    expect(grade.quantityUnitLabel, 'packet');
+    expect(grade.availableQuantityLabel, '21 packets');
+    expect(grade.soldQuantityLabel, '1 packet');
   });
 }
 

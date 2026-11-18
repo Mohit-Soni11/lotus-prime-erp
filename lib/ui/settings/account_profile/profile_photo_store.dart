@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
+import '../../../core/storage/app_storage_paths.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePhotoStore {
@@ -15,7 +15,7 @@ class ProfilePhotoStore {
   }
 
   Future<File> save(String uid, File selected) async {
-    final base = await getApplicationSupportDirectory();
+    final base = await AppStoragePaths.supportDirectory();
     final directory = Directory('${base.path}${Platform.pathSeparator}profile');
     await directory.create(recursive: true);
     final target = File(

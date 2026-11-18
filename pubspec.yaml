@@ -2,7 +2,7 @@ name: lotus_erp
 description: "Lotus ERP - Enterprise Resource Planning System (Professional Edition)"
 publish_to: 'none'
 
-version: 1.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -35,6 +35,7 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.5
   shared_preferences: ^2.5.4
+  flutter_secure_storage: ^10.3.4
 
   # --- 5. MEDIA ENGINE ---
   image_picker: ^1.1.2

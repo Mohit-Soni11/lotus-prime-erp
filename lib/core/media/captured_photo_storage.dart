@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../storage/app_storage_paths.dart';
 
 class CapturedPhotoStorage {
   CapturedPhotoStorage._();
@@ -17,7 +17,7 @@ class CapturedPhotoStorage {
       throw StateError('Captured photo file was not found.');
     }
 
-    final root = await getApplicationDocumentsDirectory();
+    final root = await AppStoragePaths.documentsDirectory();
     final directory = Directory(
       p.join(root.path, 'Lotus ERP', 'media', module),
     );
@@ -41,7 +41,7 @@ class CapturedPhotoStorage {
       throw StateError('Photo data was empty.');
     }
 
-    final root = await getApplicationDocumentsDirectory();
+    final root = await AppStoragePaths.documentsDirectory();
     final directory = Directory(
       p.join(root.path, 'Lotus ERP', 'media', module),
     );

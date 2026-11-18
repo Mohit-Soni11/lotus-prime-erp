@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../../core/storage/app_storage_paths.dart';
 
 import '../../config/db_config.dart';
 import '../../config/env_config.dart';
@@ -3183,7 +3183,7 @@ const List<String> _billingSetupSchemaSafetySql = [
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
+    final dbFolder = await AppStoragePaths.documentsDirectory();
     final file = File(p.join(dbFolder.path, DbConfig.dbName));
     final backup = await DatabaseMigrationBackup.createIfNeeded(
         file, DbConfig.schemaVersion);

@@ -548,7 +548,7 @@ extension NewGirviActions on _NewGirviScreenState {
         return;
       }
 
-      final appDir = await getApplicationDocumentsDirectory();
+      final appDir = await AppStoragePaths.documentsDirectory();
       final photoDir =
           Directory(p.join(appDir.path, 'lotus_erp', 'girvi_kyc_photos'));
       if (!photoDir.existsSync()) {

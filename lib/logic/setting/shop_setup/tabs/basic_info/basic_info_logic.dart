@@ -10,7 +10,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:lotus_erp/core/storage/app_storage_paths.dart';
 
 // NOTE: Adjust paths according to your structure
 import '../../../../../../../models/setting/shop_setup/shop_profile_model.dart';
@@ -227,7 +227,7 @@ class BasicInfoLogic {
   }
 
   Future<File> _persistIdentityImage(File source, String fileStem) async {
-    final supportDir = await getApplicationSupportDirectory();
+    final supportDir = await AppStoragePaths.supportDirectory();
     final identityDir = Directory(p.join(supportDir.path, "shop_identity"));
     await identityDir.create(recursive: true);
     final extension = p.extension(source.path).toLowerCase();

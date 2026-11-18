@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import '../../core/storage/app_storage_paths.dart';
 import 'shop_database_schema.dart';
 
 /// Data access for the Shop Profile master configuration.
@@ -30,8 +31,8 @@ class ShopDatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    final databasePath = await getDatabasesPath();
-    final path = join(databasePath, filePath);
+    final databaseDirectory = await AppStoragePaths.shopDatabaseDirectory();
+    final path = join(databaseDirectory.path, filePath);
 
     return openDatabase(
       path,

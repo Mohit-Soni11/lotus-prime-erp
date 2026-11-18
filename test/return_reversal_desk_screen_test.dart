@@ -608,7 +608,7 @@ void main() {
     expect(find.text('LESS'), findsNothing);
     expect(find.text('MAKING'), findsNothing);
     expect(find.text('TOTAL'), findsNothing);
-    expect(find.text('1 PAIR'), findsWidgets);
+    expect(find.text('1 PCS'), findsWidgets);
     expect(find.text('12%'), findsOneWidget);
     expect(find.text('DISCOUNT'), findsNothing);
     expect(find.text('ACT'), findsNothing);

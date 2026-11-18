@@ -136,7 +136,7 @@ void main() {
 
       expect(
         item.availableUnitProfiles.map((unit) => unit.shortName),
-        ['PCS', 'PACK', 'PAIR', 'SET'],
+        ['PCS', 'PAIR', 'SET', 'PACK', 'LOT'],
       );
 
       item.setUnitProfile(PosItemUnitProfile.packet);

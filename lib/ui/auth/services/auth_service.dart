@@ -6,19 +6,22 @@ import 'auth_result.dart';
 import 'auth_session_gateway.dart';
 import 'local_account_repository.dart';
 import 'local_password_hasher.dart';
+import 'local_session_store.dart';
 
 class AuthService implements AuthSessionGateway {
-  AuthService._(this._accounts, this._hasher);
+  AuthService._(this._accounts, this._hasher, this._sessions);
 
-  static final AuthService _instance =
-      AuthService._(LocalAccountRepository(), LocalPasswordHasher());
+  static final AuthService _instance = AuthService._(LocalAccountRepository(),
+      LocalPasswordHasher(), const SecureLocalSessionStore());
   factory AuthService() => _instance;
 
-  AuthService.forTesting(LocalAccountRepository accounts)
-      : this._(accounts, LocalPasswordHasher());
+  AuthService.forTesting(LocalAccountRepository accounts,
+      {required LocalSessionStore sessionStore})
+      : this._(accounts, LocalPasswordHasher(), sessionStore);
 
   final LocalAccountRepository _accounts;
   final LocalPasswordHasher _hasher;
+  final LocalSessionStore _sessions;
   final _changes = StreamController<String?>.broadcast();
   String? _signedInUid;
 
@@ -27,6 +30,15 @@ class AuthService implements AuthSessionGateway {
 
   @override
   Stream<String?> authUserIds() async* {
+    final storedId = await _sessions.readUserId();
+    if (storedId != null) {
+      final account = await _accounts.read();
+      if (account?['uid'] == storedId) {
+        _signedInUid = storedId;
+      } else {
+        await _sessions.clear();
+      }
+    }
     yield _signedInUid;
     yield* _changes.stream;
   }
@@ -64,6 +76,7 @@ class AuthService implements AuthSessionGateway {
             AuthResultCode.failure, 'Username or password is incorrect.');
       }
       await _accounts.update({'failed_attempts': 0, 'locked_until': null});
+      await _sessions.writeUserId(record['uid'] as String);
       _signedInUid = record['uid'] as String;
       _changes.add(_signedInUid);
       return const AuthResult(AuthResultCode.success, 'Signed in.');
@@ -128,6 +141,7 @@ class AuthService implements AuthSessionGateway {
 
   @override
   Future<void> signOut() async {
+    await _sessions.clear();
     _signedInUid = null;
     _changes.add(null);
   }
@@ -213,6 +227,7 @@ class AuthService implements AuthSessionGateway {
       'locked_until': null,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
+    await signOut();
     return AuthResult(AuthResultCode.success, 'Password reset.',
         recoveryCode: nextRecoveryCode);
   }

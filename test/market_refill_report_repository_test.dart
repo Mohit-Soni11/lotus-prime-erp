@@ -27,6 +27,7 @@ void main() {
       itemName: 'Dulhan Payal',
       subCategory: 'Payal',
       metal: 'Silver',
+      quantityMode: 'PAIR',
       createdAt: now,
     );
     await _insertStockUnit(
@@ -58,6 +59,7 @@ void main() {
       itemName: 'Simple Payal',
       subCategory: 'Payal',
       metal: 'Silver',
+      quantityMode: 'PAIR',
       createdAt: now,
     );
     await _insertStockUnit(
@@ -344,9 +346,10 @@ Future<int> _insertStockItem(
   required String itemName,
   required String subCategory,
   required String metal,
+  String quantityMode = 'PCS',
   required DateTime createdAt,
-}) {
-  return database.into(database.stockItems).insert(
+}) async {
+  final stockItemId = await database.into(database.stockItems).insert(
         StockItemsCompanion.insert(
           createdAt: drift.Value(createdAt),
           sku: sku,
@@ -362,6 +365,11 @@ Future<int> _insertStockItem(
           isActive: const drift.Value(true),
         ),
       );
+  await database.customStatement(
+    'UPDATE stock_items SET quantity_mode = ? WHERE id = ?',
+    [quantityMode, stockItemId],
+  );
+  return stockItemId;
 }
 
 Future<void> _insertStockUnit(

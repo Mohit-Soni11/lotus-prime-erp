@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
+import '../../core/storage/app_storage_paths.dart';
 
 class CustomerMediaStore {
   CustomerMediaStore({Directory? root}) : _rootOverride = root;
@@ -8,7 +8,7 @@ class CustomerMediaStore {
   final Directory? _rootOverride;
 
   Future<Directory> _root() async {
-    final support = _rootOverride ?? await getApplicationSupportDirectory();
+    final support = _rootOverride ?? await AppStoragePaths.supportDirectory();
     return Directory('${support.path}${Platform.pathSeparator}customer_media');
   }
 
