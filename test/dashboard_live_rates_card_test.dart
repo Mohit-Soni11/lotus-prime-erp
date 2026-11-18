@@ -39,7 +39,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: LiveRatesCard(ratesStream: Stream.value(rates)),
+          body: SingleChildScrollView(
+            child: LiveRatesCard(ratesStream: Stream.value(rates)),
+          ),
         ),
       ),
     );
@@ -80,6 +82,10 @@ void main() {
     tester.view.physicalSize = const Size(600, 700);
     await tester.pump();
     expect(find.text('Per kg'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    tester.view.physicalSize = const Size(760, 700);
+    await tester.pump();
     expect(tester.takeException(), isNull);
   });
 }
