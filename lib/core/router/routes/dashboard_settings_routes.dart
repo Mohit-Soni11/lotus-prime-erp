@@ -8,17 +8,11 @@ List<RouteBase> dashboardSettingsRoutes() => [
             context,
             RouteMapper.toPath(routeId),
           ),
-          onNavigateWithId: (routeId, {customerId}) {
-            if (routeId == AppRoutes.customerProfileRoute &&
-                customerId != null) {
-              context.go(RoutePaths.customerProfileFor(customerId));
-            } else {
-              WorkspaceNavigation.open(
-                context,
-                RouteMapper.toPath(routeId),
-              );
-            }
-          },
+          onOpenCustomer: (customerId) =>
+              context.go(PaymentStatusNavigation.customer(customerId)),
+          onOpenInvoice: (billId, customerId) => context.go(
+            PaymentStatusNavigation.invoice(billId, customerId),
+          ),
         ),
       ),
       GoRoute(

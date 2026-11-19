@@ -1,266 +1,93 @@
-// =============================================================================
-// FILE        : payment_status_logic.dart
-// MODULE      : Dashboard / Payment Status
-// LAYER       : Logic (Business Logic)
-// DESCRIPTION : Manages the dashboard payment status card data.
-//
-//               DB CONNECTIONS:
-//               • Bills table     → payment data (billNo, amounts, date, status)
-//               • Customers table → customer name, mobile, id (for navigation)
-//
-//               LIVE WATCHING:
-//               Watches the bills table and refreshes automatically when
-//               payment data changes.
-//
-//               LOGIC:
-//               • paidAmount = bills.paidAmount (new column from v5)
-//               • dueAmount  = finalAmount - paidAmount
-//               • status     = PAID / PARTIAL / UNPAID (computed)
-//               • Summary    = counts + sum of amounts
-//               • Filter     = ALL / DUE / PAID tabs
-//               • Sort       = Latest bills first
-//               • Limit      = 10 bills max (performance)
-//
-//               NAVIGATION:
-//               • Customer name tap → customerProfileRoute
-// =============================================================================
-
 import 'dart:async';
-//import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:drift/drift.dart';
-import 'package:lotus_erp/database/db/app_database.dart';
-import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
-import '../../../models/dashboard/payment_bill_item.dart';
+
+import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/payment_status_model.dart';
-import '../../../core/logging/app_logger.dart';
+import '../../../repositories/dashboard/payment_status_repository.dart';
 
 class PaymentStatusLogic extends ChangeNotifier {
-  // ── Dependencies ───────────────────────────────────────────────────────────
-  final AppDatabase _db;
-  PaymentStatusLogic({AppDatabase? db}) : _db = db ?? AppDatabase() {
-    _startLiveWatch();
+  PaymentStatusLogic({
+    PaymentStatusRepository? repository,
+    DateTime Function()? clock,
+  })  : _repository = repository ?? PaymentStatusRepository(AppDatabase()),
+        _clock = clock ?? DateTime.now {
+    _watchToday();
   }
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  PaymentStatusModel _data = PaymentStatusModel.loading();
-  bool _isExpanded = false; // Show more / show less
+  final PaymentStatusRepository _repository;
+  final DateTime Function() _clock;
+  StreamSubscription<PaymentStatusModel>? _subscription;
+  Timer? _dayTimer;
+
+  PaymentStatusModel _data = PaymentStatusModel.loading;
   bool _hasError = false;
+  int _visibleCount = 3;
 
   PaymentStatusModel get data => _data;
-  bool get isExpanded => _isExpanded;
-  bool get hasError => _hasError;
   bool get isLoading => _data.isLoading;
+  bool get hasError => _hasError;
+  int get visibleCount => _visibleCount;
+  bool get hasMore => _data.filteredBills.length > _visibleCount;
 
-  // Max bills dikhane ki limit
-  static const int _kVisibleLimit = 3;
-  static const int _kExpandedLimit = 10;
-  static const int _kFetchLimit = 10; // DB se kitne lao
-  static const List<String> _billLifecycleStatuses = [
-    'ACTIVE',
-    'PARTIALLY_RETURNED',
-    'RETURNED',
-  ];
-
-  // Kitne bills dikhenge currently
-  int get visibleCount => _isExpanded ? _kExpandedLimit : _kVisibleLimit;
-
-  // ── DB Subscription ────────────────────────────────────────────────────────
-  StreamSubscription? _billsSub;
-
-  // ==========================================
-  // LIVE WATCH — Bills table change hone par auto-update
-  // ==========================================
-  void _startLiveWatch() {
-    // Recent bills watch — latest pehle, limit se zyada mat lao
-    final query = _db.select(_db.bills)
-      ..where((t) => t.status.isIn(_billLifecycleStatuses))
-      ..orderBy([
-        (t) => OrderingTerm.desc(t.updatedAt),
-        (t) => OrderingTerm.desc(t.billDate),
-        (t) => OrderingTerm.desc(t.id),
-      ])
-      ..limit(_kFetchLimit);
-
-    _billsSub = query.watch().listen(
-      (bills) => _processBills(bills),
-      onError: (_) {
+  void _watchToday() {
+    _subscription?.cancel();
+    _dayTimer?.cancel();
+    final now = _clock();
+    final nextDay = DateTime(now.year, now.month, now.day + 1);
+    _dayTimer = Timer(nextDay.difference(now), () {
+      _data = PaymentStatusModel.loading;
+      _visibleCount = 3;
+      notifyListeners();
+      _watchToday();
+    });
+    _subscription = _repository.watchDay(now).listen(
+      (snapshot) {
+        _data = PaymentStatusModel(
+          summary: snapshot.summary,
+          bills: snapshot.bills,
+          activeTab: _data.activeTab,
+        );
+        _hasError = false;
+        notifyListeners();
+      },
+      onError: (Object error, StackTrace stackTrace) {
         _hasError = true;
         notifyListeners();
       },
     );
   }
 
-  // ==========================================
-  // PROCESS — Build PaymentBillItem records from bills.
-  // ==========================================
-  Future<void> _processBills(List<Bill> bills) async {
-    try {
-      final List<PaymentBillItem> items = [];
-
-      for (final bill in bills) {
-        // Fetch customer data when a customer id is available.
-        String customerName = bill.customerName ?? 'Walk-in Customer';
-        int? customerId = bill.customerId;
-
-        if (customerId != null) {
-          final customer = await (_db.select(_db.customers)
-                ..where((t) => t.id.equals(customerId)))
-              .getSingleOrNull();
-          if (customer != null) {
-            customerName = customer.name;
-          }
-        }
-
-        // Compute current payment amounts.
-        final double total = bill.finalAmount;
-        final double paid = bill.paidAmount;
-        final double due = _currentDue(bill);
-        final PaymentStatus status = _statusFromDue(paid: paid, due: due);
-
-        items.add(PaymentBillItem(
-          billId: bill.id,
-          billNo: bill.billNo,
-          customerName: customerName,
-          customerInitials: PaymentBillItem.extractInitials(customerName),
-          customerId: customerId,
-          mobile: bill.mobile ?? '',
-          totalAmount: total,
-          paidAmount: paid,
-          dueAmount: due,
-          billDate: bill.billDate,
-          status: status,
-        ));
-      }
-
-      // Compute dashboard summary.
-      final summary = _computeSummary(items);
-
-      _data = PaymentStatusModel(
-        summary: summary,
-        bills: items,
-        activeTab: _data.activeTab, // Preserve the active tab.
-      );
-      _hasError = false;
-      notifyListeners();
-    } catch (e) {
-      AppLogger.debug('PaymentStatusLogic error: $e');
-      _hasError = true;
-      notifyListeners();
-    }
-  }
-
-  // ==========================================
-  // SUMMARY COMPUTE
-  // ==========================================
-  PaymentSummary _computeSummary(List<PaymentBillItem> items) {
-    double collected = 0;
-    double pending = 0;
-    int paidCnt = 0, partialCnt = 0, unpaidCnt = 0;
-
-    for (final item in items) {
-      collected += item.paidAmount;
-      pending += item.dueAmount;
-      switch (item.status) {
-        case PaymentStatus.paid:
-          paidCnt++;
-          break;
-        case PaymentStatus.partial:
-          partialCnt++;
-          break;
-        case PaymentStatus.unpaid:
-          unpaidCnt++;
-          break;
-      }
-    }
-
-    return PaymentSummary(
-      totalBills: items.length,
-      totalCollected: collected,
-      totalPending: pending,
-      paidCount: paidCnt,
-      partialCount: partialCnt,
-      unpaidCount: unpaidCnt,
-    );
-  }
-
-  double _currentDue(Bill bill) {
-    return BillDuePolicy.financeDue(bill);
-  }
-
-  PaymentStatus _statusFromDue({
-    required double paid,
-    required double due,
-  }) {
-    if (due <= 0.5) return PaymentStatus.paid;
-    if (paid > 0.5) return PaymentStatus.partial;
-    return PaymentStatus.unpaid;
-  }
-
-  // ==========================================
-  // INTERACTIONS
-  // ==========================================
-
-  /// Changes the active filter tab.
   void setTab(PaymentFilterTab tab) {
+    if (_data.activeTab == tab) return;
     _data = _data.withTab(tab);
+    _visibleCount = 3;
     notifyListeners();
   }
 
-  /// Show More / Show Less toggle
   void toggleExpanded() {
-    _isExpanded = !_isExpanded;
+    _visibleCount = hasMore ? _visibleCount + 10 : 3;
     notifyListeners();
   }
 
-  /// Retry on error
-  void retry() => _startLiveWatch();
-
-  // ==========================================
-  // FORMATTERS — Indian currency style
-  // ==========================================
-  static String formatAmount(double amount) {
-    if (amount >= 10000000) {
-      return '₹${(amount / 10000000).toStringAsFixed(1)}Cr';
-    } else if (amount >= 100000) {
-      return '₹${(amount / 100000).toStringAsFixed(1)}L';
-    } else if (amount >= 1000) {
-      return '₹${(amount / 1000).toStringAsFixed(1)}K';
-    }
-    return NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: '₹',
-      decimalDigits: 0,
-    ).format(amount);
+  void retry() {
+    _hasError = false;
+    _data = PaymentStatusModel.loading;
+    notifyListeners();
+    _watchToday();
   }
 
-  static String formatAmountFull(double amount) {
-    return NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: '₹',
-      decimalDigits: 2,
-    ).format(amount);
-  }
+  static String formatAmountFull(double amount) => NumberFormat.currency(
+        locale: 'en_IN',
+        symbol: '₹',
+        decimalDigits: 2,
+      ).format(amount);
 
-  static String formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final billDay = DateTime(date.year, date.month, date.day);
-    final diff = today.difference(billDay).inDays;
-
-    if (diff == 0) return 'Today';
-    if (diff == 1) return 'Yesterday';
-    if (diff < 7) return '$diff days ago';
-    return DateFormat('dd MMM').format(date);
-  }
-
-  // ==========================================
-  // CLEANUP
-  // ==========================================
   @override
   void dispose() {
-    _billsSub?.cancel();
+    _dayTimer?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 }

@@ -15,9 +15,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../constants/app_routes.dart';
 import 'notice_recovery_navigation.dart';
+import 'payment_status_navigation.dart';
 import 'workspace_navigation.dart';
 import 'workspace_transition_page.dart';
-import '../../theme/dashboard/app/uv.dart';
 
 import '../../ui/auth/login_screen.dart';
 import '../../ui/auth/auth_gate_screen.dart';
@@ -104,46 +104,6 @@ void _goBackOr(BuildContext context, String fallbackPath) {
 
 void initAuthRouting() {
   AuthSessionController.instance.start();
-}
-
-class _ComingSoonScreen extends StatelessWidget {
-  final String pageTitle;
-  const _ComingSoonScreen({required this.pageTitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.construction_rounded,
-            size: 60,
-            color: UV.colors.textSecondary.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 20),
-          Text('Under Construction',
-              style: UV.styles.h2.copyWith(color: UV.colors.textSecondary)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: UV.colors.textSecondary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              pageTitle,
-              style: UV.styles.body.copyWith(
-                color: UV.colors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // 5. ROUTER FACTORY

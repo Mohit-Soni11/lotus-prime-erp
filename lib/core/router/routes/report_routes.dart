@@ -44,12 +44,6 @@ List<RouteBase> reportRoutes() => [
         },
       ),
       GoRoute(
-        path: RoutePaths.reportPnl,
-        builder: (context, state) => _ComingSoonScreen(
-          pageTitle: AppRoutes.getTitle(AppRoutes.profitLossRoute),
-        ),
-      ),
-      GoRoute(
         path: RoutePaths.reportGst,
         builder: (context, state) => GstReportHubScreen(
           onBack: () => _goBackOr(context, RoutePaths.dashboard),

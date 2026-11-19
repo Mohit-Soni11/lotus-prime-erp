@@ -1,99 +1,61 @@
-// =============================================================================
-// FILE        : payment_status_model.dart
-// MODULE      : Dashboard / Payment Status
-// LAYER       : Models
-// DESCRIPTION : Complete data snapshot for the Payment Status card.
-//               Summary stats + individual bill list.
-// =============================================================================
-
 import 'payment_bill_item.dart';
 
-/// Active filter tab
 enum PaymentFilterTab { all, due, paid }
 
-/// Summary stats displayed in the header.
 class PaymentSummary {
-  final int totalBills;
-  final double totalCollected; // Sum of all paidAmount
-  final double totalPending; // Sum of all dueAmount
-  final int paidCount;
-  final int partialCount;
-  final int unpaidCount;
-
   const PaymentSummary({
     required this.totalBills,
-    required this.totalCollected,
-    required this.totalPending,
-    required this.paidCount,
-    required this.partialCount,
-    required this.unpaidCount,
+    required this.cashCollected,
+    required this.bankCollected,
+    required this.bankByMode,
   });
 
-  factory PaymentSummary.empty() => const PaymentSummary(
-        totalBills: 0,
-        totalCollected: 0,
-        totalPending: 0,
-        paidCount: 0,
-        partialCount: 0,
-        unpaidCount: 0,
-      );
+  final int totalBills;
+  final double cashCollected;
+  final double bankCollected;
+  final Map<String, double> bankByMode;
 
-  factory PaymentSummary.loading() => const PaymentSummary(
-        totalBills: -1, // -1 = loading indicator
-        totalCollected: 0,
-        totalPending: 0,
-        paidCount: 0,
-        partialCount: 0,
-        unpaidCount: 0,
-      );
+  double get totalCollected => cashCollected + bankCollected;
 
-  bool get isLoading => totalBills == -1;
+  static const empty = PaymentSummary(
+    totalBills: 0,
+    cashCollected: 0,
+    bankCollected: 0,
+    bankByMode: {},
+  );
 }
 
-/// Complete widget data model
 class PaymentStatusModel {
-  final PaymentSummary summary;
-  final List<PaymentBillItem> bills; // All bills
-  final PaymentFilterTab activeTab;
-
   const PaymentStatusModel({
     required this.summary,
     required this.bills,
     this.activeTab = PaymentFilterTab.all,
+    this.isLoading = false,
   });
 
-  factory PaymentStatusModel.loading() => PaymentStatusModel(
-        summary: PaymentSummary.loading(),
-        bills: [],
-      );
+  final PaymentSummary summary;
+  final List<PaymentBillItem> bills;
+  final PaymentFilterTab activeTab;
+  final bool isLoading;
 
-  factory PaymentStatusModel.empty() => PaymentStatusModel(
-        summary: PaymentSummary.empty(),
-        bills: [],
-      );
+  static const loading = PaymentStatusModel(
+    summary: PaymentSummary.empty,
+    bills: [],
+    isLoading: true,
+  );
 
-  bool get isLoading => summary.isLoading;
+  List<PaymentBillItem> get filteredBills => switch (activeTab) {
+        PaymentFilterTab.all => bills,
+        PaymentFilterTab.due =>
+          bills.where((bill) => bill.dueAmount > 0.5).toList(),
+        PaymentFilterTab.paid =>
+          bills.where((bill) => bill.status == PaymentStatus.paid).toList(),
+      };
 
-  /// Active tab ke hisaab se filtered list
-  List<PaymentBillItem> get filteredBills {
-    switch (activeTab) {
-      case PaymentFilterTab.all:
-        return bills;
-      case PaymentFilterTab.due:
-        return bills
-            .where((b) =>
-                b.status == PaymentStatus.unpaid ||
-                b.status == PaymentStatus.partial)
-            .toList();
-      case PaymentFilterTab.paid:
-        return bills.where((b) => b.status == PaymentStatus.paid).toList();
-    }
-  }
-
-  /// Tab switch ke saath copy
   PaymentStatusModel withTab(PaymentFilterTab tab) => PaymentStatusModel(
         summary: summary,
         bills: bills,
         activeTab: tab,
+        isLoading: isLoading,
       );
 }

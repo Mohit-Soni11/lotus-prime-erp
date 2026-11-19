@@ -36,13 +36,14 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String routeId) onNavigate;
-  // ✅ FIX: onNavigateWithId — customerId pass karne ke liye (Payment Status → Profile)
-  final Function(String routeId, {int? customerId})? onNavigateWithId;
+  final ValueChanged<int> onOpenCustomer;
+  final void Function(int billId, int? customerId) onOpenInvoice;
 
   const DashboardScreen({
     super.key,
     required this.onNavigate,
-    this.onNavigateWithId,
+    required this.onOpenCustomer,
+    required this.onOpenInvoice,
   });
 
   @override
@@ -202,15 +203,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // 3. Payment Status
         PaymentStatusCard(
-          onNavigate: widget.onNavigate,
-          // ✅ FIX: customerId ab properly pass hoga parent ko
-          onNavigateWithId: (routeId, {int? customerId}) {
-            if (widget.onNavigateWithId != null) {
-              widget.onNavigateWithId!(routeId, customerId: customerId);
-            } else {
-              widget.onNavigate(routeId);
-            }
-          },
+          onOpenCustomer: widget.onOpenCustomer,
+          onOpenInvoice: widget.onOpenInvoice,
         ),
 
         const SizedBox(height: 20),

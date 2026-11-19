@@ -57,7 +57,6 @@ class AppRoutes {
   static const String cashBookRoute = '/finance/cashbook';
   static const String bankBookRoute = '/finance/bankbook';
   static const String expenseEntryRoute = '/finance/expense';
-  static const String journalEntryRoute = '/finance/journal';
   static const String dueReportRoute = '/finance/due-report';
   static const String dueCollectionRoute = '/finance/due-collection';
   static const String dueReceiptHistoryRoute = '/finance/due-receipts';
@@ -66,7 +65,6 @@ class AppRoutes {
   static const String dayBookRoute = '/reports/daybook';
   static const String salesReportRoute = '/reports/sales';
   static const String purchaseReportRoute = '/reports/purchase';
-  static const String profitLossRoute = '/reports/pnl';
   static const String gstReportRoute = '/reports/gst';
 
   static const Map<String, String> _titles = {
@@ -101,7 +99,6 @@ class AppRoutes {
     cashBookRoute: 'Account Book',
     bankBookRoute: 'Bank Book',
     expenseEntryRoute: 'Expense Entry',
-    journalEntryRoute: 'Journal Entry',
     dueReportRoute: 'Due Report',
     dueCollectionRoute: 'Due Collection Entry',
     dueReceiptHistoryRoute: 'Due Receipt History',
@@ -109,7 +106,6 @@ class AppRoutes {
     salesReportRoute: 'Sales Report',
     purchaseReportRoute: 'Metal Purchase Report',
     stockSummaryRoute: 'Stock Summary',
-    profitLossRoute: 'Profit & Loss',
     gstReportRoute: 'GST Report',
   };
 
@@ -179,7 +175,6 @@ class RoutePaths {
   static const String financeBankLedger = '/app/finance/cashbook/bank-ledger';
   static const String financeBankBook = '/app/finance/bankbook';
   static const String financeExpense = '/app/finance/expense';
-  static const String financeJournal = '/app/finance/journal';
   static const String financeDueReport = '/app/finance/due-report';
   static const String financeDueCollection = '/app/finance/due-collection';
   static const String financeDueReceipts = '/app/finance/due-receipts';
@@ -194,7 +189,6 @@ class RoutePaths {
       '$reportPurchase/voucher';
   static const String customerMetalPurchaseVoucher =
       '$customerMetalPurchaseVoucherBase/:voucherId';
-  static const String reportPnl = '/app/reports/pnl';
   static const String reportGst = '/app/reports/gst';
 
   static String customerProfileFor(int customerId) {
@@ -247,14 +241,12 @@ class RouteMapper {
     AppRoutes.cashBookRoute: RoutePaths.financeCashBook,
     AppRoutes.bankBookRoute: RoutePaths.financeBankBook,
     AppRoutes.expenseEntryRoute: RoutePaths.financeExpense,
-    AppRoutes.journalEntryRoute: RoutePaths.financeJournal,
     AppRoutes.dueReportRoute: RoutePaths.financeDueReport,
     AppRoutes.dueCollectionRoute: RoutePaths.financeDueCollection,
     AppRoutes.dueReceiptHistoryRoute: RoutePaths.financeDueReceipts,
     AppRoutes.dayBookRoute: RoutePaths.reportDayBook,
     AppRoutes.salesReportRoute: RoutePaths.reportSales,
     AppRoutes.purchaseReportRoute: RoutePaths.reportPurchase,
-    AppRoutes.profitLossRoute: RoutePaths.reportPnl,
     AppRoutes.gstReportRoute: RoutePaths.reportGst,
   };
 

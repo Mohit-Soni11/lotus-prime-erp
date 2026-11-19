@@ -6,8 +6,4 @@
 
 class QuickActionsStrings {
   static const String cardTitle = 'QUICK ACTIONS';
-  static const String newInvoice = 'New Invoice';
-  static const String addStock = 'Add Stock';
-  static const String addCustomer = 'Add Customer';
-  static const String cashBook = 'Account Book';
 }

@@ -38,12 +38,6 @@ List<RouteBase> financeRoutes() => [
         ),
       ),
       GoRoute(
-        path: RoutePaths.financeJournal,
-        builder: (context, state) => _ComingSoonScreen(
-          pageTitle: AppRoutes.getTitle(AppRoutes.journalEntryRoute),
-        ),
-      ),
-      GoRoute(
         path: RoutePaths.financeDueReport,
         builder: (context, state) => DueReportScreen(
           onBack: () => _goBackOr(context, RoutePaths.dashboard),

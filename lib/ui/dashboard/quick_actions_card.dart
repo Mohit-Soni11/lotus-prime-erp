@@ -2,21 +2,13 @@
 // FILE        : quick_actions_card.dart
 // MODULE      : Dashboard / Quick Actions
 // LAYER       : UI
-// DESCRIPTION : Four quick action buttons in a 2x2 grid.
-//               "New Entry" opens New Sale, Customer Metal Purchase,
-//               Collateral / Loan, and Booking Advance actions.
-//               "Adjust" opens Due Adjust and Interest Payment actions.
-//               "Add Stock" and "Cash Book" navigate directly.
-//
-//               POPUP DESIGN:
-//               Dark glassmorphism bottom sheet with labeled option cards,
-//               slide-up motion, backdrop blur, and selection feedback.
+// DESCRIPTION : Dashboard shortcuts with contextual action sheets.
 // =============================================================================
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../logic/dashboard/quick_actions/quick_actions_logic.dart';
+import 'quick_actions/quick_action_popup_sheet.dart';
 import '../../../models/dashboard/quick_action_item_model.dart';
 import '../../theme/dashboard/quick_actions/quick_actions_theme.dart';
 
@@ -88,27 +80,24 @@ class _QuickActionsCardState extends State<QuickActionsCard>
   // ==========================================
   // POPUP BOTTOM SHEET
   // ==========================================
-  void _showPopup(BuildContext context, QuickActionItemModel item) {
+  Future<void> _showPopup(QuickActionItemModel item) async {
     final options = _logic.getPopupOptions(item.id);
     final title = _logic.getPopupTitle(item.id);
 
-    showModalBottomSheet(
+    final routeId = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (_) => _QuickActionPopupSheet(
+      builder: (sheetContext) => QuickActionPopupSheet(
         title: title,
         accentColor: item.accentColor,
         options: options,
-        onOptionTap: (routeId) {
-          Navigator.pop(context);
-          Future.delayed(const Duration(milliseconds: 200), () {
-            widget.onNavigate(routeId);
-          });
-        },
+        onOptionTap: (selectedRouteId) =>
+            Navigator.of(sheetContext).pop(selectedRouteId),
       ),
     );
+    if (mounted && routeId != null) widget.onNavigate(routeId);
   }
 
   // ==========================================
@@ -136,24 +125,37 @@ class _QuickActionsCardState extends State<QuickActionsCard>
                     const SizedBox(height: 4),
                     _buildGoldenDivider(),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildAnimatedButton(
-                            index: 0, item: QuickActionsLogic.actions[0]),
-                        const SizedBox(width: QuickActionsStyles.buttonSpacing),
-                        _buildAnimatedButton(
-                            index: 1, item: QuickActionsLogic.actions[1]),
-                      ],
-                    ),
-                    const SizedBox(height: QuickActionsStyles.rowSpacing),
-                    Row(
-                      children: [
-                        _buildAnimatedButton(
-                            index: 2, item: QuickActionsLogic.actions[2]),
-                        const SizedBox(width: QuickActionsStyles.buttonSpacing),
-                        _buildAnimatedButton(
-                            index: 3, item: QuickActionsLogic.actions[3]),
-                      ],
+                    ...List.generate(
+                      (QuickActionsLogic.actions.length + 1) ~/ 2,
+                      (rowIndex) {
+                        final firstIndex = rowIndex * 2;
+                        final secondIndex = firstIndex + 1;
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            top: rowIndex == 0
+                                ? 0
+                                : QuickActionsStyles.rowSpacing,
+                          ),
+                          child: Row(
+                            children: [
+                              _buildAnimatedButton(
+                                index: firstIndex,
+                                item: QuickActionsLogic.actions[firstIndex],
+                              ),
+                              const SizedBox(
+                                  width: QuickActionsStyles.buttonSpacing),
+                              if (secondIndex <
+                                  QuickActionsLogic.actions.length)
+                                _buildAnimatedButton(
+                                  index: secondIndex,
+                                  item: QuickActionsLogic.actions[secondIndex],
+                                )
+                              else
+                                const Expanded(child: SizedBox.shrink()),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -241,15 +243,16 @@ class _QuickActionsCardState extends State<QuickActionsCard>
             onEnter: (_) => _logic.onHoverEnter(item.id),
             onExit: (_) => _logic.onHoverExit(),
             child: GestureDetector(
+              key: ValueKey('quick-action-${item.id}'),
               onTapDown: (_) => _logic.onButtonTapDown(item.id),
               onTapCancel: () => _logic.onButtonTapCancel(),
-              onTapUp: (_) {
+              onTap: () {
                 // âœ… Separate logic for popup vs direct navigation
                 if (item.hasPopup) {
                   _logic.onButtonTapCancel();
-                  _showPopup(context, item);
+                  _showPopup(item);
                 } else {
-                  _logic.onDirectButtonTapUp(item.id, widget.onNavigate);
+                  _logic.onDirectButtonTap(item.id, widget.onNavigate);
                 }
               },
               child: AnimatedContainer(
@@ -323,297 +326,6 @@ class _QuickActionsCardState extends State<QuickActionsCard>
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// POPUP BOTTOM SHEET WIDGET
-// Beautiful dark glassmorphism sheet with option cards
-// ============================================================================
-class _QuickActionPopupSheet extends StatefulWidget {
-  final String title;
-  final Color accentColor;
-  final List<QuickActionPopupOption> options;
-  final Function(String routeId) onOptionTap;
-
-  const _QuickActionPopupSheet({
-    required this.title,
-    required this.accentColor,
-    required this.options,
-    required this.onOptionTap,
-  });
-
-  @override
-  State<_QuickActionPopupSheet> createState() => _QuickActionPopupSheetState();
-}
-
-class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
-    with TickerProviderStateMixin {
-  late final AnimationController _sheetController;
-  late final List<AnimationController> _cardControllers;
-  late final List<Animation<double>> _cardSlides;
-  late final List<Animation<double>> _cardFades;
-  String? _pressedOptionId;
-
-  @override
-  void initState() {
-    super.initState();
-    _sheetController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300));
-    _cardControllers = List.generate(
-      widget.options.length,
-      (_) => AnimationController(
-          vsync: this, duration: const Duration(milliseconds: 350)),
-    );
-    _cardSlides = _cardControllers
-        .map((c) => Tween<double>(begin: 30.0, end: 0.0)
-            .animate(CurvedAnimation(parent: c, curve: Curves.easeOutCubic)))
-        .toList();
-    _cardFades = _cardControllers
-        .map((c) => Tween<double>(begin: 0.0, end: 1.0)
-            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
-        .toList();
-
-    _sheetController.forward();
-    _playCardEntry();
-  }
-
-  Future<void> _playCardEntry() async {
-    for (int i = 0; i < _cardControllers.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 70));
-      if (mounted) _cardControllers[i].forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _sheetController.dispose();
-    for (final c in _cardControllers) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1F2937), Color(0xFF0F172A)],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 40,
-              offset: const Offset(0, -10),
-            ),
-            BoxShadow(
-              color: widget.accentColor.withValues(alpha: 0.08),
-              blurRadius: 30,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // â”€â”€ Drag handle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              Row(
-                children: [
-                  // Gold accent line
-                  Container(
-                      width: 3,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: widget.accentColor,
-                        borderRadius: BorderRadius.circular(2),
-                      )),
-                  const SizedBox(width: 12),
-                  ShaderMask(
-                    shaderCallback: (b) => LinearGradient(
-                      colors: [
-                        widget.accentColor,
-                        widget.accentColor.withValues(alpha: 0.7)
-                      ],
-                    ).createShader(b),
-                    child: Text(
-                      widget.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.only(left: 15),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Select an option to proceed', // <-- Changed to professional English
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.4)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // â”€â”€ Option Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              ...List.generate(widget.options.length, (i) {
-                final opt = widget.options[i];
-                return AnimatedBuilder(
-                  animation: _cardControllers[i],
-                  builder: (_, child) => Transform.translate(
-                    offset: Offset(0, _cardSlides[i].value),
-                    child: Opacity(opacity: _cardFades[i].value, child: child),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _buildOptionCard(opt),
-                  ),
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionCard(QuickActionPopupOption opt) {
-    final bool isPressed = _pressedOptionId == opt.id;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressedOptionId = opt.id),
-      onTapCancel: () => setState(() => _pressedOptionId = null),
-      onTapUp: (_) {
-        setState(() => _pressedOptionId = null);
-        widget.onOptionTap(opt.routeId);
-      },
-      child: AnimatedScale(
-        scale: isPressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: isPressed
-                ? opt.accentColor.withValues(alpha: 0.12)
-                : Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isPressed
-                  ? opt.accentColor.withValues(alpha: 0.5)
-                  : opt.accentColor.withValues(alpha: 0.18),
-              width: isPressed ? 1.5 : 1.0,
-            ),
-            boxShadow: isPressed
-                ? [
-                    BoxShadow(
-                        color: opt.accentColor.withValues(alpha: 0.15),
-                        blurRadius: 12)
-                  ]
-                : [],
-          ),
-          child: Row(
-            children: [
-              // Icon circle
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: opt.accentColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: opt.accentColor.withValues(alpha: 0.3)),
-                ),
-                child: Center(
-                  child: Icon(opt.icon, color: opt.accentColor, size: 20),
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      opt.label,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isPressed
-                            ? opt.accentColor
-                            : Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      opt.subtitle,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: Colors.white.withValues(alpha: 0.45),
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Arrow
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isPressed
-                      ? opt.accentColor.withValues(alpha: 0.25)
-                      : Colors.white.withValues(alpha: 0.05),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: isPressed
-                      ? opt.accentColor
-                      : Colors.white.withValues(alpha: 0.3),
-                  size: 12,
-                ),
-              ),
-            ],
           ),
         ),
       ),
