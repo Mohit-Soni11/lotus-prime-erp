@@ -122,14 +122,16 @@ class _RuleSetupConsole extends StatelessWidget {
                   else
                     const Expanded(child: _RuleSetupIntro()),
                   SizedBox(width: compact ? 0 : 18, height: compact ? 14 : 0),
-                  Flex(
+                  IntrinsicHeight(
+                      child: Flex(
                     direction: compact ? Axis.vertical : Axis.horizontal,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       for (final tile in content) ...[
                         if (compact)
                           tile
                         else
-                          SizedBox(width: 132, child: tile),
+                          SizedBox(width: 160, child: tile),
                         if (tile != content.last)
                           SizedBox(
                             width: compact ? 0 : 10,
@@ -137,7 +139,7 @@ class _RuleSetupConsole extends StatelessWidget {
                           ),
                       ],
                     ],
-                  ),
+                  )),
                   SizedBox(width: compact ? 0 : 18, height: compact ? 14 : 0),
                   Container(
                     height: 42,
@@ -231,8 +233,8 @@ class _SetupStatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 54,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      constraints: const BoxConstraints(minHeight: 54),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.74),
         borderRadius: BorderRadius.circular(13),
@@ -244,6 +246,7 @@ class _SetupStatTile extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

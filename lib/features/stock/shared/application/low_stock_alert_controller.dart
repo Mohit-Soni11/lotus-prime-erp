@@ -10,6 +10,7 @@ class LowStockAlertController extends ChangeNotifier {
 
   LowStockAlertDashboard _dashboard = LowStockAlertDashboard.empty();
   bool _isLoading = false;
+  bool _disposed = false;
   String? _errorMessage;
   String? _selectedMetalType;
   String? _selectedGradeLabel;
@@ -209,6 +210,7 @@ class LowStockAlertController extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    if (_disposed || _isLoading) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -223,11 +225,12 @@ class LowStockAlertController extends ChangeNotifier {
       _errorMessage = 'Low stock alerts could not be loaded. $error';
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
   Future<void> saveManualRule(LowStockManualRuleDraft draft) async {
+    if (_disposed) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -239,8 +242,14 @@ class LowStockAlertController extends ChangeNotifier {
       _errorMessage = 'Manual low stock rule could not be saved. $error';
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
   void _normalizeSelection() {

@@ -18,6 +18,7 @@ import 'notice_recovery_navigation.dart';
 import 'payment_status_navigation.dart';
 import 'workspace_navigation.dart';
 import 'workspace_transition_page.dart';
+import 'workspace_route.dart';
 
 import '../../ui/auth/login_screen.dart';
 import '../../ui/auth/auth_gate_screen.dart';
@@ -111,6 +112,21 @@ void initAuthRouting() {
 
 GoRouter createAppRouter() {
   final session = AuthSessionController.instance;
+  final moduleRoutes = <RouteBase>[
+    ...dashboardSettingsRoutes(),
+    ...customerRoutes(),
+    ...supplierSalesRoutes(),
+    ...inventoryRoutes(),
+    ...financeRoutes(),
+    ...reportRoutes(),
+  ];
+  // Full-window routes belong on the root, outside the shell's navigator.
+  final rootWorkspaces = moduleRoutes.where((route) =>
+      route is GoRoute && route.parentNavigatorKey == _rootNavigatorKey);
+  final shellRoutes = moduleRoutes
+      .where((route) =>
+          route is! GoRoute || route.parentNavigatorKey != _rootNavigatorKey)
+      .toList();
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: RoutePaths.dashboard,
@@ -140,19 +156,13 @@ GoRouter createAppRouter() {
       ...standalonePledgeRoutes(),
       ...standaloneSalesRoutes(),
       ...standaloneStockRoutes(),
+      ...rootWorkspaces,
       ShellRoute(
         pageBuilder: (context, state, child) => WorkspaceTransitionPage(
           key: state.pageKey,
           child: AppShell(child: child),
         ),
-        routes: [
-          ...dashboardSettingsRoutes(),
-          ...customerRoutes(),
-          ...supplierSalesRoutes(),
-          ...inventoryRoutes(),
-          ...financeRoutes(),
-          ...reportRoutes(),
-        ],
+        routes: shellRoutes,
       ),
     ],
   );

@@ -1,8 +1,9 @@
 part of '../app_router.dart';
 
 List<RouteBase> standaloneSalesRoutes() => [
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.salesPos,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final editBillId = int.tryParse(
             state.uri.queryParameters['editBillId'] ?? '',
@@ -35,8 +36,9 @@ List<RouteBase> standaloneSalesRoutes() => [
           );
         },
       ),
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.salesBooking,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final editAdvanceId = int.tryParse(
             state.uri.queryParameters['editAdvanceId'] ?? '',

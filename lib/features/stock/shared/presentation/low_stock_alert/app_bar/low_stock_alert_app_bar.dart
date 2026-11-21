@@ -91,17 +91,21 @@ class _LowStockAlertAppBarState extends State<LowStockAlertAppBar>
               ),
             ),
             const SizedBox(width: 14),
-            Text(
+            Expanded(
+                child: Text(
               widget.title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: InvStyles.shellTitle.copyWith(
                 fontSize: 18,
                 letterSpacing: 1.2,
               ),
-            ),
-            const Spacer(),
+            )),
             _ShellButton(icon: Icons.refresh_rounded, onTap: widget.onRefresh),
-            const SizedBox(width: 14),
-            _OnlineBadge(pulse: _pulse),
+            if (MediaQuery.sizeOf(context).width >= 720) ...[
+              const SizedBox(width: 14),
+              _OnlineBadge(pulse: _pulse),
+            ],
           ],
         ),
       ),

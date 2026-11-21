@@ -16,9 +16,18 @@ class NotificationItem {
   final bool isOperational;
   final String? location;
   final int priority;
+  final String? sourceRevision;
 
   String get storageKey => eventKey ?? 'message:$id';
-  bool get isProtected => isOperational;
+  bool get isDailyEssential =>
+      isOperational &&
+      ((eventKey?.startsWith('business:') ?? false) ||
+          type == 'Day Book' ||
+          type == 'Metal Rates');
+  bool get isStockAlert =>
+      isOperational &&
+      ((eventKey?.startsWith('stock:') ?? false) || type == 'Inventory');
+  bool get isProtected => isDailyEssential || isStockAlert;
   bool get canOpen =>
       location != null || routeId != null || billId != null || loanId != null;
   String get fingerprint => sha256
@@ -31,6 +40,7 @@ class NotificationItem {
         billId,
         customerId,
         loanId,
+        if (sourceRevision != null) sourceRevision,
       ])))
       .toString();
   int get sortRank {
@@ -41,7 +51,7 @@ class NotificationItem {
         key.startsWith('business:unfinished:')) {
       return 2;
     }
-    return isProtected ? 10 : 20;
+    return isOperational ? 10 : 20;
   }
 
   static int compare(NotificationItem a, NotificationItem b) {
@@ -49,7 +59,7 @@ class NotificationItem {
     if (rank != 0) return rank;
     final urgency = a.priority.compareTo(b.priority);
     if (urgency != 0) return urgency;
-    if (!a.isProtected && !b.isProtected) return b.id.compareTo(a.id);
+    if (!a.isOperational && !b.isOperational) return b.id.compareTo(a.id);
     return a.storageKey.compareTo(b.storageKey);
   }
 
@@ -68,6 +78,7 @@ class NotificationItem {
     this.isOperational = false,
     this.location,
     this.priority = 1,
+    this.sourceRevision,
   });
 
   // ==========================================
@@ -90,6 +101,7 @@ class NotificationItem {
       isOperational: json['is_operational'] ?? false,
       location: json['location'],
       priority: json['priority'] ?? 1,
+      sourceRevision: json['source_revision'],
     );
   }
 
@@ -110,6 +122,7 @@ class NotificationItem {
       'is_operational': isOperational,
       'location': location,
       'priority': priority,
+      'source_revision': sourceRevision,
     };
   }
 
@@ -132,6 +145,7 @@ class NotificationItem {
     bool? isOperational,
     String? location,
     int? priority,
+    String? sourceRevision,
   }) {
     return NotificationItem(
       id: id ?? this.id,
@@ -148,6 +162,7 @@ class NotificationItem {
       isOperational: isOperational ?? this.isOperational,
       location: location ?? this.location,
       priority: priority ?? this.priority,
+      sourceRevision: sourceRevision ?? this.sourceRevision,
     );
   }
 }

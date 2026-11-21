@@ -57,7 +57,8 @@ class NotificationCenterController {
               customerId: operational[i].customerId,
               loanId: operational[i].loanId,
               isOperational: true,
-              priority: operational[i].priority),
+              priority: operational[i].priority,
+              sourceRevision: operational[i].sourceRevision),
         for (final row in messages)
           NotificationItem(
               id: row.read<int>('id'),

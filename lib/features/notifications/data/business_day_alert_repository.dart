@@ -20,9 +20,9 @@ class BusinessDayAlertRepository {
         key: 'business:unfinished:$key',
         category: 'Day Book',
         priority: 0,
-        title: 'Business day $label is still open',
+        title: 'Previous business day is still open',
         description:
-            'Complete its opening verification, physical cash and bank matching, then Verify & Close Day.',
+            '$label · Complete opening verification and reconcile cash and bank balances before closing the day.',
         routeId: AppRoutes.dayBookRoute,
         location: dayBookLocation(day, 'close'),
       ));
@@ -31,9 +31,9 @@ class BusinessDayAlertRepository {
         key: 'business:closing:$key',
         category: 'Day Book',
         priority: 0,
-        title: 'Complete Day Book closing',
+        title: 'Day closing required',
         description:
-            '$label · match physical cash and bank, then Verify & Close Day. Business exit is pending.',
+            '$label · Reconcile cash and bank balances, then select Verify & Close Day.',
         routeId: AppRoutes.dayBookRoute,
         location: dayBookLocation(day, 'close'),
       ));
@@ -43,9 +43,9 @@ class BusinessDayAlertRepository {
         key: 'business:opening:$key',
         category: 'Day Book',
         priority: 0,
-        title: 'Verify opening cash and bank balance',
+        title: 'Opening balance verification',
         description:
-            '$label · compare available cash and bank with the last business closing. Save Daily Balance Verification.',
+            '$label · Verify cash and bank balances against the previous business day’s closing.',
         routeId: AppRoutes.dayBookRoute,
         location: dayBookLocation(day, 'verify'),
       ));
@@ -56,9 +56,9 @@ class BusinessDayAlertRepository {
         key: 'business:rates:${BusinessDayRepository.key(now)}',
         category: 'Metal Rates',
         priority: 1,
-        title: 'Update today’s metal rates',
+        title: 'Today’s metal rates require an update',
         description:
-            '${DateFormat('dd MMM yyyy').format(now)} · save rates for ${metals.map((m) => '${m[0].toUpperCase()}${m.substring(1)}').join(', ')} in Metal Rate Master.',
+            '${DateFormat('dd MMM yyyy').format(now)} · Update rates for ${metals.map((m) => '${m[0].toUpperCase()}${m.substring(1)}').join(', ')} in Metal Rate Master.',
         routeId: AppRoutes.settingsRoute,
         location: RoutePaths.metalRateMaster,
       ));

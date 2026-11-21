@@ -1,8 +1,9 @@
 part of '../app_router.dart';
 
 List<RouteBase> dashboardSettingsRoutes() => [
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.metalRateMaster,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, _) => MetalRateHubScreen(
           onBack: () => _goBackOr(context, RoutePaths.dashboard),
         ),

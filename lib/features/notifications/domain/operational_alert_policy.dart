@@ -5,7 +5,6 @@ import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
 import 'package:lotus_erp/features/notifications/domain/operational_alert.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/low_stock_alert/low_stock_alert_models.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_calculator.dart';
 
@@ -18,33 +17,6 @@ class OperationalAlertPolicy {
     symbol: '₹ ',
     decimalDigits: 2,
   );
-
-  static OperationalAlert? stock(LowStockStockCard card) {
-    final metal = card.metalType.trim();
-    if (!{'GOLD', 'SILVER'}.contains(metal.toUpperCase()) ||
-        !card.requiresAction) {
-      return null;
-    }
-    final stockout = card.riskLevel == LowStockRiskLevel.stockout ||
-        card.availableUnits <= 0;
-    final item = card.itemType.trim().isEmpty ||
-            card.itemType.toLowerCase() == LowStockConstants.anyItemKey
-        ? 'item'
-        : card.itemType.trim();
-    final grade = card.gradeLabel.trim();
-    final label = '$metal $item${grade.isEmpty ? '' : ' ($grade)'}';
-    return OperationalAlert(
-      key:
-          'stock:${metal.toUpperCase()}:${grade.toUpperCase()}:${item.toUpperCase()}',
-      category: 'Inventory',
-      title: '$label ${stockout ? 'out of stock' : 'stock low'}',
-      description:
-          '${card.availableUnits} ${card.unitLabel.trim().isEmpty ? 'pieces' : card.unitLabel} available. '
-          '${stockout ? 'Restock required.' : 'Check reorder level.'}',
-      routeId: AppRoutes.lowStockAlertRoute,
-      priority: stockout ? 0 : 1,
-    );
-  }
 
   static OperationalAlert? order(
       SalesOrder order, String customerName, DateTime now) {
@@ -62,10 +34,14 @@ class OperationalAlertPolicy {
     return OperationalAlert(
       key: 'order:${order.id}',
       category: 'Orders',
-      title: 'Order ${order.orderNo}: $timing',
-      description: '$customerName · ${order.itemName} · '
-          'deliver ${_dateFormat.format(order.deliveryDate!)}.',
+      title: 'Delivery $timing',
+      description:
+          'Order ${order.orderNo} · $customerName · ${order.itemName}. '
+          'Delivery date: ${_dateFormat.format(order.deliveryDate!)}.',
       routeId: AppRoutes.bookingAdvanceRoute,
+      location: Uri(
+          path: RoutePaths.salesBooking,
+          queryParameters: {'editAdvanceId': '${order.id}'}).toString(),
       priority: days <= 0 ? 0 : 1,
       customerId: order.customerId,
     );
@@ -86,11 +62,11 @@ class OperationalAlertPolicy {
       key: 'due:${bill.id}',
       category: 'Collections',
       title: overdueDays == 0
-          ? 'Call $customer · due today'
-          : 'Call $customer · due overdue',
-      description: 'Collect ${_moneyFormat.format(amount)} for invoice '
-          '${bill.billNo}. Promised ${_dateFormat.format(promise)}'
-          '${overdueDays > 0 ? ' · $overdueDays days overdue' : ''}.',
+          ? 'Invoice payment due today'
+          : 'Invoice payment overdue',
+      description: '$customer · Invoice ${bill.billNo} · '
+          '${_moneyFormat.format(amount)} outstanding. '
+          'Promised payment: ${_dateFormat.format(promise)}. Contact the customer to collect payment.',
       routeId: AppRoutes.dueReportRoute,
       priority: 0,
       billId: bill.id,
@@ -113,9 +89,9 @@ class OperationalAlertPolicy {
       result.add(OperationalAlert(
         key: 'girvi:maturity:${loan.id}',
         category: 'Girvi',
-        title: 'Girvi ${loan.ticketNo} past maturity',
-        description: '$customerName · matured ${_dateFormat.format(maturity)}. '
-            'Review settlement and contact customer.',
+        title: 'Girvi account past maturity',
+        description: '${loan.ticketNo} · $customerName · '
+            'Matured ${_dateFormat.format(maturity)}. Contact the customer to arrange settlement.',
         routeId: AppRoutes.girviReleaseRoute,
         priority: 0,
         loanId: loan.id,
@@ -134,9 +110,10 @@ class OperationalAlertPolicy {
       result.add(OperationalAlert(
         key: 'girvi:compound:${loan.id}',
         category: 'Girvi',
-        title: 'Girvi ${loan.ticketNo}: annual compound cycle',
-        description: '$customerName · first 12-month cycle reached '
-            '${_dateFormat.format(anniversary)}. Review interest in account.',
+        title: 'Annual interest review required',
+        description:
+            '${loan.ticketNo} · $customerName · Annual cycle completed '
+            '${_dateFormat.format(anniversary)}. Review compound interest in the account.',
         routeId: AppRoutes.girviReleaseRoute,
         priority: 1,
         loanId: loan.id,

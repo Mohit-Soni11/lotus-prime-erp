@@ -37,9 +37,16 @@ List<RouteBase> inventoryRoutes() => [
           onBack: () => _goBackOr(context, RoutePaths.dashboard),
         ),
       ),
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.stockLowAlert,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => LowStockAlertScreen(
+          initialMetalType: switch (
+              state.uri.queryParameters['metal']?.toLowerCase()) {
+            'gold' => 'Gold',
+            'silver' => 'Silver',
+            _ => null,
+          },
           onBack: () => _goBackOr(context, RoutePaths.dashboard),
         ),
       ),

@@ -9,6 +9,7 @@ class OperationalAlert {
   final int? customerId;
   final int? loanId;
   final String? location;
+  final String? sourceRevision;
 
   const OperationalAlert({
     required this.key,
@@ -21,5 +22,6 @@ class OperationalAlert {
     this.customerId,
     this.loanId,
     this.location,
+    this.sourceRevision,
   });
 }

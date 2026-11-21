@@ -103,12 +103,38 @@ void main() {
         (await repo.load(today)).where((a) => a.category == 'Orders'), isEmpty);
   });
 
+  test('advance for the 25th alerts on the 22nd and links to that exact order',
+      () async {
+    final row = await order(DateTime(2026, 11, 25));
+    await db.into(db.orderAdvances).insert(OrderAdvancesCompanion.insert(
+          orderId: row.id,
+          amountPaid: const drift.Value(500),
+        ));
+    final repo = OperationalAlertRepository(db);
+    expect(
+        (await repo.load(DateTime(2026, 11, 21)))
+            .where((a) => a.category == 'Orders'),
+        isEmpty);
+    final advance = (await repo.load(DateTime(2026, 11, 22)))
+        .singleWhere((a) => a.category == 'Orders');
+    expect(advance.title, contains('due in 3 days'));
+    expect(advance.description, contains('25 Nov 2026'));
+    expect(Uri.parse(advance.location!).queryParameters['editAdvanceId'],
+        '${row.id}');
+    expect(
+        (await repo.load(DateTime(2026, 11, 25)))
+            .singleWhere((a) => a.category == 'Orders')
+            .title,
+        contains('due today'));
+  });
+
   test('collection reminder persists overdue and resolves on payment',
       () async {
     final row = await bill();
     expect(OperationalAlertPolicy.due(row, DateTime(2026, 11, 19)), isNull);
     final due = OperationalAlertPolicy.due(row, today)!;
-    expect(due.title, contains('Call Test Customer'));
+    expect(due.title, 'Invoice payment due today');
+    expect(due.description, contains('Test Customer'));
     expect(due.description, contains('250.00'));
     expect(OperationalAlertPolicy.due(row, DateTime(2026, 12, 1)), isNotNull);
     expect(
@@ -147,7 +173,7 @@ void main() {
     }
   });
 
-  test('notifications update live and mark read cannot dismiss active due',
+  test('notifications update live and marking read keeps an active due visible',
       () async {
     final row = await bill();
     await (db.update(db.bills)..where((t) => t.id.equals(row.id))).write(
@@ -172,6 +198,33 @@ void main() {
           dueAmount: drift.Value(0), paymentStatus: drift.Value('PAID')),
     );
     await cleared.timeout(const Duration(seconds: 5));
+  });
+
+  test('cleared due stays dismissed after refresh without changing the invoice',
+      () async {
+    final row = await bill();
+    await (db.update(db.bills)..where((t) => t.id.equals(row.id))).write(
+      BillsCompanion(promiseDate: drift.Value(DateTime(2000))),
+    );
+    final repository = DashboardRepository(db: db);
+    addTearDown(repository.dispose);
+    final initial = repository.notificationsStream.first;
+    await repository.loadNotifications('owner');
+    expect((await initial).any((item) => item.eventKey == 'due:${row.id}'),
+        isTrue);
+    final cleared = repository.notificationsStream.first;
+    await repository.clearNotifications();
+    expect((await cleared).any((item) => item.eventKey == 'due:${row.id}'),
+        isFalse);
+    final reloaded = repository.notificationsStream.first;
+    await repository.loadNotifications('owner');
+    expect((await reloaded).any((item) => item.eventKey == 'due:${row.id}'),
+        isFalse);
+    expect(
+        (await (db.select(db.bills)..where((t) => t.id.equals(row.id)))
+                .getSingle())
+            .dueAmount,
+        250);
   });
 
   test(
@@ -218,8 +271,8 @@ void main() {
         .toList();
     expect(alerts, hasLength(2));
     expect(alerts.singleWhere((a) => a.title.contains('Gold')).description,
-        contains('2'));
-    expect(alerts.singleWhere((a) => a.title.contains('Silver')).title,
+        contains('below the required stock level'));
+    expect(alerts.singleWhere((a) => a.title.contains('Silver')).description,
         contains('out of stock'));
     await db
         .customStatement("UPDATE stock_item_units SET status = 'Available'");

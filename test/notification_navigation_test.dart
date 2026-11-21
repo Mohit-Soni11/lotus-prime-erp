@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/core/router/notification_navigation.dart';
 import 'package:lotus_erp/core/router/workspace_navigation.dart';
+import 'package:lotus_erp/core/router/workspace_route.dart';
 import 'package:lotus_erp/features/notifications/domain/notification_item.dart';
 import 'package:lotus_erp/features/notifications/presentation/notification_center_screen.dart';
 import 'package:lotus_erp/features/notifications/presentation/notification_view_state.dart';
@@ -24,6 +25,20 @@ void main() {
         desc: '',
         targetRole: 'all',
         routeId: AppRoutes.lowStockAlertRoute),
+    'gold stock group': NotificationItem(
+        id: 20,
+        type: 'Inventory',
+        title: 'Gold stock alert',
+        desc: '',
+        targetRole: 'all',
+        location: '${RoutePaths.stockLowAlert}?metal=Gold'),
+    'silver stock group': NotificationItem(
+        id: 21,
+        type: 'Inventory',
+        title: 'Silver stock alert',
+        desc: '',
+        targetRole: 'all',
+        location: '${RoutePaths.stockLowAlert}?metal=Silver'),
     'order': NotificationItem(
         id: 3,
         type: 'Orders',
@@ -74,26 +89,30 @@ void main() {
       testWidgets(
           '${entry.key}: ${systemBack ? 'system' : 'page'} Back returns to notifications',
           (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
         final item = entry.value;
         final destination =
             Uri.parse(NotificationNavigation.location(item)).path;
         final rootKey = GlobalKey<NavigatorState>();
         final storage = PageStorageBucket();
         final view = NotificationViewState();
-        final inShell = entry.key != 'girvi' &&
-            entry.key != 'order' &&
-            entry.key != 'walk-in invoice';
         final router = GoRouter(
           navigatorKey: rootKey,
           initialLocation: RoutePaths.dashboard,
           routes: [
             GoRoute(path: '/outside', builder: (_, __) => const SizedBox()),
-            if (!inShell)
-              GoRoute(
-                  path: destination,
-                  builder: (context, state) => _target(context)),
+            workspaceRoute(
+                path: destination,
+                rootNavigatorKey: rootKey,
+                builder: (context, state) => _target(context)),
             ShellRoute(
-              builder: (_, __, child) => child,
+              builder: (_, __, child) => Row(children: [
+                const SizedBox(width: 260, child: Text('Sidebar')),
+                Expanded(child: child),
+              ]),
               routes: [
                 GoRoute(
                     path: RoutePaths.dashboard,
@@ -124,10 +143,6 @@ void main() {
                                 )),
                           ),
                         ))),
-                if (inShell)
-                  GoRoute(
-                      path: destination,
-                      builder: (context, state) => _target(context)),
               ],
             ),
           ],
@@ -153,6 +168,11 @@ void main() {
           await tester.tap(find.text(item.title));
           await tester.pumpAndSettle();
           expect(find.text('Destination'), findsOneWidget);
+          expect(
+              tester.getSize(
+                  find.byKey(const ValueKey('notification-destination'))),
+              const Size(1200, 800));
+          expect(find.text('Sidebar'), findsNothing);
           expect(find.text('Notifications'), findsNothing);
           if (systemBack) {
             await tester.binding.handlePopRoute();
@@ -178,7 +198,8 @@ void main() {
 }
 
 Widget _target(BuildContext context) => Scaffold(
-        body: Column(children: [
+    key: const ValueKey('notification-destination'),
+    body: Column(children: [
       const Text('Destination'),
       TextButton(
           onPressed: () => WorkspaceNavigation.backTo(context, '/outside'),

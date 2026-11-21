@@ -6,9 +6,77 @@ import 'package:lotus_erp/features/notifications/domain/notification_item.dart';
 import 'package:lotus_erp/features/notifications/presentation/notification_center_screen.dart';
 import 'package:lotus_erp/features/notifications/presentation/notification_view_state.dart';
 import 'package:lotus_erp/features/notifications/presentation/widgets/notification_bell_button.dart';
+import 'package:lotus_erp/features/notifications/presentation/widgets/notification_unread_indicator.dart';
 
 void main() {
-  testWidgets('scroll offsets and expanded filters restore independently',
+  testWidgets(
+      'search and category filter work and clear preserves protected alerts',
+      (tester) async {
+    final source = StreamController<List<NotificationItem>>.broadcast();
+    addTearDown(source.close);
+    final view = NotificationViewState();
+    var items = [
+      NotificationItem(
+          id: -1,
+          type: 'Day Book',
+          title: 'Verify opening',
+          desc: 'Opening count required',
+          targetRole: 'all',
+          eventKey: 'business:opening:today',
+          isOperational: true),
+      NotificationItem(
+          id: -2,
+          type: 'Inventory',
+          title: 'Silver rings stock low',
+          desc: '2 pieces available',
+          targetRole: 'all',
+          isOperational: true),
+      NotificationItem(
+          id: 1,
+          type: 'General',
+          title: 'Ordinary message',
+          desc: 'Information',
+          targetRole: 'all'),
+    ];
+    await tester.pumpWidget(MaterialApp(
+        home: NotificationCenterScreen(
+      stream: source.stream,
+      initialItems: items,
+      viewState: view,
+      onMarkAllRead: () async {},
+      onClearMessages: () async {
+        items = items.where((item) => item.isProtected).toList();
+        source.add(items);
+      },
+      onSelect: (_) {},
+    )));
+    await tester.tap(find.byTooltip('Filter notifications'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Inventory'));
+    await tester.pumpAndSettle();
+    expect(find.text('Silver rings stock low'), findsOneWidget);
+    expect(find.text('Verify opening'), findsNothing);
+    expect(find.text('1 message'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'No matching customer');
+    await tester.pumpAndSettle();
+    expect(find.text('No notifications match this view.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), '  SILVER  ');
+    await tester.pumpAndSettle();
+    expect(find.text('Silver rings stock low'), findsOneWidget);
+    await tester.tap(find.text('Clear messages'));
+    await tester.pumpAndSettle();
+    expect(view.filter, 'All');
+    expect(view.search, isEmpty);
+    expect(find.text('Verify opening'), findsOneWidget);
+    expect(find.text('Silver rings stock low'), findsOneWidget);
+    expect(find.text('Ordinary message'), findsNothing);
+    expect(
+        tester.widget<TextFormField>(find.byType(TextFormField)).initialValue,
+        isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('scroll, search and dropdown filter restore independently',
       (tester) async {
     final storage = PageStorageBucket();
     final view = NotificationViewState();
@@ -26,26 +94,27 @@ void main() {
                         type: 'Category $i',
                         title: 'Message $i',
                         desc: 'Notification details',
-                        targetRole: 'all'),
+                        targetRole: 'all',
+                        isOperational: true),
                 ],
                 onMarkAllRead: () async {},
                 onSelect: (_) {})));
-    ScrollPosition position(Type type) => tester
+    ScrollPosition position() => tester
         .state<ScrollableState>(find
             .descendant(
-                of: find.byType(type), matching: find.byType(Scrollable))
+                of: find.byType(CustomScrollView),
+                matching: find.byType(Scrollable))
             .first)
         .position;
 
     await tester.pumpWidget(panel(0));
-    await tester.tap(find.text('Search and filters'));
+    await tester.enterText(find.byType(TextFormField), 'Message');
+    await tester.tap(find.byTooltip('Filter notifications'));
     await tester.pumpAndSettle();
-    await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(-300, 0));
+    await tester.tap(find.text('Unread'));
     await tester.pumpAndSettle();
-    final filterOffset = position(SingleChildScrollView).pixels;
-    expect(filterOffset, greaterThan(0));
-    position(CustomScrollView).jumpTo(80);
+    FocusManager.instance.primaryFocus?.unfocus();
+    position().jumpTo(80);
     await tester.pumpAndSettle();
 
     for (var generation = 1; generation <= 3; generation++) {
@@ -53,15 +122,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.byType(TextFormField), findsOneWidget);
-      expect(position(CustomScrollView).pixels, 80);
-      expect(position(SingleChildScrollView).pixels, filterOffset);
+      expect(position().pixels, 80);
+      expect(
+          tester.widget<TextFormField>(find.byType(TextFormField)).initialValue,
+          'Message');
+      expect(view.filter, 'Unread');
+      expect(find.text('Unread'), findsOneWidget);
     }
-    await tester.ensureVisible(find.text('Search and filters'));
-    await tester.tap(find.text('Search and filters'));
-    await tester.pumpAndSettle();
-    await tester.pumpWidget(panel(4));
-    await tester.pumpAndSettle();
-    expect(find.byType(TextFormField), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -128,7 +195,7 @@ void main() {
         tester.getSize(panel).width,
         lessThan(
             tester.view.physicalSize.width / tester.view.devicePixelRatio));
-    expect(find.text('Retained until resolved'), findsOneWidget);
+    expect(find.text('Retained until resolved'), findsNothing);
     await tester.ensureVisible(find.text(item.title));
     await tester.pumpAndSettle();
     await tester.tap(find.text(item.title));
@@ -173,9 +240,17 @@ void main() {
       },
       onSelect: (_) {},
     )));
+    expect(find.byType(NotificationUnreadIndicator), findsNWidgets(2));
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump(const Duration(milliseconds: 300));
+    final pulse = find.descendant(
+        of: find.byType(NotificationUnreadIndicator).first,
+        matching: find.byType(AnimatedOpacity));
+    expect(tester.widget<AnimatedOpacity>(pulse).opacity, 0.35);
     await tester.tap(find.text('Mark all read'));
     await tester.pumpAndSettle();
     expect(find.textContaining('0 unread'), findsOneWidget);
+    expect(find.byType(NotificationUnreadIndicator), findsNothing);
     await tester.tap(find.text('Clear messages'));
     await tester.pumpAndSettle();
     expect(find.text('Verify opening'), findsOneWidget);

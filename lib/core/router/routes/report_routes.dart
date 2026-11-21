@@ -1,8 +1,9 @@
 part of '../app_router.dart';
 
 List<RouteBase> reportRoutes() => [
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.reportDayBook,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => DayBookScreen(
           initialAction: state.uri.queryParameters['action'],
           exitAfterClose: state.uri.queryParameters['exitAfterClose'] == 'true',

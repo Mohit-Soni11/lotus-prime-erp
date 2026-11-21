@@ -24,11 +24,17 @@ abstract final class NotificationNavigation {
   }) async {
     while (true) {
       if (!context.mounted) return;
-      final selected = await showDialog<NotificationItem>(
+      final navigator = Navigator.of(context, rootNavigator: true);
+      if (!navigator.mounted) return;
+      final dialog = DialogRoute<NotificationItem>(
         context: context,
         useSafeArea: true,
         builder: builder,
+        themes: InheritedTheme.capture(from: context, to: navigator.context),
       );
+      final selected = await navigator.push(dialog);
+      // Save scroll/focus state and finish the popup's exit before navigating.
+      await dialog.completed;
       if (selected == null || !context.mounted) return;
       await context.push<void>(location(selected));
       if (context.mounted && onReturn != null) await onReturn();

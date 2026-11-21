@@ -17,8 +17,9 @@ List<RouteBase> customerRoutes() => [
           onSaved: () => context.go(RoutePaths.customerList),
         ),
       ),
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.customerProfile,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
           final initialBillId =

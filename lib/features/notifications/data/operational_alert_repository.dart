@@ -1,5 +1,6 @@
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'business_day_alert_repository.dart';
+import '../domain/stock_group_alert_policy.dart';
 import 'package:lotus_erp/features/notifications/domain/operational_alert.dart';
 import 'package:lotus_erp/features/notifications/domain/operational_alert_policy.dart';
 import 'package:lotus_erp/features/stock/shared/data/repositories/low_stock_alert_repository.dart';
@@ -63,8 +64,7 @@ class OperationalAlertRepository {
 
     final alerts = <OperationalAlert>[
       ...await BusinessDayAlertRepository(db).load(now),
-      for (final card in stock.itemTypeCards)
-        if (OperationalAlertPolicy.stock(card) case final alert?) alert,
+      ...StockGroupAlertPolicy.build(stock.itemTypeCards),
       for (final order in orders)
         if (OperationalAlertPolicy.order(
                 order, names[order.customerId] ?? 'Customer', now)

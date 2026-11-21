@@ -10,7 +10,15 @@ void main() {
   NotificationItem alert(String key, {String desc = 'Pending'}) =>
       NotificationItem(
         id: -1,
-        type: 'Inventory',
+        type: key.startsWith('due:')
+            ? 'Collections'
+            : key.startsWith('girvi:')
+                ? 'Girvi'
+                : key.startsWith('order:')
+                    ? 'Orders'
+                    : key.startsWith('business:')
+                        ? 'Day Book'
+                        : 'Inventory',
         title: key,
         desc: desc,
         targetRole: 'all',
@@ -82,5 +90,44 @@ void main() {
     await repo.markRead('owner', [item]);
     await repo.apply('owner', []);
     expect((await repo.apply('owner', [item])).single.isRead, isFalse);
+  });
+
+  test('an acknowledged stock summary becomes unread when its members change',
+      () async {
+    final original =
+        alert('stock:GOLD', desc: '2 item groups are out of stock.')
+            .copyWith(sourceRevision: 'ring-and-chain');
+    await repo.markRead('owner', [original]);
+    expect((await repo.apply('owner', [original])).single.isRead, isTrue);
+    final updated = original.copyWith(sourceRevision: 'ring-and-necklace');
+    expect((await repo.apply('owner', [updated])).single.isRead, isFalse);
+  });
+
+  test(
+      'clear dismisses girvi, due and order alerts while retaining daily and stock',
+      () async {
+    final items = [
+      alert('business:opening:20261121'),
+      alert('business:rates:20261121'),
+      alert('business:closing:20261121'),
+      alert('stock:gold:ring'),
+      alert('due:1'),
+      alert('girvi:maturity:2'),
+      alert('order:3'),
+      message(1),
+    ];
+    await repo.clearMessages('owner', items);
+    final reloaded = NotificationStateRepository(db);
+    final visible = await reloaded.apply('owner', items);
+    expect(visible.map((item) => item.storageKey), [
+      'business:opening:20261121',
+      'business:rates:20261121',
+      'business:closing:20261121',
+      'stock:gold:ring',
+    ]);
+    await reloaded.markRead('owner', visible);
+    expect((await reloaded.apply('owner', items)), hasLength(4));
+    expect((await reloaded.apply('owner', items)).every((item) => item.isRead),
+        isTrue);
   });
 }

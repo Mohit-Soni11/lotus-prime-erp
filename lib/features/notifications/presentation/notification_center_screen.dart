@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../domain/notification_item.dart';
+import '../domain/notification_filters.dart';
 import 'notification_theme.dart';
 import 'notification_view_state.dart';
-import 'widgets/notification_card.dart';
+import 'widgets/notification_header.dart';
+import 'widgets/notification_list.dart';
 import 'widgets/notification_toolbar.dart';
 
 class NotificationCenterScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class NotificationCenterScreen extends StatefulWidget {
   final Future<void> Function()? onRefresh;
   final Future<void> Function(NotificationItem)? onMarkRead;
   final ValueChanged<NotificationItem> onSelect;
+
   const NotificationCenterScreen(
       {super.key,
       required this.stream,
@@ -79,40 +82,29 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     }
   }
 
+  bool _matches(NotificationItem item) =>
+      NotificationFilters.matches(_view.filter, item) &&
+      '${item.title} ${item.desc}'
+          .toLowerCase()
+          .contains(_view.search.trim().toLowerCase());
+
   @override
   Widget build(BuildContext context) => Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: SizedBox(
-        width: 480,
-        height: MediaQuery.sizeOf(context).height * 0.75,
-        child: Theme(
-          data: ThemeData.dark(useMaterial3: true).copyWith(
-              scaffoldBackgroundColor: NotificationTheme.background,
-              colorScheme: ColorScheme.fromSeed(
-                  seedColor: NotificationTheme.gold,
-                  brightness: Brightness.dark)),
-          child: Scaffold(
-            appBar: AppBar(
-                backgroundColor: NotificationTheme.shell,
-                foregroundColor: Colors.white,
-                leading: IconButton(
-                    tooltip: 'Back',
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_rounded)),
-                title: const Text('Notifications',
-                    style:
-                        TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
-                actions: [
-                  IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded))
-                ]),
-            body: SafeArea(
-                child: StreamBuilder<List<NotificationItem>>(
+        insetPadding: const EdgeInsets.all(16),
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 800),
+        backgroundColor: NotificationTheme.background,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: NotificationTheme.border)),
+        child: SizedBox(
+          width: 720,
+          height: MediaQuery.sizeOf(context).height * 0.86,
+          child: Theme(
+            data: NotificationTheme.data(Theme.of(context)),
+            child: Scaffold(
+                body: SafeArea(
+                    child: StreamBuilder<List<NotificationItem>>(
               stream: widget.stream,
               initialData: widget.initialItems,
               builder: (context, snapshot) {
@@ -121,102 +113,71 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                 final failed = snapshot.hasError ||
                     (snapshot.connectionState == ConnectionState.waiting &&
                         widget.initialError != null);
-                final visible = items
-                    .where((item) =>
-                        (_view.filter == 'All' ||
-                            (_view.filter == 'Important' && item.isProtected) ||
-                            (_view.filter == 'Unread' && !item.isRead) ||
-                            item.type == _view.filter) &&
-                        '${item.title} ${item.desc}'
-                            .toLowerCase()
-                            .contains(_view.search.toLowerCase()))
-                    .toList();
-                return CustomScrollView(
-                  key: const PageStorageKey('notification-list-scroll'),
-                  controller: widget.scrollController,
-                  slivers: [
-                    SliverPadding(
-                        padding: const EdgeInsets.all(14),
-                        sliver: SliverToBoxAdapter(
-                          child: NotificationToolbar(
+                final visible = items.where(_matches).toList();
+                final enabled = !_busy && !_opening;
+                return Column(children: [
+                  NotificationHeader(
+                      items: items, onClose: () => Navigator.pop(context)),
+                  const Divider(height: 1, color: NotificationTheme.border),
+                  Expanded(
+                      child: CustomScrollView(
+                    key: const PageStorageKey('notification-list-scroll'),
+                    controller: widget.scrollController,
+                    slivers: [
+                      SliverPadding(
+                          padding: const EdgeInsets.all(18),
+                          sliver: SliverToBoxAdapter(
+                            child: NotificationToolbar(
                               items: items,
                               view: _view,
                               onViewChanged: () => setState(() {}),
                               busy: _busy,
                               error: _actionError,
-                              onMarkAllRead: _busy || failed
-                                  ? null
-                                  : () => _run(widget.onMarkAllRead),
-                              onClearMessages: _busy ||
-                                      failed ||
-                                      widget.onClearMessages == null
-                                  ? null
-                                  : _clearMessages,
-                              onRefresh: _busy || widget.onRefresh == null
-                                  ? null
-                                  : () => _run(widget.onRefresh!)),
-                        )),
-                    if (failed || visible.isEmpty)
-                      SliverFillRemaining(
+                              onMarkAllRead: enabled && !failed
+                                  ? () => _run(widget.onMarkAllRead)
+                                  : null,
+                              onClearMessages: enabled &&
+                                      !failed &&
+                                      widget.onClearMessages != null
+                                  ? _clearMessages
+                                  : null,
+                              onRefresh: enabled && widget.onRefresh != null
+                                  ? () => _run(widget.onRefresh!)
+                                  : null,
+                            ),
+                          )),
+                      if (failed || visible.isEmpty)
+                        SliverFillRemaining(
                           hasScrollBody: false,
                           child: Center(
                               child: Padding(
                                   padding: const EdgeInsets.all(20),
                                   child: Text(
-                                      failed
-                                          ? 'Notifications could not be loaded. Use Refresh to try again.'
-                                          : items.isEmpty
-                                              ? 'All caught up'
-                                              : 'No notifications match this view.',
-                                      style: const TextStyle(
-                                          color: NotificationTheme.muted)))))
-                    else
-                      SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                          sliver: SliverList.separated(
-                              itemCount: visible.length,
-                              separatorBuilder: (_, __) => const Divider(
-                                  height: 1, color: NotificationTheme.border),
-                              itemBuilder: (_, index) {
-                                final item = visible[index];
-                                return Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (index == 0 ||
-                                          (visible[index - 1].sortRank < 10) !=
-                                              (item.sortRank < 10))
-                                        Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 10),
-                                            child: Text(
-                                                item.sortRank < 10
-                                                    ? 'DAILY ESSENTIALS'
-                                                    : 'ACTIVITY & ALERTS',
-                                                style: const TextStyle(
-                                                    color:
-                                                        NotificationTheme.muted,
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w800,
-                                                    letterSpacing: 1))),
-                                      NotificationCard(
-                                          item: item,
-                                          onOpen:
-                                              _busy || _opening || !item.canOpen
-                                                  ? null
-                                                  : () => _open(item),
-                                          onMarkRead: _busy ||
-                                                  widget.onMarkRead == null
-                                              ? null
-                                              : () => _run(() =>
-                                                  widget.onMarkRead!(item))),
-                                    ]);
-                              })),
-                  ],
-                );
+                                    failed
+                                        ? 'Notifications could not be loaded. Use Refresh to try again.'
+                                        : items.isEmpty
+                                            ? 'All caught up'
+                                            : 'No notifications match this view.',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: NotificationTheme.muted),
+                                  ))),
+                        )
+                      else
+                        NotificationList(
+                          items: visible,
+                          enabled: enabled,
+                          onOpen: _open,
+                          onMarkRead: widget.onMarkRead == null
+                              ? null
+                              : (item) => _run(() => widget.onMarkRead!(item)),
+                        ),
+                    ],
+                  )),
+                ]);
               },
-            )),
+            ))),
           ),
         ),
-      ));
+      );
 }
