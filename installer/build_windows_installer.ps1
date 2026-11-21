@@ -4,11 +4,12 @@ Set-StrictMode -Version Latest
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $pubspecPath = Join-Path $projectRoot 'pubspec.yaml'
 $pubspec = Get-Content -LiteralPath $pubspecPath -Raw
-$versionMatch = [regex]::Match($pubspec, '(?m)^version:\s*(\d+\.\d+\.\d+)\+\d+\s*$')
+$versionMatch = [regex]::Match($pubspec, '(?m)^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$')
 if (-not $versionMatch.Success) {
     throw 'pubspec.yaml must contain version: major.minor.patch+build.'
 }
 $appVersion = $versionMatch.Groups[1].Value
+$appBuild = $versionMatch.Groups[2].Value
 
 $compilerCandidates = @(
     (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),
@@ -50,6 +51,10 @@ try {
             throw "Release package is missing $required."
         }
     }
+    $compiledVersion = (Get-Item -LiteralPath (Join-Path $releaseDir 'lotus_erp.exe')).VersionInfo.FileVersion
+    if ($compiledVersion -ne "$appVersion+$appBuild") {
+        throw "Release version mismatch: expected $appVersion+$appBuild, found $compiledVersion."
+    }
     if (-not [Environment]::Is64BitProcess) {
         throw 'Use 64-bit PowerShell to bundle the x64 Visual C++ runtime.'
     }
@@ -77,6 +82,8 @@ try {
     $digest = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
     $checksumFile = "$installer.sha256"
     Set-Content -LiteralPath $checksumFile -Value "$digest *$(Split-Path -Leaf $installer)" -Encoding Ascii
+    $instructions = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'UPDATE-INSTRUCTIONS.txt') -Raw).Replace('{{VERSION}}', $appVersion)
+    Set-Content -LiteralPath (Join-Path $projectRoot "dist\Lotus-ERP-Update-$appVersion-Instructions.txt") -Value $instructions -Encoding UTF8
     Write-Output "Installer: $installer"
     Write-Output "SHA256: $digest"
 } finally {

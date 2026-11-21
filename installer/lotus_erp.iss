@@ -1,22 +1,35 @@
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.0.1"
+#endif
+#ifndef ProductName
+  #define ProductName "Lotus ERP"
+#endif
+#ifndef ProductId
+  #define ProductId "LotusERP.Desktop"
+#endif
+#ifndef ReleaseDir
+  #define ReleaseDir "..\build\windows\x64\runner\Release"
+#endif
+#ifndef InstallerOutputDir
+  #define InstallerOutputDir "..\dist"
 #endif
 
-#define ReleaseDir "..\build\windows\x64\runner\Release"
-
 [Setup]
-AppId=LotusERP.Desktop
-AppName=Lotus ERP
+AppId={#ProductId}
+AppName={#ProductName}
 AppVersion={#AppVersion}
-AppVerName=Lotus ERP {#AppVersion}
+AppVerName={#ProductName} {#AppVersion}
 AppPublisher=Lotus ERP
-DefaultDirName={localappdata}\Programs\Lotus ERP
-DefaultGroupName=Lotus ERP
+DefaultDirName={localappdata}\Programs\{#ProductName}
+DefaultGroupName={#ProductName}
+UsePreviousAppDir=yes
+DisableDirPage=auto
+DisableWelcomePage=no
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
-OutputDir=..\dist
+OutputDir={#InstallerOutputDir}
 OutputBaseFilename=Lotus-ERP-Setup-{#AppVersion}-x64
 Compression=lzma2
 SolidCompression=yes
@@ -35,8 +48,11 @@ Source: "{#ReleaseDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#ReleaseDir}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\Lotus ERP"; Filename: "{app}\lotus_erp.exe"
-Name: "{autodesktop}\Lotus ERP"; Filename: "{app}\lotus_erp.exe"; Tasks: desktopicon
+Name: "{group}\{#ProductName}"; Filename: "{app}\lotus_erp.exe"
+Name: "{autodesktop}\{#ProductName}"; Filename: "{app}\lotus_erp.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\lotus_erp.exe"; Description: "Launch Lotus ERP"; Flags: nowait postinstall skipifsilent
+
+[Code]
+#include "scripts\update_safety.iss"

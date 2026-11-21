@@ -1,0 +1,21 @@
+LOTUS ERP {{VERSION}} - UPDATE
+
+1. Close Lotus ERP with the window's X button. Updating does not require
+   closing your business day. Do not uninstall the existing application.
+2. Open Lotus-ERP-Setup-{{VERSION}}-x64.exe under the same Windows account.
+3. Click Next, then Update. Setup uses the existing installation folder.
+4. Setup first backs up and verifies existing data, attachments and settings.
+   If the backup fails or Lotus ERP is still open, installation stops.
+5. Click Finish and reopen Lotus ERP. Verify your customer records, stock,
+   invoices, dues and balances before continuing work.
+
+BACKUP LOCATION
+%LOCALAPPDATA%\Lotus ERP\Backups\before-{{VERSION}}-...
+
+A backup-complete.txt file identifies a successfully verified backup.
+The final setup page displays the full backup location.
+
+The setup updates application files. Existing business records remain in:
+%LOCALAPPDATA%\Lotus ERP\Data
+
+This package is currently unsigned, so Windows may show a publisher warning.

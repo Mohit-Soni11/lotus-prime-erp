@@ -2,7 +2,7 @@ name: lotus_erp
 description: "Lotus ERP - Enterprise Resource Planning System (Professional Edition)"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
