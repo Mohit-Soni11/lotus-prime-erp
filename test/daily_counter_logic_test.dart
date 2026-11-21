@@ -80,7 +80,8 @@ void main() {
     },
   );
 
-  test('dashboard bought metals include customer purchases and sales returns',
+  test(
+      'old metal bought includes customer purchases but excludes sales returns',
       () async {
     final now = DateTime.now();
     await database.ensureReturnReversalSchema();
@@ -142,10 +143,10 @@ void main() {
       const Duration(seconds: 2),
     );
 
-    expect(data.metalMovement.boughtGold.weightRaw, closeTo(1.615, 0.001));
-    expect(data.metalMovement.boughtGold.piecesStr, '3 Pcs');
-    expect(data.metalMovement.boughtSilver.weightRaw, closeTo(20.320, 0.001));
-    expect(data.metalMovement.boughtSilver.piecesStr, '2 Pcs');
+    expect(data.metalMovement.boughtGold.weightRaw, closeTo(1.250, 0.001));
+    expect(data.metalMovement.boughtGold.piecesStr, '2 Pcs');
+    expect(data.metalMovement.boughtSilver.weightRaw, 0);
+    expect(data.metalMovement.boughtSilver.piecesStr, '0 Pcs');
   });
 
   test('dashboard due ignores tiny floating point payment residue', () async {
@@ -252,6 +253,138 @@ void main() {
     expect(data.financeDue.dueCount, '1 Customer');
     expect(data.financeDue.dueAmountRaw, 750);
   });
+
+  test('new girvi uses current tickets and distinct customer count', () async {
+    final now = DateTime.now();
+    final customer = await database.into(database.customers).insert(
+          CustomersCompanion.insert(
+              name: 'Girvi Customer', mobile: '9000010001'),
+        );
+    final other = await database.into(database.customers).insert(
+          CustomersCompanion.insert(
+              name: 'Other Customer', mobile: '9000010002'),
+        );
+    for (final (ticket, customerId, amount) in [
+      ('GRV-DASH-1', customer, 1000.25),
+      ('GRV-DASH-2', customer, 2000.50),
+      ('GRV-DASH-3', other, 3000.00),
+    ]) {
+      await database.into(database.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: ticket,
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              startDate: drift.Value(now),
+              loanAmount: drift.Value(amount),
+            ),
+          );
+    }
+
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+    final data =
+        await logic.dataStream.first.timeout(const Duration(seconds: 2));
+
+    expect(data.financeDue.girviCount, '3 Tickets');
+    expect(data.financeDue.girviCustomerCountRaw, 2);
+    expect(data.financeDue.girviAmountRaw, 6000.75);
+  });
+
+  test('posted return reduces the original day sale without becoming old metal',
+      () async {
+    final now = DateTime.now();
+    final billId = await _insertBill(
+      database,
+      billNo: 'DASH-RETURN-SALE',
+      billDate: now,
+      finalAmount: 2000,
+      paidAmount: 2000,
+      status: 'PARTIALLY_RETURNED',
+    );
+    await _insertBillItem(
+      database,
+      billId: billId,
+      lineNo: 1,
+      metalType: 'GOLD',
+      purity: '22K',
+      grossWeight: 4.5,
+      itemTotal: 2000,
+    );
+    await database.ensureReturnReversalSchema();
+    await _insertReturnVoucherLine(
+      database,
+      voucherNo: 'DASH-RETURN-1',
+      operationType: 'SALES_RETURN',
+      sourceType: 'SALES_INVOICE',
+      sourceId: billId,
+      metalType: 'GOLD',
+      quantity: 1,
+      receivedNetWeight: 4.5,
+      createdAt: now,
+    );
+
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+    final data =
+        await logic.dataStream.first.timeout(const Duration(seconds: 2));
+
+    expect(data.metalMovement.soldGold.weightRaw, 0);
+    expect(data.metalMovement.soldGold.piecesRaw, 0);
+    expect(data.metalMovement.boughtGold.weightRaw, 0);
+  });
+
+  test('daily due refreshes immediately after a new bill', () async {
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+    await logic.dataStream.first.timeout(const Duration(seconds: 2));
+
+    final updated = logic.dataStream
+        .firstWhere(
+          (data) => data.financeDue.dueAmountRaw == 42.75,
+        )
+        .timeout(const Duration(seconds: 2));
+    await _insertBill(
+      database,
+      billNo: 'DASH-LIVE-DUE',
+      billDate: DateTime.now(),
+      finalAmount: 100,
+      paidAmount: 57.25,
+      dueAmount: 42.75,
+    );
+
+    expect((await updated).financeDue.dueCount, '1 Customer');
+  });
+
+  test('old metal trade-in contributes net grams and pieces', () async {
+    final billId = await _insertBill(
+      database,
+      billNo: 'DASH-TRADE-IN',
+      billDate: DateTime.now(),
+      finalAmount: 4000,
+      paidAmount: 4000,
+    );
+    await database.into(database.billTradeInItems).insert(
+          BillTradeInItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('SILVER'),
+            grossWeight: const drift.Value(12.5),
+            netWeight: const drift.Value(12.0),
+            lineAmount: const drift.Value(900.25),
+          ),
+        );
+
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+    final data =
+        await logic.dataStream.first.timeout(const Duration(seconds: 2));
+
+    expect(data.metalMovement.boughtSilver.weightRaw, 12);
+    expect(data.metalMovement.boughtSilver.piecesRaw, 1);
+  });
 }
 
 Future<int> _insertBill(
@@ -342,6 +475,7 @@ Future<void> _insertReturnVoucherLine(
   required String metalType,
   required int quantity,
   required double receivedNetWeight,
+  int? sourceId,
   required DateTime createdAt,
 }) async {
   final createdAtMs = createdAt.millisecondsSinceEpoch;
@@ -368,7 +502,7 @@ Future<void> _insertReturnVoucherLine(
       voucherNo,
       operationType,
       sourceType,
-      voucherNo.hashCode.abs(),
+      sourceId ?? voucherNo.hashCode.abs(),
       'SRC-$voucherNo',
       'REFUND_PAYABLE',
       0.0,

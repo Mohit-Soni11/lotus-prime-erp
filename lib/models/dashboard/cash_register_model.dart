@@ -2,61 +2,44 @@
 // FILE        : cash_register_model.dart
 // MODULE      : Dashboard / Cash Register
 // LAYER       : Models
-// DESCRIPTION : Complete snapshot for today's cash register.
-//
-//               4 KEY FIELDS:
-//               • openingBalance  → ShopProfiles.openingCashBalance (v6)
-//               • totalReceived   → Sum of bills.paidAmount (today)
-//               • totalPaidOut    → Expense total
-//               • netCashDrawer   → openingBalance + received - paidOut
+// DESCRIPTION : Dashboard projection of Day Book cash and bank balances.
 // =============================================================================
 
 class CashRegisterModel {
   final double openingBalance;
-  final double totalReceived;
-  final double totalPaidOut;
-  final double netCashDrawer;
+  final double moneyIn;
+  final double moneyOut;
+  final double closingBalance;
 
   // Formatted strings for the UI.
   final String openingBalanceStr;
-  final String totalReceivedStr;
-  final String totalPaidOutStr;
-  final String netCashDrawerStr;
+  final String moneyInStr;
+  final String moneyOutStr;
+  final String closingBalanceStr;
 
   final bool isLoading;
 
   const CashRegisterModel({
     required this.openingBalance,
-    required this.totalReceived,
-    required this.totalPaidOut,
-    required this.netCashDrawer,
+    required this.moneyIn,
+    required this.moneyOut,
+    required this.closingBalance,
     required this.openingBalanceStr,
-    required this.totalReceivedStr,
-    required this.totalPaidOutStr,
-    required this.netCashDrawerStr,
+    required this.moneyInStr,
+    required this.moneyOutStr,
+    required this.closingBalanceStr,
     this.isLoading = false,
   });
 
   factory CashRegisterModel.loading() => const CashRegisterModel(
         openingBalance: 0,
-        totalReceived: 0,
-        totalPaidOut: 0,
-        netCashDrawer: 0,
+        moneyIn: 0,
+        moneyOut: 0,
+        closingBalance: 0,
         openingBalanceStr: '--',
-        totalReceivedStr: '--',
-        totalPaidOutStr: '--',
-        netCashDrawerStr: '--',
+        moneyInStr: '--',
+        moneyOutStr: '--',
+        closingBalanceStr: '--',
         isLoading: true,
-      );
-
-  factory CashRegisterModel.zero() => const CashRegisterModel(
-        openingBalance: 0,
-        totalReceived: 0,
-        totalPaidOut: 0,
-        netCashDrawer: 0,
-        openingBalanceStr: '₹0',
-        totalReceivedStr: '₹0',
-        totalPaidOutStr: '₹0',
-        netCashDrawerStr: '₹0',
       );
 }

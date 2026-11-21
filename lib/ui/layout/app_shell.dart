@@ -7,23 +7,55 @@
 //               This widget decides HOW to show it (layout, animation, responsive).
 // =============================================================================
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/app_routes.dart';
 import '../../theme/dashboard/app/uv.dart';
 import 'sidebar/custom_sidebar.dart';
+import 'application_exit_flow.dart';
+import '../../database/db/app_database.dart';
+import '../../features/business_day/data/business_day_repository.dart';
+import '../../core/logging/app_logger.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   final Widget child;
 
   const AppShell({
     super.key,
     required this.child,
   });
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  bool _exitInProgress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordBusinessOpening();
+  }
+
+  Future<void> _recordBusinessOpening() async {
+    try {
+      await BusinessDayRepository(AppDatabase()).activeDay(DateTime.now());
+    } catch (error) {
+      AppLogger.error('Business opening could not be recorded: $error');
+    }
+  }
+
+  Future<void> _exitBusinessDay() async {
+    if (_exitInProgress) return;
+    _exitInProgress = true;
+    try {
+      await ApplicationExitFlow.run(context);
+    } finally {
+      _exitInProgress = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +71,7 @@ class AppShell extends StatelessWidget {
       drawer: isSmallScreen && showShellNavigation
           ? Drawer(
               child: CustomSidebar(
-                onExitApp: () {
-                  if (Platform.isAndroid || Platform.isIOS) {
-                    SystemNavigator.pop();
-                  } else {
-                    exit(0);
-                  }
-                },
+                onExitApp: _exitBusinessDay,
               ),
             )
           : null,
@@ -77,13 +103,7 @@ class AppShell extends StatelessWidget {
           // Desktop Sidebar
           if (!isSmallScreen && showShellNavigation)
             CustomSidebar(
-              onExitApp: () {
-                if (Platform.isAndroid || Platform.isIOS) {
-                  SystemNavigator.pop();
-                } else {
-                  exit(0);
-                }
-              },
+              onExitApp: _exitBusinessDay,
             ),
 
           // Content Area
@@ -118,7 +138,7 @@ class AppShell extends StatelessWidget {
                     key: ValueKey(
                       GoRouterState.of(context).matchedLocation,
                     ),
-                    child: child,
+                    child: widget.child,
                   ),
                 ),
               ),

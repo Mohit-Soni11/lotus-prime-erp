@@ -22,8 +22,15 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 class DayBookScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final DateTime? initialDate;
+  final String? initialAction;
+  final bool exitAfterClose;
 
-  const DayBookScreen({super.key, this.onBack, this.initialDate});
+  const DayBookScreen(
+      {super.key,
+      this.onBack,
+      this.initialDate,
+      this.initialAction,
+      this.exitAfterClose = false});
 
   @override
   State<DayBookScreen> createState() => _DayBookScreenState();
@@ -33,29 +40,79 @@ class _DayBookScreenState extends State<DayBookScreen> {
   late final DayBookController _ctrl;
   final ScrollController _mainScrollController = ScrollController();
   bool _exporting = false;
+  bool _initialActionScheduled = false;
 
   @override
   void initState() {
     super.initState();
     _ctrl = DayBookController(initialDate: widget.initialDate);
+    _ctrl.addListener(_handleInitialAction);
   }
 
   @override
   void dispose() {
+    _ctrl.removeListener(_handleInitialAction);
     _ctrl.dispose();
     _mainScrollController.dispose();
     super.dispose();
   }
 
   Future<void> _showDayClosing() async {
-    final draft = await showDialog<ExpenseDraft>(
-      context: context,
-      barrierColor: DayBookColors.overlay,
-      builder: (context) => DayBookEodDialog(ctrl: _ctrl),
+    if (widget.exitAfterClose && _ctrl.balanceVerification == null) {
+      await _setBalance();
+      if (!mounted || _ctrl.balanceVerification == null) return;
+    }
+    final draft =
+        await Navigator.of(context, rootNavigator: true).push<ExpenseDraft>(
+      MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => DayBookEodDialog(ctrl: _ctrl, fullScreen: true)),
     );
-    if (!mounted || draft == null) return;
+    if (!mounted) return;
+    if (_ctrl.summary?.isDayLocked == true &&
+        widget.exitAfterClose &&
+        _isRequestedDay) {
+      context.pop(true);
+      return;
+    }
+    if (draft == null) return;
     await context.push(RoutePaths.financeExpense, extra: draft);
     if (mounted) await _ctrl.loadData(silent: true);
+  }
+
+  bool get _isRequestedDay {
+    final requested = widget.initialDate;
+    final selected = _ctrl.selectedDate;
+    return requested != null &&
+        requested.year == selected.year &&
+        requested.month == selected.month &&
+        requested.day == selected.day;
+  }
+
+  void _handleInitialAction() {
+    if (_initialActionScheduled ||
+        widget.initialAction == null ||
+        _ctrl.isLoading ||
+        _ctrl.summary == null ||
+        _ctrl.errorMessage != null) {
+      return;
+    }
+    _initialActionScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (_ctrl.summary!.isDayLocked) {
+        if (widget.exitAfterClose) context.pop(true);
+        return;
+      }
+      if (widget.initialAction == 'verify') {
+        await _setBalance();
+      } else if (widget.initialAction == 'close') {
+        await _showDayClosing();
+      }
+      if (mounted && !widget.exitAfterClose && _isRequestedDay) {
+        context.pop();
+      }
+    });
   }
 
   Future<void> _addIncome() async {
@@ -82,24 +139,26 @@ class _DayBookScreenState extends State<DayBookScreen> {
   Future<void> _setBalance() async {
     final flow = _ctrl.summary?.moneyFlow;
     if (flow == null) return;
-    final result = await showDialog<DayBookBalanceDialogResult>(
-      context: context,
-      barrierColor: DayBookColors.overlay,
-      builder: (_) => DayBookBalanceDialog(
-        date: _ctrl.selectedDate,
-        expectedCash: flow.openingCash,
-        expectedBank: flow.openingBank,
-        expenseRecords: _ctrl.summary?.expenseRecords ?? const [],
-        bankAccountConfigured:
-            flow.bankAccountCount != 0 || flow.openingBank.abs() >= 0.01,
-        existing: _ctrl.balanceVerification,
-        onSave: _ctrl.verifyBalance,
-      ),
+    final result = await Navigator.of(context, rootNavigator: true)
+        .push<DayBookBalanceDialogResult>(
+      MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => DayBookBalanceDialog(
+                fullScreen: true,
+                date: _ctrl.selectedDate,
+                expectedCash: flow.openingCash,
+                expectedBank: flow.openingBank,
+                expenseRecords: _ctrl.summary?.expenseRecords ?? const [],
+                bankAccountConfigured: flow.bankAccountCount != 0 ||
+                    flow.openingBank.abs() >= 0.01,
+                existing: _ctrl.balanceVerification,
+                onSave: _ctrl.verifyBalance,
+              )),
     );
     if (!mounted || result == null) return;
     final amount = result.mismatchExpenseAmount;
     if (amount != null) {
-      context.push(RoutePaths.financeExpense, extra: amount);
+      await context.push(RoutePaths.financeExpense, extra: amount);
       return;
     }
     _showSuccess('Daily balance verification saved.');
@@ -213,11 +272,15 @@ class _DayBookScreenState extends State<DayBookScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DayBookTopSection(
+              allowDayClosing: widget.initialAction != null && _isRequestedDay,
               ctrl: _ctrl,
               summary: summary,
               onDayClosing: _showDayClosing,
               onAddIncome: summary.isDayLocked ? null : _addIncome,
-              onBalanceVerification: (_ctrl.isToday && !summary.isDayLocked) ||
+              onBalanceVerification: ((_ctrl.isToday ||
+                              (widget.initialAction != null &&
+                                  _isRequestedDay)) &&
+                          !summary.isDayLocked) ||
                       _ctrl.balanceVerification != null
                   ? _setBalance
                   : null,

@@ -10,6 +10,7 @@ import 'day_book_export_button.dart';
 class DayBookWorkspaceHeader extends StatelessWidget {
   const DayBookWorkspaceHeader({
     super.key,
+    this.allowDayClosing = false,
     required this.ctrl,
     required this.summary,
     required this.onDayClosing,
@@ -22,6 +23,7 @@ class DayBookWorkspaceHeader extends StatelessWidget {
   });
 
   final DayBookController ctrl;
+  final bool allowDayClosing;
   final DayBookSummary summary;
   final VoidCallback onDayClosing;
   final VoidCallback? onAddIncome;
@@ -75,7 +77,7 @@ class DayBookWorkspaceHeader extends StatelessWidget {
                 balanceVerification,
                 const SizedBox(width: 10),
                 addIncome,
-                if (ctrl.isToday) ...[
+                if (ctrl.isToday || allowDayClosing) ...[
                   const SizedBox(width: 10),
                   dayClosing,
                 ],
@@ -96,7 +98,7 @@ class DayBookWorkspaceHeader extends StatelessWidget {
                         export,
                         balanceVerification,
                         addIncome,
-                        if (ctrl.isToday) dayClosing,
+                        if (ctrl.isToday || allowDayClosing) dayClosing,
                       ],
                     ),
                   ),

@@ -8,6 +8,7 @@ import 'day_book_workspace_header.dart';
 class DayBookTopSection extends StatelessWidget {
   const DayBookTopSection({
     super.key,
+    this.allowDayClosing = false,
     required this.ctrl,
     required this.summary,
     required this.onDayClosing,
@@ -20,6 +21,7 @@ class DayBookTopSection extends StatelessWidget {
   });
 
   final DayBookController ctrl;
+  final bool allowDayClosing;
   final DayBookSummary summary;
   final VoidCallback onDayClosing;
   final VoidCallback? onAddIncome;
@@ -34,6 +36,7 @@ class DayBookTopSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DayBookWorkspaceHeader(
+            allowDayClosing: allowDayClosing,
             ctrl: ctrl,
             summary: summary,
             onDayClosing: onDayClosing,

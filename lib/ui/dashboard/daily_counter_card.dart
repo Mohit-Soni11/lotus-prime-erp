@@ -131,6 +131,10 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 stream: _logic.dataStream,
                 initialData: _logic.initialData,
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Text('Daily activity could not be loaded',
+                        style: TextStyle(color: DailyCounterColors.dueAccent));
+                  }
                   final data = snapshot.data ?? _logic.initialData;
                   if (data.isLoading) return _buildShimmer();
                   return _buildContent(data);
@@ -177,8 +181,9 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 _animatedGroup(1, _buildFinanceDueGroup(data.financeDue)),
               ]);
             }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return IntrinsicHeight(
+                child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
                     child: _animatedGroup(
@@ -188,7 +193,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                     child: _animatedGroup(
                         1, _buildFinanceDueGroup(data.financeDue))),
               ],
-            );
+            ));
           },
         ),
       ],
@@ -263,6 +268,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
     return Container(
       decoration: DailyCounterStyles.groupDecoration,
       padding: DailyCounterStyles.groupPadding,
+      constraints: const BoxConstraints(minHeight: 230),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -278,11 +284,14 @@ class _DailyCounterCardState extends State<DailyCounterCard>
           const SizedBox(height: 12),
 
           // Two inner boxes side by side
-          Row(children: [
-            Expanded(child: _buildSoldBox(data)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildBoughtBox(data)),
-          ]),
+          IntrinsicHeight(
+              child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                Expanded(child: _buildSoldBox(data)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildBoughtBox(data)),
+              ])),
         ],
       ),
     );
@@ -359,7 +368,10 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                       color: DailyCounterColors.boughtAccent)),
             ),
             const SizedBox(width: 8),
-            const Text('BOUGHT', style: DailyCounterStyles.boxTitleStyle),
+            const Flexible(
+                child: Text('OLD METAL BOUGHT',
+                    style: DailyCounterStyles.boxTitleStyle,
+                    overflow: TextOverflow.ellipsis)),
           ]),
 
           const SizedBox(height: 10),
@@ -389,7 +401,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
       children: [
         Text(label, style: DailyCounterStyles.metalLabelStyle),
         const SizedBox(height: 3),
-        Row(children: [
+        Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: Text(weight,
@@ -415,6 +427,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
     return Container(
       decoration: DailyCounterStyles.groupDecoration,
       padding: DailyCounterStyles.groupPadding,
+      constraints: const BoxConstraints(minHeight: 230),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -423,17 +436,20 @@ class _DailyCounterCardState extends State<DailyCounterCard>
             Icon(DailyCounterIcons.financeDue,
                 size: 14, color: DailyCounterColors.textMuted),
             SizedBox(width: 6),
-            Text('FINANCE & DUE (Today)',
+            Text('NEW DUE & PLEDGES (Today)',
                 style: DailyCounterStyles.groupTitleStyle),
           ]),
 
           const SizedBox(height: 12),
 
-          Row(children: [
-            Expanded(child: _buildDueBox(data)),
-            const SizedBox(width: 10),
-            Expanded(child: _buildGirviBox(data)),
-          ]),
+          IntrinsicHeight(
+              child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                Expanded(child: _buildDueBox(data)),
+                const SizedBox(width: 10),
+                Expanded(child: _buildGirviBox(data)),
+              ])),
         ],
       ),
     );
@@ -463,7 +479,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
             ),
             const SizedBox(width: 8),
             const Flexible(
-                child: Text('NEW DUE',
+                child: Text('NEW CUSTOMER DUE',
                     style: DailyCounterStyles.boxTitleStyle,
                     overflow: TextOverflow.ellipsis)),
           ]),
@@ -492,7 +508,8 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                         key: ValueKey(data.dueCount),
                         style: DailyCounterStyles.bigCountStyle),
                   ),
-                  const Text('Active', style: DailyCounterStyles.subLabelStyle),
+                  const Text('Customers with due today',
+                      style: DailyCounterStyles.subLabelStyle),
                 ],
               ),
             ),
@@ -511,12 +528,17 @@ class _DailyCounterCardState extends State<DailyCounterCard>
               children: [
                 const Icon(DailyCounterIcons.rupee,
                     size: 14, color: DailyCounterColors.dueAccent),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: Text(data.dueAmount,
-                      key: ValueKey(data.dueAmount),
-                      style: DailyCounterStyles.amountStyle(
-                          DailyCounterColors.dueAccent)),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: Text(data.dueAmount,
+                          key: ValueKey(data.dueAmount),
+                          style: DailyCounterStyles.amountStyle(
+                              DailyCounterColors.dueAccent)),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -549,7 +571,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
             ),
             const SizedBox(width: 8),
             const Flexible(
-                child: Text('GIRVI',
+                child: Text('NEW GIRVI',
                     style: DailyCounterStyles.boxTitleStyle,
                     overflow: TextOverflow.ellipsis)),
           ]),
@@ -573,7 +595,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                         key: ValueKey(data.girviCount),
                         style: DailyCounterStyles.bigCountStyle),
                   ),
-                  const Text('Disbursed',
+                  Text(data.girviCustomerCount,
                       style: DailyCounterStyles.subLabelStyle),
                 ],
               ),
@@ -590,12 +612,17 @@ class _DailyCounterCardState extends State<DailyCounterCard>
               children: [
                 const Icon(DailyCounterIcons.rupee,
                     size: 14, color: DailyCounterColors.girviAccent),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: Text(data.girviAmount,
-                      key: ValueKey(data.girviAmount),
-                      style: DailyCounterStyles.amountStyle(
-                          DailyCounterColors.girviAccent)),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: Text(data.girviAmount,
+                          key: ValueKey(data.girviAmount),
+                          style: DailyCounterStyles.amountStyle(
+                              DailyCounterColors.girviAccent)),
+                    ),
+                  ),
                 ),
               ],
             ),

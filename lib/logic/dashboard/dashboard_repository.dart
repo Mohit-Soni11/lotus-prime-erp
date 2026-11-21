@@ -1,10 +1,10 @@
-import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
 import '../../models/dashboard/shop_profile_model.dart';
 import '../../models/dashboard/search_result.dart';
-import '../../models/dashboard/notification_item.dart';
+import '../../features/notifications/domain/notification_item.dart';
+import '../../features/notifications/application/notification_center_controller.dart';
 import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
 import '../../database/local_database/shop_database_helper.dart';
@@ -21,12 +21,9 @@ class DashboardRepository {
   final AppDatabase _db;
   final Future<Map<String, dynamic>?> Function() _shopSetupLoader;
 
-  // Stream Controller for Notifications
-  final _notificationController =
-      StreamController<List<NotificationItem>>.broadcast();
-
+  late final _notificationCenter = NotificationCenterController(_db);
   Stream<List<NotificationItem>> get notificationsStream =>
-      _notificationController.stream;
+      _notificationCenter.stream;
 
   // ==========================================
   // 1. FETCH USER PROFILE (Short Info)
@@ -113,43 +110,20 @@ class DashboardRepository {
   // ==========================================
   // 3. LOAD NOTIFICATIONS
   // ==========================================
-  void loadNotifications(String role) async {
-    try {
-      final query = _db.select(_db.notifications)
-        ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all'))
-        ..orderBy(
-            [(t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc)]);
-
-      final dbList = await query.get();
-
-      final uiList = dbList
-          .map((row) => NotificationItem(
-                id: row.id,
-                type: row.type,
-                title: row.title,
-                desc: row.desc,
-                targetRole: row.role,
-                isRead: row.isRead,
-              ))
-          .toList();
-
-      _notificationController.add(uiList);
-    } catch (e) {
-      AppLogger.error("Error loading notifications: $e");
-      _notificationController.add([]);
-    }
+  Future<void> loadNotifications(String role) {
+    return _notificationCenter.start(role);
   }
 
   // ==========================================
   // 4. MARK ALL READ
   // ==========================================
   Future<void> markAllRead(String role) async {
-    await (_db.update(_db.notifications)
-          ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all')))
-        .write(const NotificationsCompanion(isRead: Value(true)));
-
-    loadNotifications(role);
+    await _notificationCenter.markAllRead();
   }
+
+  Future<void> clearNotifications() => _notificationCenter.clearMessages();
+  Future<void> markNotificationRead(NotificationItem item) =>
+      _notificationCenter.markRead(item);
 
   // ==========================================
   // 5. FETCH CUSTOMER STATS
@@ -246,7 +220,7 @@ class DashboardRepository {
   }
 
   void dispose() {
-    _notificationController.close();
+    _notificationCenter.dispose();
   }
 
   Future<({String? logoPath, String logoShape})> _fetchSavedIdentity() async {

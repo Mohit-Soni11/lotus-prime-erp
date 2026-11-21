@@ -114,6 +114,10 @@ class _CashRegisterCardState extends State<CashRegisterCard>
                 stream: _logic.dataStream,
                 initialData: _logic.initialData,
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Text('Cash register could not be loaded',
+                        style: TextStyle(color: CashRegisterColors.paidAccent));
+                  }
                   final data = snapshot.data ?? _logic.initialData;
                   if (data.isLoading) return _buildShimmer();
                   return _buildContent(data);
@@ -162,15 +166,15 @@ class _CashRegisterCardState extends State<CashRegisterCard>
 
         // â”€â”€ RECEIVED + PAID BLOCKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Row(children: [
-          Expanded(child: _buildReceivedBlock(data.totalReceivedStr)),
+          Expanded(child: _buildReceivedBlock(data.moneyInStr)),
           const SizedBox(width: 12),
-          Expanded(child: _buildPaidBlock(data.totalPaidOutStr)),
+          Expanded(child: _buildPaidBlock(data.moneyOutStr)),
         ]),
 
         const SizedBox(height: 16),
 
         // â”€â”€ NET CASH FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        _buildNetCashFooter(data.netCashDrawerStr),
+        _buildNetCashFooter(data.closingBalanceStr),
       ],
     );
   }
@@ -207,10 +211,10 @@ class _CashRegisterCardState extends State<CashRegisterCard>
             ShaderMask(
               shaderCallback: (b) =>
                   CashRegisterColors.goldGradient.createShader(b),
-              child: const Text('CASH REGISTER',
+              child: const Text('CASH & BANK',
                   style: CashRegisterStyles.headerTitleStyle),
             ),
-            const Text("Today's Summary",
+            const Text("Today's Day Book Balance",
                 style: CashRegisterStyles.headerSubStyle),
           ],
         ),
@@ -262,14 +266,16 @@ class _CashRegisterCardState extends State<CashRegisterCard>
           const Text('Opening Balance',
               style: CashRegisterStyles.openingLabelStyle),
           const Spacer(),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: Text(
-              amount,
-              key: ValueKey(amount),
-              style: CashRegisterStyles.openingAmountStyle,
+          Flexible(
+              child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: Text(amount,
+                  key: ValueKey(amount),
+                  style: CashRegisterStyles.openingAmountStyle),
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -288,20 +294,20 @@ class _CashRegisterCardState extends State<CashRegisterCard>
                 size: 14, color: CashRegisterColors.receivedAccent),
             const SizedBox(width: 5),
             const Text(
-              'Received',
+              'Money In',
               style: CashRegisterStyles.blockLabelStyle,
             ).withColor(CashRegisterColors.receivedAccent),
           ]),
           const SizedBox(height: 6),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: Text(
-              amount,
-              key: ValueKey(amount),
-              style: CashRegisterStyles.blockAmountStyle
-                  .copyWith(color: CashRegisterColors.receivedText),
-            ),
-          ),
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: Text(amount,
+                    key: ValueKey(amount),
+                    style: CashRegisterStyles.blockAmountStyle
+                        .copyWith(color: CashRegisterColors.receivedText)),
+              )),
         ],
       ),
     );
@@ -320,20 +326,20 @@ class _CashRegisterCardState extends State<CashRegisterCard>
                 size: 14, color: CashRegisterColors.paidAccent),
             const SizedBox(width: 5),
             const Text(
-              'Paid / Out',
+              'Money Out',
               style: CashRegisterStyles.blockLabelStyle,
             ).withColor(CashRegisterColors.paidAccent),
           ]),
           const SizedBox(height: 6),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: Text(
-              amount,
-              key: ValueKey(amount),
-              style: CashRegisterStyles.blockAmountStyle
-                  .copyWith(color: CashRegisterColors.paidText),
-            ),
-          ),
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: Text(amount,
+                    key: ValueKey(amount),
+                    style: CashRegisterStyles.blockAmountStyle
+                        .copyWith(color: CashRegisterColors.paidText)),
+              )),
         ],
       ),
     );
@@ -346,43 +352,39 @@ class _CashRegisterCardState extends State<CashRegisterCard>
       decoration: CashRegisterStyles.footerDecoration,
       child: Row(
         children: [
-          // Label
-          const Column(
+          Expanded(
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Net Cash In Drawer',
+              const Text('Closing Balance',
                   style: CashRegisterStyles.footerLabelStyle),
-              Text('Closing Balance', style: CashRegisterStyles.footerSubStyle),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Amount + verified icon
-          Row(children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              switchInCurve: Curves.easeOutCubic,
-              transitionBuilder: (child, anim) => FadeTransition(
-                opacity: anim,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0, 0.3),
-                    end: Offset.zero,
-                  ).animate(anim),
-                  child: child,
+              const SizedBox(height: 3),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 350),
+                  child: Text(amount,
+                      key: ValueKey(amount),
+                      style: CashRegisterStyles.footerAmountStyle),
                 ),
               ),
-              child: Text(
-                amount,
-                key: ValueKey(amount),
-                style: CashRegisterStyles.footerAmountStyle,
+            ],
+          )),
+          const SizedBox(width: 12),
+          Tooltip(
+            message: 'Synced with Day Book',
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0B5CAD).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(CashRegisterIcons.net,
+                  size: 23, color: Color(0xFF0B5CAD)),
             ),
-            const SizedBox(width: 8),
-            const Icon(CashRegisterIcons.net,
-                size: 22, color: Color(0xFF1A2238)),
-          ]),
+          ),
         ],
       ),
     );

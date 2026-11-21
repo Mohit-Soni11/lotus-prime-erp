@@ -4,6 +4,8 @@ List<RouteBase> reportRoutes() => [
       GoRoute(
         path: RoutePaths.reportDayBook,
         builder: (context, state) => DayBookScreen(
+          initialAction: state.uri.queryParameters['action'],
+          exitAfterClose: state.uri.queryParameters['exitAfterClose'] == 'true',
           initialDate:
               DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
           onBack: () => _goBackOr(context, RoutePaths.dashboard),

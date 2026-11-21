@@ -52,7 +52,7 @@ List<RouteBase> standaloneSalesRoutes() => [
                 context.go(RoutePaths.customerProfileFor(returnCustomerId));
                 return;
               }
-              context.go(RoutePaths.dashboard);
+              _goBackOr(context, RoutePaths.dashboard);
             },
           );
         },

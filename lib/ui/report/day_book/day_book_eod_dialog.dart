@@ -8,11 +8,14 @@ import '../../../models/reports/day_book/day_book_closing_mismatch.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_eod_sections.dart';
 import 'day_book_form_visuals.dart';
+import 'day_book_form_frame.dart';
 import 'day_book_metal_count_dialog.dart';
 
 class DayBookEodDialog extends StatefulWidget {
-  const DayBookEodDialog({super.key, required this.ctrl});
+  const DayBookEodDialog(
+      {super.key, required this.ctrl, this.fullScreen = false});
   final DayBookController ctrl;
+  final bool fullScreen;
 
   @override
   State<DayBookEodDialog> createState() => _DayBookEodDialogState();
@@ -83,19 +86,12 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
   @override
   Widget build(BuildContext context) => DayBookFormVisuals.themed(
-        child: Dialog(
-          insetPadding: const EdgeInsets.all(18),
-          backgroundColor: const Color(0xFFFFFEFC),
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: DayBookColors.brandGoldBorder),
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 690,
-              maxHeight: MediaQuery.sizeOf(context).height - 36,
-            ),
+        child: DayBookFormFrame(
+          fullScreen: widget.fullScreen,
+          title: 'Day Closing',
+          dialogWidth: 690,
+          onBack: _closing ? null : () => Navigator.of(context).pop(),
+          child: SizedBox(
             child: ListenableBuilder(
               listenable: widget.ctrl,
               builder: (context, _) {
@@ -129,7 +125,7 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                     widget.ctrl.isCustodyPositionVerified;
                 final ready = cashMatched && bankMatched && prerequisites;
                 return Column(mainAxisSize: MainAxisSize.min, children: [
-                  _header(context),
+                  if (!widget.fullScreen) _header(context),
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),

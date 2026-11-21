@@ -5,10 +5,11 @@
 // DESCRIPTION : Data snapshot for today's counter activity.
 //
 //               4 SECTIONS:
-//               1. Metal Sold   — Today's gold/silver gross weight from BillItems.
-//               2. Metal Bought — customer-received metal and sales returns
-//               3. New Due      — Today's bills where paidAmount is below finalAmount.
-//               4. New Pledge Ticket — Pledge loans created today.
+//               1. Metal sold: net weight and pieces on today's invoices,
+//                  adjusted for posted sales returns.
+//               2. Old metal bought: customer purchase vouchers and trade-ins.
+//               3. New due: current balance on today's invoices.
+//               4. New girvi: current pledge tickets opened today.
 // =============================================================================
 
 /// One metal activity entry containing weight and pieces.
@@ -16,18 +17,14 @@ class MetalEntry {
   final String weightStr; // e.g. "15.200 gm"
   final String piecesStr; // e.g. "3 Pcs"
   final double weightRaw; // Used for calculations.
+  final int piecesRaw;
 
   const MetalEntry({
     required this.weightStr,
     required this.piecesStr,
     required this.weightRaw,
+    this.piecesRaw = 0,
   });
-
-  factory MetalEntry.zero() => const MetalEntry(
-        weightStr: '0.000 gm',
-        piecesStr: '0 Pcs',
-        weightRaw: 0.0,
-      );
 
   factory MetalEntry.loading() => const MetalEntry(
         weightStr: '--',
@@ -56,13 +53,6 @@ class MetalMovementData {
         boughtGold: MetalEntry.loading(),
         boughtSilver: MetalEntry.loading(),
       );
-
-  factory MetalMovementData.zero() => MetalMovementData(
-        soldGold: MetalEntry.zero(),
-        soldSilver: MetalEntry.zero(),
-        boughtGold: MetalEntry.zero(),
-        boughtSilver: MetalEntry.zero(),
-      );
 }
 
 /// Finance and due section data.
@@ -73,6 +63,8 @@ class FinanceDueData {
   final String girviAmount; // e.g. "₹50,000"
   final double dueAmountRaw;
   final double girviAmountRaw;
+  final String girviCustomerCount;
+  final int girviCustomerCountRaw;
 
   const FinanceDueData({
     required this.dueCount,
@@ -81,6 +73,8 @@ class FinanceDueData {
     required this.girviAmount,
     required this.dueAmountRaw,
     required this.girviAmountRaw,
+    this.girviCustomerCount = '0 Customers',
+    this.girviCustomerCountRaw = 0,
   });
 
   factory FinanceDueData.loading() => const FinanceDueData(
@@ -90,15 +84,7 @@ class FinanceDueData {
         girviAmount: '--',
         dueAmountRaw: 0,
         girviAmountRaw: 0,
-      );
-
-  factory FinanceDueData.zero() => const FinanceDueData(
-        dueCount: '0 Customers',
-        dueAmount: '₹0',
-        girviCount: '0 Loans',
-        girviAmount: '₹0',
-        dueAmountRaw: 0,
-        girviAmountRaw: 0,
+        girviCustomerCount: '--',
       );
 }
 
@@ -121,11 +107,5 @@ class DailyCounterModel {
         metalMovement: MetalMovementData.loading(),
         financeDue: FinanceDueData.loading(),
         isLoading: true,
-      );
-
-  factory DailyCounterModel.empty(String dateStr) => DailyCounterModel(
-        dateStr: dateStr,
-        metalMovement: MetalMovementData.zero(),
-        financeDue: FinanceDueData.zero(),
       );
 }

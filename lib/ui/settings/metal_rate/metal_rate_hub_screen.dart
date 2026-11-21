@@ -9,7 +9,8 @@ import 'widgets/metal_rate_hub_card.dart';
 import 'widgets/metal_rate_hub_intro.dart';
 
 class MetalRateHubScreen extends StatefulWidget {
-  const MetalRateHubScreen({super.key});
+  final VoidCallback? onBack;
+  const MetalRateHubScreen({super.key, this.onBack});
 
   @override
   State<MetalRateHubScreen> createState() => _MetalRateHubScreenState();
@@ -51,7 +52,8 @@ class _MetalRateHubScreenState extends State<MetalRateHubScreen> {
         backgroundColor: MetalRateColors.bodyBg,
         appBar: MetalRateAppBar(
           screenTitle: MetalRateStrings.hubTitle,
-          onBack: () => Navigator.of(context, rootNavigator: true).maybePop(),
+          onBack: widget.onBack ??
+              () => Navigator.of(context, rootNavigator: true).maybePop(),
         ),
         body: SafeArea(
           top: false,

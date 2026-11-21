@@ -10,8 +10,54 @@ import 'package:lotus_erp/ui/report/day_book/day_book_balance_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_eod_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_income_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_metal_count_dialog.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_form_frame.dart';
 
 void main() {
+  for (final balance in [true, false]) {
+    testWidgets(
+        '${balance ? 'Verification' : 'Closing'} opens as a full-window workspace and Back returns',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1280, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final controller = _EmptyClosingController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+              body: Builder(
+        builder: (context) => TextButton(
+          child: const Text('Open full form'),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+            fullscreenDialog: true,
+            builder: (_) => balance
+                ? DayBookBalanceDialog(
+                    fullScreen: true,
+                    date: DateTime(2026, 11, 21),
+                    expectedCash: 100,
+                    expectedBank: 0,
+                    onSave: (
+                            {required actualCash,
+                            required actualBank,
+                            cashExpenseCategory,
+                            cashReason,
+                            bankReason}) =>
+                        throw StateError('Not saving in this layout test'),
+                  )
+                : DayBookEodDialog(ctrl: controller, fullScreen: true),
+          )),
+        ),
+      ))));
+      await tester.tap(find.text('Open full form'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      final workspace = find.descendant(
+          of: find.byType(DayBookFormFrame), matching: find.byType(Scaffold));
+      expect(tester.getSize(workspace), const Size(1280, 800));
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('Open full form'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('closing opens item-wise physical metal count at narrow width',
       (tester) async {
     final controller = _MetalClosingController();

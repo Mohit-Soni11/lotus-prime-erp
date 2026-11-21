@@ -27,11 +27,9 @@ import '../dashboard/pending_order_card.dart';
 import '../dashboard/shop_card.dart';
 import '../dashboard/live_rates_card.dart';
 import '../dashboard/quick_actions_card.dart';
-import '../dashboard/alert_row.dart';
 import '../dashboard/payment_status_card.dart';
 import '../dashboard/daily_counter_card.dart';
 import '../dashboard/cash_register_card.dart';
-import '../dashboard/counter_security_card.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -107,6 +105,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   widget.onNavigate(AppRoutes.newSaleRoute);
                 } else if (action == 'My Profile') {
                   widget.onNavigate(AppRoutes.accountProfileRoute);
+                } else if (action.startsWith('/')) {
+                  widget.onNavigate(action);
                 }
               },
             ),
@@ -148,10 +148,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Python: 4 cards → live rates → alert row → [daily counter | cash register]
   // ==========================================
   Widget _buildLeftSection() {
-    return Column(
+    return const Column(
       children: [
         // 1. 4 Stat Cards — ek row mein
-        const Row(children: [
+        Row(children: [
           Expanded(child: DateAndTimeCard()),
           SizedBox(width: 20),
           Expanded(child: BillGeneratedCard()),
@@ -161,25 +161,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(child: PendingOrdersCard()),
         ]),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // 2. Live Rates Card
-        const LiveRatesCard(),
+        LiveRatesCard(),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
-        // 3. Alert Row
-        AlertRow(onNavigate: widget.onNavigate),
-
-        const SizedBox(height: 20),
-
-        // 4. Daily Counter — full width (Cash Register right mein shift hua)
-        const DailyCounterCard(),
-
-        const SizedBox(height: 20),
-
-        // 5. Counter Security Check
-        const CounterSecurityCard(),
+        // Daily counter activity
+        DailyCounterCard(),
       ],
     );
   }

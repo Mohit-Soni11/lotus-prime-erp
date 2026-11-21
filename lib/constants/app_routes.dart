@@ -147,6 +147,7 @@ class RoutePaths {
   static const String salesPos = '/app/sales/pos';
   static const String salesReturnExchange = '/app/sales/returns-exchanges';
   static const String salesBooking = '/app/sales/booking';
+  static const String metalRateMaster = '/app/settings/metal-rates';
 
   // Purchase
   static const String purchaseEntry = '/app/purchase/entry';

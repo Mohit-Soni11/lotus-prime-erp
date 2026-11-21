@@ -2,6 +2,12 @@ part of '../app_router.dart';
 
 List<RouteBase> dashboardSettingsRoutes() => [
       GoRoute(
+        path: RoutePaths.metalRateMaster,
+        builder: (context, _) => MetalRateHubScreen(
+          onBack: () => _goBackOr(context, RoutePaths.dashboard),
+        ),
+      ),
+      GoRoute(
         path: RoutePaths.dashboard,
         builder: (context, state) => DashboardScreen(
           onNavigate: (routeId) => WorkspaceNavigation.open(

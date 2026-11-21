@@ -24,6 +24,7 @@ import '../../ui/auth/auth_gate_screen.dart';
 import '../../ui/auth/services/auth_session_controller.dart';
 
 import '../../ui/dashboard/dashboard_screen.dart';
+import '../../ui/settings/metal_rate/metal_rate_hub_screen.dart';
 
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 import '../../ui/settings/account_profile/account_profile_screen.dart';

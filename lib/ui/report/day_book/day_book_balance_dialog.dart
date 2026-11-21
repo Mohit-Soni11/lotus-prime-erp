@@ -11,6 +11,7 @@ import 'day_book_balance_expense_summary.dart';
 import 'day_book_balance_sections.dart';
 import 'day_book_balance_summary.dart';
 import 'day_book_form_visuals.dart';
+import 'day_book_form_frame.dart';
 
 typedef SaveDayBookBalance = Future<DayBookBalanceVerification> Function({
   required double actualCash,
@@ -37,6 +38,7 @@ class DayBookBalanceDialog extends StatefulWidget {
     this.existing,
     this.expenseRecords = const [],
     this.bankAccountConfigured = true,
+    this.fullScreen = false,
   });
 
   final DateTime date;
@@ -46,6 +48,7 @@ class DayBookBalanceDialog extends StatefulWidget {
   final List<DayBookExpenseRecord> expenseRecords;
   final SaveDayBookBalance onSave;
   final bool bankAccountConfigured;
+  final bool fullScreen;
 
   @override
   State<DayBookBalanceDialog> createState() => _DayBookBalanceDialogState();
@@ -162,19 +165,14 @@ class _DayBookBalanceDialogState extends State<DayBookBalanceDialog> {
         (cashVariance.abs() >= 0.01 || bankVariance.abs() >= 0.01);
 
     return DayBookFormVisuals.themed(
-      child: Dialog(
-        insetPadding: const EdgeInsets.all(18),
-        backgroundColor: const Color(0xFFFFFEFC),
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: DayBookColors.brandGoldBorder),
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-              maxWidth: 640, maxHeight: MediaQuery.sizeOf(context).height - 36),
+      child: DayBookFormFrame(
+        fullScreen: widget.fullScreen,
+        title: 'Daily Balance Verification',
+        dialogWidth: 640,
+        onBack: _saving ? null : () => Navigator.of(context).pop(),
+        child: SizedBox(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _header(context),
+            if (!widget.fullScreen) _header(context),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),

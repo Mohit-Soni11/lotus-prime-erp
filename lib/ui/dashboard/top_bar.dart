@@ -5,7 +5,11 @@ import 'package:flutter/services.dart';
 import '../../theme/dashboard/topbar/topbar_theme.dart';
 import '../../models/dashboard/user_profile.dart';
 import '../../logic/dashboard/dashboard_repository.dart';
-import '../../models/dashboard/notification_item.dart';
+import '../../features/notifications/domain/notification_item.dart';
+import '../../features/notifications/presentation/notification_center_screen.dart';
+import '../../features/notifications/presentation/notification_view_state.dart';
+import '../../features/notifications/presentation/widgets/notification_bell_button.dart';
+import '../../core/router/notification_navigation.dart';
 import '../../models/dashboard/search_result.dart';
 import '../../constants/enums.dart';
 import '../auth/services/auth_session_controller.dart';
@@ -43,6 +47,11 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
 
   List<NotificationItem> _cachedNotifications = [];
   StreamSubscription? _notifSubscription;
+  Set<String> _lastUnreadKeys = {};
+  Object? _notificationError;
+  bool _notificationsOpen = false;
+  final _notificationStorage = PageStorageBucket();
+  final _notificationViewState = NotificationViewState();
 
   String _searchHintText = "Search here...";
   TextInputType _keyboardType = TextInputType.text;
@@ -90,13 +99,23 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
     // Real-time Notifications
     _notifSubscription = widget.repository.notificationsStream.listen((data) {
       if (mounted) {
+        final unreadKeys = {
+          for (final item in data)
+            if (!item.isRead)
+              '${item.eventKey ?? 'message:${item.id}'}:${item.title}:${item.desc}',
+        };
+        final hasNew = unreadKeys.difference(_lastUnreadKeys).isNotEmpty;
+        _lastUnreadKeys = unreadKeys;
         setState(() {
           _cachedNotifications = data;
-          if (data.any((n) => !n.isRead)) {
+          _notificationError = null;
+          if (hasNew) {
             _bellController.forward(from: 0);
           }
         });
       }
+    }, onError: (Object error) {
+      if (mounted) setState(() => _notificationError = error);
     });
 
     widget.repository.loadNotifications(widget.currentUser.role);
@@ -297,73 +316,35 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
     }
   }
 
-  void _showNotifications(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: TopBarColors.background,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Notifications",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
-              TextButton(
-                onPressed: () {
-                  widget.repository.markAllRead(widget.currentUser.role);
-                  Navigator.pop(context); // Close dialog
-                },
-                child: const Text("Mark all read",
-                    style: TextStyle(
-                        color: TopBarColors.accentGold, fontSize: 12)),
-              )
-            ],
+  Future<void> _showNotifications(BuildContext context) async {
+    if (_notificationsOpen) return;
+    _notificationsOpen = true;
+    try {
+      widget.repository.loadNotifications(widget.currentUser.role);
+      await NotificationNavigation.showCenter(
+        context,
+        onReturn: () =>
+            widget.repository.loadNotifications(widget.currentUser.role),
+        builder: (dialogContext) => PageStorage(
+          bucket: _notificationStorage,
+          child: NotificationCenterScreen(
+            stream: widget.repository.notificationsStream,
+            initialItems: _cachedNotifications,
+            initialError: _notificationError,
+            viewState: _notificationViewState,
+            onMarkAllRead: () =>
+                widget.repository.markAllRead(widget.currentUser.role),
+            onClearMessages: widget.repository.clearNotifications,
+            onRefresh: () =>
+                widget.repository.loadNotifications(widget.currentUser.role),
+            onMarkRead: widget.repository.markNotificationRead,
+            onSelect: (item) => Navigator.pop(dialogContext, item),
           ),
-          content: SizedBox(
-            width: 350,
-            height: 300,
-            child: StreamBuilder<List<NotificationItem>>(
-              stream: widget.repository.notificationsStream,
-              initialData: _cachedNotifications,
-              builder: (context, snapshot) {
-                final alerts = snapshot.data ?? [];
-                if (alerts.isEmpty) {
-                  return const Center(
-                      child: Text("All caught up!",
-                          style: TextStyle(color: Colors.grey)));
-                }
-                return ListView.separated(
-                  itemCount: alerts.length,
-                  separatorBuilder: (c, i) =>
-                      Divider(color: Colors.white.withValues(alpha: 0.1)),
-                  itemBuilder: (context, index) {
-                    final item = alerts[index];
-                    return ListTile(
-                      leading: Icon(Icons.notifications,
-                          color: item.isRead
-                              ? Colors.grey
-                              : TopBarColors.accentGold),
-                      title: Text(item.title,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: item.isRead
-                                  ? FontWeight.normal
-                                  : FontWeight.bold)),
-                      subtitle: Text(item.desc,
-                          style: const TextStyle(
-                              color: Colors.grey, fontSize: 12)),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    } finally {
+      _notificationsOpen = false;
+    }
   }
 
   void _showProfileMenu() async {
@@ -666,47 +647,20 @@ class _TopBarState extends State<TopBar> with TickerProviderStateMixin {
             ),
           ),
         const SizedBox(width: 20),
-        InkWell(
-          onTap: () => _showNotifications(context),
-          borderRadius: BorderRadius.circular(50),
-          child: AnimatedBuilder(
-            animation: _bellController,
-            builder: (context, child) {
-              double offset = 0;
-              if (_bellController.isAnimating) {
-                offset = 4 *
-                    (1 - _bellController.value) *
-                    (0.5 - (0.5 - _bellController.value).abs()).sign;
-              }
-              return Transform.translate(
-                  offset: Offset(offset, 0), child: child);
-            },
-            child: Stack(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      shape: BoxShape.circle),
-                  child: const Icon(TopBarIcons.notification,
-                      color: Colors.white70),
-                ),
-                if (_cachedNotifications.any((n) => !n.isRead))
-                  Positioned(
-                    top: 10,
-                    right: 12,
-                    child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                            color: TopBarColors.notificationRed,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: TopBarColors.background, width: 2))),
-                  )
-              ],
-            ),
+        AnimatedBuilder(
+          animation: _bellController,
+          builder: (context, child) {
+            double offset = 0;
+            if (_bellController.isAnimating) {
+              offset = 4 *
+                  (1 - _bellController.value) *
+                  (0.5 - (0.5 - _bellController.value).abs()).sign;
+            }
+            return Transform.translate(offset: Offset(offset, 0), child: child);
+          },
+          child: NotificationBellButton(
+            unreadCount: _cachedNotifications.where((n) => !n.isRead).length,
+            onPressed: () => _showNotifications(context),
           ),
         ),
         const SizedBox(width: 20),
