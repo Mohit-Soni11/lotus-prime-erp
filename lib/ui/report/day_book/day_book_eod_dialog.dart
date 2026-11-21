@@ -13,9 +13,13 @@ import 'day_book_metal_count_dialog.dart';
 
 class DayBookEodDialog extends StatefulWidget {
   const DayBookEodDialog(
-      {super.key, required this.ctrl, this.fullScreen = false});
+      {super.key,
+      required this.ctrl,
+      this.fullScreen = false,
+      this.onVerifyOpening});
   final DayBookController ctrl;
   final bool fullScreen;
+  final Future<void> Function()? onVerifyOpening;
 
   @override
   State<DayBookEodDialog> createState() => _DayBookEodDialogState();
@@ -25,6 +29,7 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
   final _bank = TextEditingController();
   bool _cashCountEntered = false;
   bool _closing = false;
+  bool _verifyingOpening = false;
 
   @override
   void initState() {
@@ -65,6 +70,17 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
       barrierColor: DayBookColors.overlay,
       builder: (_) => DayBookMetalCountDialog(controller: widget.ctrl),
     );
+  }
+
+  Future<void> _verifyOpening() async {
+    final action = widget.onVerifyOpening;
+    if (action == null || _verifyingOpening || _closing) return;
+    setState(() => _verifyingOpening = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _verifyingOpening = false);
+    }
   }
 
   Future<void> _closeDay() async {
@@ -176,12 +192,24 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                               EodNotice(
                                   text: [
                                 if (widget.ctrl.balanceVerification == null)
-                                  'Verify today’s opening cash and bank.',
+                                  'Verify opening cash and bank for this business day.',
                                 if (!widget.ctrl.isMetalPositionVerified)
                                   'Owned metal stock is unverified.',
                                 if (!widget.ctrl.isCustodyPositionVerified)
                                   'Girvi custody handover dates are incomplete.',
                               ].join(' ')),
+                            ],
+                            if (widget.ctrl.balanceVerification == null &&
+                                widget.onVerifyOpening != null) ...[
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                onPressed: _verifyingOpening || _closing
+                                    ? null
+                                    : _verifyOpening,
+                                icon:
+                                    const Icon(Icons.account_balance_outlined),
+                                label: const Text('Verify Opening Balance'),
+                              ),
                             ],
                             if (!widget.ctrl.isMetalPositionVerified) ...[
                               const SizedBox(height: 8),

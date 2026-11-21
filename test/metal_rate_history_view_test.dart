@@ -4,6 +4,79 @@ import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_revision_change.dart';
 
 void main() {
+  for (final metal in [MetalRateMetal.gold, MetalRateMetal.silver]) {
+    test('${metal.name} summary contains only base selling and old purchase',
+        () {
+      final base = MetalRateProfile.defaultFor(metal);
+      final current = base.copyWith(
+        mcxRatePer10g: 200000,
+        physicalMarketRatePer10g: 180000,
+        oldMetalPurchaseRatePer10g: 120000,
+        purityPlans: [
+          for (final plan in base.purityPlans)
+            plan.copyWith(manualDisplayRatePer10g: 150000),
+        ],
+      );
+      final revision = MetalRateRevision.compare(
+        MetalRateHistoryEntry(
+            profile: current,
+            changedAt: DateTime(2026, 11, 21),
+            source: 'Manual'),
+        base,
+      );
+      expect(revision.summaryChanges.map((change) => change.label),
+          ['${base.purityPlans.first.label} selling', 'Old metal purchase']);
+      expect(revision.changes.length, greaterThan(2));
+    });
+  }
+
+  test('shared timestamps use revision order and plot the latest saved value',
+      () {
+    final base = MetalRateProfile.defaultFor(MetalRateMetal.silver);
+    final at = DateTime(2026, 11, 21, 10);
+    MetalRateHistoryEntry saved(int revision, double rate) =>
+        MetalRateHistoryEntry(
+          profile: base.copyWith(physicalMarketRatePer10g: rate),
+          changedAt: at,
+          source: 'Manual',
+          revision: revision,
+        );
+    final view = MetalRateHistoryView.build(
+      [saved(5, 180000), saved(4, 170000)],
+      MetalRateHistoryPeriod.current,
+      now: DateTime(2026, 11, 21, 12),
+      purityLabel: '999',
+    );
+    expect(view.currentRate, 180000);
+    expect(view.points.map((point) => point.rate), [180000, 180000]);
+    expect(view.changeEntries.first.entry.revision, 5);
+    final change = view.changeEntries.first.summaryChanges.single;
+    expect(change.previousRate, 170000);
+    expect(change.currentRate, 180000);
+  });
+
+  test('reset leaves a graph gap instead of carrying a stale selling rate', () {
+    final base = MetalRateProfile.defaultFor(MetalRateMetal.silver);
+    final view = MetalRateHistoryView.build([
+      MetalRateHistoryEntry(
+          profile: base.copyWith(physicalMarketRatePer10g: 175000),
+          changedAt: DateTime(2026, 11, 21, 9),
+          source: 'Manual',
+          revision: 1),
+      MetalRateHistoryEntry(
+          profile: base,
+          changedAt: DateTime(2026, 11, 21, 10),
+          source: 'Manual',
+          revision: 2),
+    ], MetalRateHistoryPeriod.current, now: DateTime(2026, 11, 21, 12));
+    expect(view.hasSavedRate, isTrue);
+    expect(view.hasCurrentRate, isFalse);
+    expect(view.currentRate, 0);
+    expect(view.points.last.isAvailable, isFalse);
+    expect(view.points.where((point) => point.isAvailable).last.time,
+        DateTime(2026, 11, 21, 10));
+  });
+
   test('revision details identify a changed silver jewellery rate', () {
     final base = MetalRateProfile.defaultFor(MetalRateMetal.silver);
     final before = base.copyWith(purityPlans: [

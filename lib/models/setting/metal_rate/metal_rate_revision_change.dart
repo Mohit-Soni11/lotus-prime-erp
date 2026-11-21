@@ -18,6 +18,24 @@ class MetalRateRevision {
 
   const MetalRateRevision({required this.entry, required this.changes});
 
+  /// The counter summary stays focused; the full revision remains available.
+  List<MetalRateRevisionChange> get summaryChanges {
+    final profile = entry.profile;
+    if (profile.metal != MetalRateMetal.gold &&
+        profile.metal != MetalRateMetal.silver) {
+      return changes;
+    }
+    final basePlans = profile.purityPlans.where(profile.isMarketBasePlan);
+    final labels = [
+      if (basePlans.isNotEmpty) '${basePlans.first.label} selling',
+      'Old metal purchase',
+    ];
+    return [
+      for (final label in labels)
+        ...changes.where((change) => change.label == label),
+    ];
+  }
+
   factory MetalRateRevision.compare(
     MetalRateHistoryEntry entry,
     MetalRateProfile? previous,

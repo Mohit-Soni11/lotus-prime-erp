@@ -15,8 +15,10 @@ import 'core/router/app_router.dart';
 import 'database/db/app_database.dart';
 import 'features/finance/ledger/data/finance_day_closure_repository.dart';
 import 'theme/dashboard/app/uv.dart';
+import 'features/settings/backup_restore/application/backup_runtime.dart';
+import 'features/settings/backup_restore/application/backup_application_lease.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   FlutterError.onError = (details) {
     AppLogger.error(
@@ -37,12 +39,14 @@ Future<void> main() async {
 
   await runZonedGuarded(() async {
     try {
-      await _bootstrapApplication();
+      await _bootstrapApplication(
+          waitForPrevious: arguments.contains('--lotus-restore-restart'));
       runApp(
         ProviderScope(
           child: LotusERPApp(routerConfig: createAppRouter()),
         ),
       );
+      BackupRuntime.instance.startScheduler();
     } catch (error, stackTrace) {
       AppLogger.error(
         'Application bootstrap failed.',
@@ -64,10 +68,11 @@ Future<void> main() async {
   });
 }
 
-Future<void> _bootstrapApplication() async {
+Future<void> _bootstrapApplication({bool waitForPrevious = false}) async {
   if (kReleaseMode) {
     SharedPreferences.setPrefix('lotus_erp.production.');
   }
+  await BackupRuntime.instance.bootstrap(waitForPrevious: waitForPrevious);
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -79,6 +84,7 @@ Future<void> _bootstrapApplication() async {
 }
 
 String _formatStartupError(Object error) {
+  if (error is BackupStartupException) return error.message;
   return 'Startup failed. Please review local configuration and restart the app.';
 }
 

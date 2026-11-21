@@ -34,7 +34,9 @@ class _MarketReferenceSection extends StatelessWidget {
                 ? 2
                 : 1;
         final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
-        final cardHeight = enabled ? 124.0 : 116.0;
+        final scaledText = MediaQuery.textScalerOf(context).scale(56);
+        final cardHeight =
+            (enabled ? 124.0 : 116.0) + math.max(0, scaledText - 56);
         return Wrap(spacing: 12, runSpacing: 12, children: [
           _MarketInputCard(
             width: width,
@@ -196,8 +198,13 @@ class _ParityPreviewCard extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w900)),
         const SizedBox(height: 8),
-        Text('${_money(base)} / $unit',
-            style: MetalRateDetailStyles.value.copyWith(fontSize: 19)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text('${_money(base)} / $unit',
+              maxLines: 1,
+              style: MetalRateDetailStyles.value.copyWith(fontSize: 19)),
+        ),
       ]),
     );
   }

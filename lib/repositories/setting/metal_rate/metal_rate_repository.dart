@@ -113,6 +113,7 @@ class MetalRateRepository {
               profile: _profileFromPayload(row.profileJson, metal),
               changedAt: row.effectiveAt,
               source: row.source,
+              revision: row.revision,
             ))
         .toList(growable: false);
   }

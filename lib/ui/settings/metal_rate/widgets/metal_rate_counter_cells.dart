@@ -92,7 +92,7 @@ class _EditableRateCell extends StatelessWidget {
         child: Row(children: [
           Expanded(
             child: _RateField(
-              value: enabled ? value : effectiveValue,
+              value: value > 0 ? value : effectiveValue,
               accent: color,
               enabled: enabled,
               hintText: effectiveValue > 0
@@ -206,7 +206,7 @@ class _CompactRate extends StatelessWidget {
                   color: color, fontWeight: FontWeight.w800, fontSize: 11)),
           const SizedBox(height: 5),
           _RateField(
-            value: enabled ? value : effectiveValue ?? value,
+            value: value > 0 ? value : effectiveValue ?? value,
             accent: color,
             enabled: enabled && onChanged != null,
             hintText: (effectiveValue ?? 0) > 0

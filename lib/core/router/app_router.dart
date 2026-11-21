@@ -28,6 +28,7 @@ import '../../ui/dashboard/dashboard_screen.dart';
 import '../../ui/settings/metal_rate/metal_rate_hub_screen.dart';
 
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
+import '../../features/settings/backup_restore/presentation/backup_restore_screen.dart';
 import '../../ui/settings/account_profile/account_profile_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_desk_screen.dart';

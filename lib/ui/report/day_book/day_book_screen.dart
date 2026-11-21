@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../constants/app_routes.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
-import '../../../models/finance/expense/expense_draft.dart';
 import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
 import 'day_book_income_dialog.dart';
-import 'day_book_balance_dialog.dart';
+import 'day_book_form_navigation.dart';
 import 'day_book_top_section.dart';
 import 'day_book_document_summary_panel.dart';
-import 'day_book_eod_dialog.dart';
 import 'day_book_receipts_register_panel.dart';
 import 'day_book_primary_grid.dart';
 import 'day_book_stock_added_panel.dart';
@@ -25,12 +23,16 @@ class DayBookScreen extends StatefulWidget {
   final String? initialAction;
   final bool exitAfterClose;
 
+  /// An injected controller remains owned by its caller.
+  final DayBookController? controller;
+
   const DayBookScreen(
       {super.key,
       this.onBack,
       this.initialDate,
       this.initialAction,
-      this.exitAfterClose = false});
+      this.exitAfterClose = false,
+      this.controller});
 
   @override
   State<DayBookScreen> createState() => _DayBookScreenState();
@@ -38,6 +40,7 @@ class DayBookScreen extends StatefulWidget {
 
 class _DayBookScreenState extends State<DayBookScreen> {
   late final DayBookController _ctrl;
+  late final bool _ownsController;
   final ScrollController _mainScrollController = ScrollController();
   bool _exporting = false;
   bool _initialActionScheduled = false;
@@ -45,36 +48,28 @@ class _DayBookScreenState extends State<DayBookScreen> {
   @override
   void initState() {
     super.initState();
-    _ctrl = DayBookController(initialDate: widget.initialDate);
+    _ownsController = widget.controller == null;
+    _ctrl =
+        widget.controller ?? DayBookController(initialDate: widget.initialDate);
     _ctrl.addListener(_handleInitialAction);
+    _handleInitialAction();
   }
 
   @override
   void dispose() {
     _ctrl.removeListener(_handleInitialAction);
-    _ctrl.dispose();
+    if (_ownsController) _ctrl.dispose();
     _mainScrollController.dispose();
     super.dispose();
   }
 
   Future<void> _showDayClosing() async {
-    if (widget.exitAfterClose && _ctrl.balanceVerification == null) {
-      await _setBalance();
-      if (!mounted || _ctrl.balanceVerification == null) return;
-    }
-    final draft =
-        await Navigator.of(context, rootNavigator: true).push<ExpenseDraft>(
-      MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => DayBookEodDialog(ctrl: _ctrl, fullScreen: true)),
+    final draft = await DayBookFormNavigation.closeDay(
+      context,
+      _ctrl,
+      onVerifyOpening: _setBalance,
     );
     if (!mounted) return;
-    if (_ctrl.summary?.isDayLocked == true &&
-        widget.exitAfterClose &&
-        _isRequestedDay) {
-      context.pop(true);
-      return;
-    }
     if (draft == null) return;
     await context.push(RoutePaths.financeExpense, extra: draft);
     if (mounted) await _ctrl.loadData(silent: true);
@@ -109,8 +104,10 @@ class _DayBookScreenState extends State<DayBookScreen> {
       } else if (widget.initialAction == 'close') {
         await _showDayClosing();
       }
-      if (mounted && !widget.exitAfterClose && _isRequestedDay) {
-        context.pop();
+      if (mounted && _isRequestedDay) {
+        // Returning from a cancelled form must also finish the exit request.
+        // The exit service independently checks the persisted day lock.
+        context.pop(_ctrl.summary?.isDayLocked == true);
       }
     });
   }
@@ -137,28 +134,17 @@ class _DayBookScreenState extends State<DayBookScreen> {
   }
 
   Future<void> _setBalance() async {
-    final flow = _ctrl.summary?.moneyFlow;
-    if (flow == null) return;
-    final result = await Navigator.of(context, rootNavigator: true)
-        .push<DayBookBalanceDialogResult>(
-      MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => DayBookBalanceDialog(
-                fullScreen: true,
-                date: _ctrl.selectedDate,
-                expectedCash: flow.openingCash,
-                expectedBank: flow.openingBank,
-                expenseRecords: _ctrl.summary?.expenseRecords ?? const [],
-                bankAccountConfigured: flow.bankAccountCount != 0 ||
-                    flow.openingBank.abs() >= 0.01,
-                existing: _ctrl.balanceVerification,
-                onSave: _ctrl.verifyBalance,
-              )),
-    );
+    final day = _ctrl.selectedDate;
+    final result = await DayBookFormNavigation.verifyOpening(context, _ctrl);
     if (!mounted || result == null) return;
     final amount = result.mismatchExpenseAmount;
     if (amount != null) {
-      await context.push(RoutePaths.financeExpense, extra: amount);
+      final location = Uri(
+        path: RoutePaths.financeExpense,
+        queryParameters: {'date': day.toIso8601String()},
+      );
+      await context.push(location.toString(), extra: amount);
+      if (mounted) await _ctrl.loadData(silent: true);
       return;
     }
     _showSuccess('Daily balance verification saved.');

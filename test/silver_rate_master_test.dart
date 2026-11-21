@@ -16,6 +16,51 @@ import 'package:lotus_erp/ui/settings/metal_rate/metal_rate_detail_screen.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('local silver update persists to counter, billing and rate history',
+      () async {
+    SharedPreferences.setMockInitialValues({});
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = MetalRateRepository(db: database);
+    final base = await repository.loadProfile(MetalRateMetal.silver);
+    await repository.saveProfile(base.copyWith(
+      physicalMarketRatePer10g: 175000,
+      oldMetalPurchaseRatePer10g: 12000,
+      purityPlans: [
+        for (final plan in base.purityPlans)
+          plan.copyWith(
+              manualDisplayRatePer10g: switch (plan.label) {
+            '999' => 175000,
+            '925' => 165000,
+            '800' => 140000,
+            _ => 110000,
+          }),
+      ],
+    ));
+    final controller = MetalRateController(repo: repository);
+    addTearDown(controller.dispose);
+    await controller.load();
+    controller.updatePhysicalRate(MetalRateMetal.silver, 180000);
+    await controller.saveProfile(controller.profileFor(MetalRateMetal.silver));
+    expect(controller.state, MetalRateLoadState.loaded);
+    final saved = await repository.loadProfile(MetalRateMetal.silver);
+    expect(saved.purityPlans.map((plan) => plan.manualDisplayRatePer10g),
+        [180000, 165000, 144000, 110000]);
+    expect(saved.primaryBuyRatePer10g, 12000);
+    final quote = await MetalRateQuoteService(repository: repository)
+        .sellingQuote(metal: MetalRateMetal.silver, purityLabel: '999');
+    expect(quote?.marketRate, 180000);
+    expect(quote?.billingRate, 180);
+    final history = controller.historyFor(MetalRateMetal.silver);
+    expect(history.first.profile.primaryShopRatePer10g, 180000);
+    expect(history.first.revision, greaterThan(history.last.revision!));
+    final live = await LiveRatesRepository(repository: repository)
+        .watchRates()
+        .firstWhere((rates) => rates.state != LiveRateState.loading);
+    expect(live.silverRates.first.perBaseUnit, '1,80,000');
+    expect(live.silverRates.first.perGram, '180');
+  });
+
   test('saved silver kg values are unchanged and billing uses grams', () async {
     SharedPreferences.setMockInitialValues({});
     final database = AppDatabase.forTesting(NativeDatabase.memory());
@@ -227,6 +272,18 @@ void main() {
     await tester.pump();
     expect(controller.profileFor(MetalRateMetal.silver).marketBaseRatePer10g,
         180000);
+    expect(controller.profileFor(MetalRateMetal.silver).primaryShopRatePer10g,
+        180000);
+    final selling = find.descendant(
+      of: find.byKey(const ValueKey('silver-sell-0')),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(selling).controller!.text, '180000');
+    final automatic925 = find.descendant(
+      of: find.byKey(const ValueKey('silver-sell-1')),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(automatic925).controller!.text, '166500');
 
     final jewellery = find.descendant(
       of: find.byKey(const ValueKey('silver-jewellery-rate')),

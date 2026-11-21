@@ -52,7 +52,9 @@ class _HistoryCardState extends State<_HistoryCard> {
           onPurityChanged: (purity) => setState(() => _selectedPurity = purity),
         );
         final revisions = _HistoryEntries(
-            entries: view.changeEntries,
+            entries: view.changeEntries
+                .where((revision) => revision.summaryChanges.isNotEmpty)
+                .toList(growable: false),
             accent: widget.accent,
             priceUnit: widget.priceUnit);
         if (constraints.maxWidth < 950) {
@@ -75,10 +77,3 @@ TextStyle _historyText({double size = 13, Color? color}) =>
       fontWeight: FontWeight.w800,
       color: color ?? MetalRateColors.textDark,
     );
-
-String _compactMoney(double value) {
-  if (value <= 0) return '—';
-  if (value >= 100000) return '${(value / 100000).toStringAsFixed(2)}L';
-  if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}K';
-  return value.round().toString();
-}

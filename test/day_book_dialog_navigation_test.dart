@@ -109,8 +109,7 @@ void main() {
     expect(find.text('System Closing · 11 Nov 2026'), findsOneWidget);
     expect(find.text('Cash Balance'), findsOneWidget);
     expect(find.text('Bank Balance'), findsOneWidget);
-    expect(find.textContaining('Verify today’s opening cash and bank'),
-        findsOneWidget);
+    expect(find.textContaining('Verify opening cash and bank'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

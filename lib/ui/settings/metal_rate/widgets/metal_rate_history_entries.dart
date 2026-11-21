@@ -47,7 +47,8 @@ class _HistoryEntriesState extends State<_HistoryEntries> {
           }
         },
         child: Container(
-          height: 310,
+          key: const ValueKey('metal-rate-history-changes'),
+          height: 350,
           padding: const EdgeInsets.all(14),
           decoration: MetalRateDetailStyles.tint(widget.accent),
           child:
@@ -55,7 +56,7 @@ class _HistoryEntriesState extends State<_HistoryEntries> {
             Row(children: [
               Expanded(
                   child: Text('Rate Changes', style: _historyText(size: 15))),
-              Text('${widget.entries.length} revisions',
+              Text('${widget.entries.length} updates',
                   style: _historyText(size: 12)),
             ]),
             const SizedBox(height: 10),
@@ -100,14 +101,6 @@ class _HistoryEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final changes = entry.changes;
-    final summary = changes.isEmpty
-        ? 'No rate values changed'
-        : changes.map((change) {
-            final before = priceUnit.toMarket(change.previousRate);
-            final after = priceUnit.toMarket(change.currentRate);
-            return '${change.label}: ${_money(before)} → ${_money(after)} / ${priceUnit.label}';
-          }).join('\n');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
       decoration: BoxDecoration(
@@ -115,30 +108,57 @@ class _HistoryEntry extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         border: Border.all(color: MetalRateColors.cardBorder),
       ),
-      child: Row(children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: MetalRateDetailStyles.tint(accent),
-          child: Icon(Icons.history_rounded, size: 18, color: accent),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(DateFormat('d MMM yyyy, h:mm a').format(entry.entry.changedAt),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: _historyText(size: 12)),
-            const SizedBox(height: 4),
-            Text(
-              summary,
-              style: _historyText(size: 12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.schedule_rounded, size: 14, color: accent),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              DateFormat('d MMM yyyy · h:mm a').format(entry.entry.changedAt),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: _historyText(size: 11),
             ),
-          ],
-        )),
+          ),
+          Text('₹ / ${priceUnit.label}', style: _historyText(size: 11)),
+        ]),
+        for (final change in entry.summaryChanges) ...[
+          const SizedBox(height: 9),
+          _HistoryRateChange(change: change, priceUnit: priceUnit),
+        ],
       ]),
     );
+  }
+}
+
+class _HistoryRateChange extends StatelessWidget {
+  const _HistoryRateChange({required this.change, required this.priceUnit});
+  final MetalRateRevisionChange change;
+  final MetalRatePriceUnit priceUnit;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = change.label.endsWith(' selling')
+        ? '${_purityLabel(change.label.replaceFirst(' selling', ''))} Selling Rate'
+        : change.label == 'Old metal purchase'
+            ? 'Old Metal Purchase'
+            : change.label;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: _historyText(size: 11)),
+      const SizedBox(height: 3),
+      Wrap(
+        spacing: 7,
+        runSpacing: 3,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(_money(priceUnit.toMarket(change.previousRate)),
+              style: MetalRateDetailStyles.body.copyWith(fontSize: 12)),
+          const Icon(Icons.arrow_forward_rounded,
+              size: 13, color: MetalRateColors.textDark),
+          Text(_money(priceUnit.toMarket(change.currentRate)),
+              style: _historyText(size: 13)),
+        ],
+      ),
+    ]);
   }
 }

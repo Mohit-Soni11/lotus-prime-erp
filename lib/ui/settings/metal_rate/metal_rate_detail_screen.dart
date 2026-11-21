@@ -27,6 +27,7 @@ part 'widgets/metal_rate_detail_shared.dart';
 part 'widgets/metal_rate_header_reference.dart';
 part 'widgets/metal_rate_history_card.dart';
 part 'widgets/metal_rate_history_chart.dart';
+part 'widgets/metal_rate_history_line_chart.dart';
 part 'widgets/metal_rate_history_entries.dart';
 part 'widgets/metal_rate_old_metal_card.dart';
 part 'widgets/metal_rate_reference_section.dart';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
@@ -21,6 +22,9 @@ class SettingsScreen extends StatelessWidget {
 
   void _handleTap(BuildContext context, SettingsModel item) {
     switch (item.id) {
+      case AppRoutes.backupRestoreRoute:
+        context.push(RoutePaths.settingsBackupRestore);
+        break;
       case 'shop_profile':
         Navigator.of(context, rootNavigator: true).push(
           PageRouteBuilder(

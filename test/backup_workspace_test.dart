@@ -1,0 +1,173 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lotus_erp/constants/app_routes.dart';
+import 'package:lotus_erp/features/settings/backup_restore/application/backup_coordinator.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/backup_restore_service.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_auth.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_backup_service.dart';
+import 'package:lotus_erp/features/settings/backup_restore/domain/backup_schedule.dart';
+import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_restore_screen.dart';
+import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_app_bar.dart';
+import 'package:lotus_erp/ui/settings/settings_dashboard/settings_screen.dart';
+import 'dart:io';
+import 'backup_restore_test_support.dart';
+import 'google_drive_backup_test_support.dart';
+
+Future<(BackupFixture, BackupCoordinator)> _controller() async {
+  final fixture =
+      BackupFixture(await Directory.systemTemp.createTemp('lotus-backup-ui-'));
+  await fixture.seed();
+  final http =
+      FakeBackupHttp((a, b, c, d) async => backupJsonResponse({'files': []}));
+  final controller = BackupCoordinator(
+      locations: fixture.locations,
+      store: BackupStore(fixture.locations),
+      preferences: fixture.preferences,
+      drive: GoogleDriveBackupService(
+          auth: GoogleDriveAuth(http: http, secrets: MemoryBackupSecrets()),
+          http: http),
+      restore: BackupRestoreService(fixture.locations, fixture.preferences,
+          clearSession: () async {}),
+      requireOwner: () async {});
+  await controller.initialize();
+  return (fixture, controller);
+}
+
+Future<void> _pump(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+  await tester.pump();
+}
+
+void main() {
+  for (final width in [500.0, 1600.0]) {
+    for (final scale in [1.0, 1.3]) {
+      testWidgets('backup workspace at $width px and $scale text scale',
+          (tester) async {
+        late (BackupFixture, BackupCoordinator) data;
+        await tester.runAsync(() async {
+          data = await _controller();
+        });
+        await tester.binding.setSurfaceSize(Size(width, 1000));
+        addTearDown(() async {
+          data.$2.dispose();
+          await tester
+              .runAsync(() => data.$1.directory.delete(recursive: true));
+          await tester.binding.setSurfaceSize(null);
+        });
+        await tester.pumpWidget(MaterialApp(
+            home: MediaQuery(
+                data: MediaQueryData(
+                    size: Size(width, 1000),
+                    textScaler: TextScaler.linear(scale),
+                    disableAnimations: true),
+                child:
+                    BackupRestoreScreen(controller: data.$2, onBack: () {}))));
+        await _pump(tester);
+        for (final title in [
+          'Local Backup',
+          'Google Drive Backup',
+          'Backup Schedule',
+          'Backups & Recovery'
+        ]) {
+          await tester.ensureVisible(find.text(title));
+          await _pump(tester);
+          expect(tester.takeException(), isNull, reason: title);
+        }
+        expect(find.text('BACKUP & RESTORE'), findsOneWidget);
+        expect(find.text('Restore Local File'), findsOneWidget);
+        expect(find.text('Back Up Now'), findsOneWidget);
+      });
+    }
+  }
+
+  testWidgets('schedule controls save weekly settings and setup dialog opens',
+      (tester) async {
+    late (BackupFixture, BackupCoordinator) data;
+    await tester.runAsync(() async {
+      data = await _controller();
+    });
+    await tester.binding.setSurfaceSize(const Size(1280, 1000));
+    addTearDown(() async {
+      data.$2.dispose();
+      await tester.runAsync(() => data.$1.directory.delete(recursive: true));
+      await tester.binding.setSurfaceSize(null);
+    });
+    await tester.pumpWidget(MaterialApp(
+        home: BackupRestoreScreen(controller: data.$2, onBack: () {})));
+    await _pump(tester);
+    await tester.ensureVisible(find.byKey(const ValueKey('backup-frequency')));
+    await tester.tap(find.byKey(const ValueKey('backup-frequency')));
+    await _pump(tester);
+    await tester.tap(find.text('Weekly').last);
+    await _pump(tester);
+    await tester.ensureVisible(find.text('Save Schedule'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Save Schedule'));
+    });
+    await _pump(tester);
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    });
+    await tester.pump(const Duration(seconds: 3));
+    await _pump(tester);
+    expect(data.$2.settings!.schedule.frequency, BackupFrequency.weekly);
+    await tester.ensureVisible(find.text('Set Up Google Drive'));
+    await tester.tap(find.text('Set Up Google Drive'));
+    await _pump(tester);
+    expect(find.text('Set Up Google Drive Backup'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await _pump(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Settings backup card opens a root workspace and Back returns',
+      (tester) async {
+    late (BackupFixture, BackupCoordinator) data;
+    await tester.runAsync(() async {
+      data = await _controller();
+    });
+    await tester.binding.setSurfaceSize(const Size(1280, 1000));
+    final root = GlobalKey<NavigatorState>();
+    final router =
+        GoRouter(navigatorKey: root, initialLocation: '/settings', routes: [
+      ShellRoute(
+          builder: (_, __, child) => Row(children: [
+                const SizedBox(width: 180, child: Text('Sidebar navigation')),
+                Expanded(child: child)
+              ]),
+          routes: [
+            GoRoute(
+                path: '/settings',
+                builder: (context, _) => SettingsScreen(
+                    onNavigate: (id) => context.push(RouteMapper.toPath(id)))),
+          ]),
+      GoRoute(
+          path: RoutePaths.settingsBackupRestore,
+          parentNavigatorKey: root,
+          builder: (context, _) => BackupRestoreScreen(
+              controller: data.$2, onBack: () => context.pop())),
+    ]);
+    addTearDown(() async {
+      router.dispose();
+      data.$2.dispose();
+      await tester.runAsync(() => data.$1.directory.delete(recursive: true));
+      await tester.binding.setSurfaceSize(null);
+    });
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await _pump(tester);
+    await tester.ensureVisible(find.text('Backup & Restore'));
+    await tester.tap(find.text('Backup & Restore'));
+    await _pump(tester);
+    expect(find.byType(BackupWorkspaceAppBar), findsOneWidget);
+    expect(find.text('Sidebar navigation').hitTestable(), findsNothing);
+    expect(tester.getSize(find.byType(BackupWorkspaceAppBar)).width, 1280);
+    await tester.tap(find.byTooltip('Back'));
+    await _pump(tester);
+    expect(find.text('Backup & Restore'), findsOneWidget);
+    expect(find.text('Sidebar navigation'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

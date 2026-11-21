@@ -77,6 +77,7 @@ void main() {
     expect(record.revision, 2);
     expect(history, hasLength(2));
     expect(history.first.profile.marketBaseRatePer10g, 76000);
+    expect(history.first.revision, record.revision);
   });
 
   test('year history includes every revision and one earlier baseline',

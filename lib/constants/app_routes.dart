@@ -18,6 +18,7 @@ class AppRoutes {
   static const String billingSetupRoute = '/settings/billing-setup';
   static const String printTemplatesRoute = '/settings/print-templates';
   static const String metalCostAnalyserRoute = '/settings/metal-cost-analyser';
+  static const String backupRestoreRoute = '/settings/backup-restore';
 
   // Customer
   static const String customerListRoute = '/customer/list';
@@ -127,6 +128,7 @@ class RoutePaths {
   // Settings
   static const String billingSetup = '/app/settings/billing-setup';
   static const String printTemplates = '/app/settings/print-templates';
+  static const String settingsBackupRestore = '/app/settings/backup-restore';
   static const String settingsMetalCostAnalyser =
       '/app/settings/metal-cost-analyser';
 
@@ -219,6 +221,8 @@ class RouteMapper {
     AppRoutes.billingSetupRoute: RoutePaths.billingSetup,
     AppRoutes.printTemplatesRoute: RoutePaths.printTemplates,
     AppRoutes.metalCostAnalyserRoute: RoutePaths.settingsMetalCostAnalyser,
+    AppRoutes.backupRestoreRoute: RoutePaths.settingsBackupRestore,
+    'backup': RoutePaths.settingsBackupRestore,
     AppRoutes.customerListRoute: RoutePaths.customerList,
     AppRoutes.addCustomerRoute: RoutePaths.customerAdd,
     AppRoutes.defaulterListRoute: RoutePaths.customerDefaulters,

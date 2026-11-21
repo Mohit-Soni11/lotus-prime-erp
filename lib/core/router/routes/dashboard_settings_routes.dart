@@ -2,6 +2,13 @@ part of '../app_router.dart';
 
 List<RouteBase> dashboardSettingsRoutes() => [
       workspaceRoute(
+        path: RoutePaths.settingsBackupRestore,
+        rootNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => BackupRestoreScreen(
+          onBack: () => _goBackOr(context, RoutePaths.settings),
+        ),
+      ),
+      workspaceRoute(
         path: RoutePaths.metalRateMaster,
         rootNavigatorKey: _rootNavigatorKey,
         builder: (context, _) => MetalRateHubScreen(

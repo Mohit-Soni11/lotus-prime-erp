@@ -98,10 +98,10 @@ class SettingsData {
       accentColor: Color(0xFF0891B2),
     ),
     SettingsModel(
-      id: 'backup',
+      id: AppRoutes.backupRestoreRoute,
       icon: SettingsIcons.backup,
       title: 'Backup & Restore',
-      subtitle: 'Download a complete database backup or restore data',
+      subtitle: 'Schedule local and Google Drive backups or restore your data',
       category: SettingsCategory.system,
       accentColor: Color(0xFF4ADE80),
     ),
