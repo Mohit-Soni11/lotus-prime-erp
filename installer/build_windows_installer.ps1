@@ -1,3 +1,5 @@
+param([string]$GoogleDriveConfig)
+
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
@@ -10,6 +12,10 @@ if (-not $versionMatch.Success) {
 }
 $appVersion = $versionMatch.Groups[1].Value
 $appBuild = $versionMatch.Groups[2].Value
+
+. (Join-Path $PSScriptRoot 'google_drive_build_config.ps1')
+$flutterBuildArguments = @('build', 'windows', '--release', '--no-pub')
+$flutterBuildArguments += @(Get-GoogleDriveBuildArguments -ProjectRoot $projectRoot -ConfigurationPath $GoogleDriveConfig)
 
 $compilerCandidates = @(
     (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),
@@ -43,7 +49,7 @@ try {
     & flutter pub get
     if ($LASTEXITCODE -ne 0) { throw 'flutter pub get failed.' }
 
-    & flutter build windows --release --no-pub
+    & flutter @flutterBuildArguments
     if ($LASTEXITCODE -ne 0) { throw 'Windows release build failed.' }
 
     foreach ($required in @('lotus_erp.exe', 'flutter_windows.dll', 'data')) {

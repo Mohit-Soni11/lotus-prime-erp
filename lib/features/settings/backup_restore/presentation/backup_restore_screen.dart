@@ -15,7 +15,6 @@ import 'backup_schedule_panel.dart';
 import 'backup_workspace_app_bar.dart';
 import 'backup_workspace_theme.dart';
 import 'backup_workspace_status.dart';
-import 'google_drive_setup_dialog.dart';
 
 class BackupRestoreScreen extends StatefulWidget {
   const BackupRestoreScreen({super.key, required this.onBack, this.controller});
@@ -45,22 +44,6 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                 .replaceFirst('Bad state: ', '')
                 .replaceFirst('FormatException: ', ''));
       }
-    }
-  }
-
-  Future<void> _setupGoogle(BackupCoordinator controller) async {
-    final import = await showDialog<bool>(
-        context: context, builder: (_) => const GoogleDriveSetupDialog());
-    if (import != true || !mounted) return;
-    final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const ['json'],
-        dialogTitle: 'Import Google Desktop OAuth Client');
-    final path = result?.files.single.path;
-    if (path != null) {
-      await _action(() => controller.configureGoogle(File(path)),
-          success:
-              'Google Drive setup saved. Connect your Google account to continue.');
     }
   }
 
@@ -270,8 +253,6 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                   'Could not open the backup folder.');
                                             }
                                           }),
-                                      onSetupGoogle: () =>
-                                          _setupGoogle(controller),
                                       onConnectGoogle: () => _action(
                                           controller.connectGoogle,
                                           success:

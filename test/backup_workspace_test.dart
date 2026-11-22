@@ -8,6 +8,7 @@ import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dar
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_auth.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_backup_service.dart';
 import 'package:lotus_erp/features/settings/backup_restore/domain/backup_schedule.dart';
+import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_client.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_restore_screen.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_app_bar.dart';
 import 'package:lotus_erp/ui/settings/settings_dashboard/settings_screen.dart';
@@ -15,18 +16,28 @@ import 'dart:io';
 import 'backup_restore_test_support.dart';
 import 'google_drive_backup_test_support.dart';
 
-Future<(BackupFixture, BackupCoordinator)> _controller() async {
+class _LoopbackHttpOverrides extends HttpOverrides {}
+
+Future<(BackupFixture, BackupCoordinator)> _controller({
+  GoogleDriveClient applicationClient = const GoogleDriveClient(clientId: ''),
+  Future<bool> Function(Uri)? openBrowser,
+  FakeBackupHttp? transport,
+}) async {
   final fixture =
       BackupFixture(await Directory.systemTemp.createTemp('lotus-backup-ui-'));
   await fixture.seed();
-  final http =
+  final http = transport ??
       FakeBackupHttp((a, b, c, d) async => backupJsonResponse({'files': []}));
   final controller = BackupCoordinator(
       locations: fixture.locations,
       store: BackupStore(fixture.locations),
       preferences: fixture.preferences,
       drive: GoogleDriveBackupService(
-          auth: GoogleDriveAuth(http: http, secrets: MemoryBackupSecrets()),
+          auth: GoogleDriveAuth(
+              http: http,
+              secrets: MemoryBackupSecrets(),
+              applicationClient: applicationClient,
+              openBrowser: openBrowser),
           http: http),
       restore: BackupRestoreService(fixture.locations, fixture.preferences,
           clearSession: () async {}),
@@ -83,7 +94,8 @@ void main() {
     }
   }
 
-  testWidgets('schedule controls save weekly settings and setup dialog opens',
+  testWidgets(
+      'schedule saves and Google connection has no developer setup flow',
       (tester) async {
     late (BackupFixture, BackupCoordinator) data;
     await tester.runAsync(() async {
@@ -114,12 +126,85 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await _pump(tester);
     expect(data.$2.settings!.schedule.frequency, BackupFrequency.weekly);
-    await tester.ensureVisible(find.text('Set Up Google Drive'));
-    await tester.tap(find.text('Set Up Google Drive'));
+    expect(find.text('Set Up Google Drive'), findsNothing);
+    expect(find.text('Connection Setup'), findsNothing);
+    expect(find.text('Import Desktop Client JSON'), findsNothing);
+    await tester.ensureVisible(find.text('Connect Google Account'));
+    await tester.tap(find.text('Connect Google Account'));
     await _pump(tester);
-    expect(find.text('Set Up Google Drive Backup'), findsOneWidget);
-    await tester.tap(find.text('Close'));
+    expect(data.$2.drive.auth.connected, isFalse);
+    expect(data.$2.error, contains('not available in this build'));
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Connect opens Google directly and shows the connected account',
+      (tester) async {
+    late (BackupFixture, BackupCoordinator) data;
+    var browserOpened = false;
+    await tester.runAsync(() async {
+      data = await _controller(
+          applicationClient: const GoogleDriveClient(
+              clientId: 'test.apps.googleusercontent.com'),
+          transport: FakeBackupHttp((uri, method, headers, body) async {
+            if (uri.path == '/token') {
+              return backupJsonResponse({
+                'access_token': 'test-access',
+                'refresh_token': 'test-refresh',
+                'expires_in': 3600,
+                'scope': '${GoogleDriveAuth.driveScope} openid email'
+              });
+            }
+            return backupJsonResponse(uri.path == '/v1/userinfo'
+                ? {'email': 'owner@example.test', 'sub': 'test-owner'}
+                : {'files': []});
+          }),
+          openBrowser: (uri) async {
+            browserOpened = true;
+            expect(uri.host, 'accounts.google.com');
+            final callback = Uri.parse(uri.queryParameters['redirect_uri']!)
+                .replace(queryParameters: {
+              'state': uri.queryParameters['state']!,
+              'code': 'test-code'
+            });
+            expect(callback.host, '127.0.0.1');
+            final client = _LoopbackHttpOverrides().createHttpClient(null);
+            try {
+              await (await (await client.getUrl(callback)).close())
+                  .drain<void>();
+            } finally {
+              client.close(force: true);
+            }
+            return true;
+          });
+    });
+    await tester.binding.setSurfaceSize(const Size(1280, 1000));
+    addTearDown(() async {
+      data.$2.dispose();
+      await tester.runAsync(() => data.$1.directory.delete(recursive: true));
+      await tester.binding.setSurfaceSize(null);
+    });
+    await tester.pumpWidget(MaterialApp(
+        home: BackupRestoreScreen(controller: data.$2, onBack: () {})));
     await _pump(tester);
+    await tester.ensureVisible(find.text('Connect Google Account'));
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Connect Google Account'));
+      await Future.doWhile(() async {
+        if (!data.$2.busy) return false;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return true;
+      }).timeout(const Duration(seconds: 5));
+    });
+    await _pump(tester);
+    expect(browserOpened, isTrue);
+    expect(data.$2.drive.auth.connected, isTrue, reason: data.$2.error);
+    expect(data.$2.settings!.googleDriveEnabled, isTrue);
+    expect(find.text('owner@example.test'), findsOneWidget);
+    expect(find.text('Change Account'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);
   });
 

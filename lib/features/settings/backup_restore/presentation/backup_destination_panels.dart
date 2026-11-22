@@ -8,14 +8,12 @@ class BackupDestinationPanels extends StatelessWidget {
       required this.controller,
       required this.onChooseFolder,
       required this.onOpenFolder,
-      required this.onSetupGoogle,
       required this.onConnectGoogle,
       required this.onDisconnectGoogle,
       required this.onDriveEnabled});
   final BackupCoordinator controller;
   final VoidCallback onChooseFolder,
       onOpenFolder,
-      onSetupGoogle,
       onConnectGoogle,
       onDisconnectGoogle;
   final ValueChanged<bool> onDriveEnabled;
@@ -73,27 +71,24 @@ class BackupDestinationPanels extends StatelessWidget {
                   TextStyle(fontSize: 12, color: BackupWorkspaceTheme.muted)),
           const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: [
-            if (!controller.drive.auth.configured)
-              FilledButton.icon(
-                  onPressed: disabled ? null : onSetupGoogle,
-                  icon: const Icon(Icons.settings_outlined, size: 18),
-                  label: const Text('Set Up Google Drive')),
-            if (controller.drive.auth.configured)
-              FilledButton.icon(
-                  onPressed: disabled ? null : onConnectGoogle,
-                  icon: const Icon(Icons.account_circle_outlined, size: 18),
-                  label: Text(controller.drive.auth.connected
-                      ? 'Change Account'
-                      : 'Connect Google Account')),
+            FilledButton.icon(
+                onPressed: disabled ? null : onConnectGoogle,
+                icon: const Icon(Icons.account_circle_outlined, size: 18),
+                label: Text(controller.drive.auth.connected
+                    ? 'Change Account'
+                    : 'Connect Google Account')),
             if (controller.drive.auth.connected)
               TextButton(
                   onPressed: disabled ? null : onDisconnectGoogle,
                   child: const Text('Disconnect')),
-            if (controller.drive.auth.configured)
-              TextButton(
-                  onPressed: disabled ? null : onSetupGoogle,
-                  child: const Text('Connection Setup')),
           ]),
+          if (!controller.drive.auth.configured) ...[
+            const SizedBox(height: 8),
+            const Text(
+                'Google account connection is not available in this build. Local backup and restore are available.',
+                style:
+                    TextStyle(fontSize: 12, color: BackupWorkspaceTheme.muted)),
+          ],
           SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               title: const Text('Include Google Drive',

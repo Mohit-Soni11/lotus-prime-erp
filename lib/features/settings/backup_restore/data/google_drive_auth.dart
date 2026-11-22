@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../domain/google_drive_client.dart';
 import 'backup_http_transport.dart';
 
 abstract interface class BackupSecretStore {
@@ -32,16 +33,18 @@ class GoogleDriveAuth {
   GoogleDriveAuth(
       {required this.http,
       BackupSecretStore? secrets,
+      this.applicationClient = const GoogleDriveClient.fromEnvironment(),
       Future<bool> Function(Uri)? openBrowser})
       : secrets = secrets ?? const SecureBackupSecretStore(),
         openBrowser = openBrowser ??
             ((uri) => launchUrl(uri, mode: LaunchMode.externalApplication));
   final BackupHttpTransport http;
   final BackupSecretStore secrets;
+  final GoogleDriveClient applicationClient;
   final Future<bool> Function(Uri) openBrowser;
   static const driveScope = 'https://www.googleapis.com/auth/drive.appdata';
   static final _tokenUri = Uri.https('oauth2.googleapis.com', '/token');
-  Map<String, dynamic>? _client;
+  GoogleDriveClient? _client;
   Map<String, dynamic>? _tokens;
   Future<String>? _refreshing;
   Completer<void>? _cancel;
@@ -50,41 +53,29 @@ class GoogleDriveAuth {
   String? get email => _tokens?['email'] as String?;
 
   Future<void> load() async {
-    final client = await secrets.read('google-client');
+    _client = applicationClient.configured
+        ? applicationClient
+        : await _legacyClient();
     final tokens = await secrets.read('google-tokens');
-    _client = client == null
-        ? null
-        : Map<String, dynamic>.from(jsonDecode(client) as Map);
     _tokens = tokens == null
         ? null
         : Map<String, dynamic>.from(jsonDecode(tokens) as Map);
     if (_tokens != null &&
-        (_client == null || _tokens!['client_id'] != _client!['client_id'])) {
+        (_client == null || _tokens!['client_id'] != _client!.clientId)) {
       _tokens = null;
       await secrets.delete('google-tokens');
     }
   }
 
-  Future<void> configure(String contents) async {
-    final document = jsonDecode(contents);
-    if (document is! Map || document['installed'] is! Map) {
-      throw const FormatException(
-          'Select the Google OAuth JSON for a Desktop app. Web and service-account credentials are not supported.');
-    }
-    final installed = document['installed'] as Map;
-    final id = installed['client_id'];
-    if (id is! String || !id.endsWith('.apps.googleusercontent.com')) {
-      throw const FormatException('The Google Desktop client ID is invalid.');
-    }
-    final client = {
-      'client_id': id,
-      if (installed['client_secret'] is String)
-        'client_secret': installed['client_secret']
-    };
-    await secrets.write('google-client', jsonEncode(client));
-    await secrets.delete('google-tokens');
-    _client = client;
-    _tokens = null;
+  Future<GoogleDriveClient?> _legacyClient() async {
+    // Preserve connections created before application-level configuration.
+    final stored = await secrets.read('google-client');
+    if (stored == null) return null;
+    final values = jsonDecode(stored) as Map;
+    final client = GoogleDriveClient(
+        clientId: values['client_id'] as String? ?? '',
+        clientSecret: values['client_secret'] as String? ?? '');
+    return client.configured ? client : null;
   }
 
   static String _random(int length) {
@@ -100,7 +91,8 @@ class GoogleDriveAuth {
 
   Future<void> signIn() async {
     if (_client == null) {
-      throw StateError('Configure the Google Desktop client first.');
+      throw StateError(
+          'Google account connection is not available in this build of Lotus ERP. Local backup and restore are available.');
     }
     if (_cancel != null) {
       throw StateError('Google sign-in is already in progress.');
@@ -141,7 +133,7 @@ class GoogleDriveAuth {
     });
     try {
       final authorize = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
-        'client_id': _client!['client_id'] as String,
+        'client_id': _client!.clientId,
         'redirect_uri': redirect,
         'response_type': 'code',
         'scope': '$driveScope openid email',
@@ -192,7 +184,7 @@ class GoogleDriveAuth {
       }
       _tokens = {
         ...tokens,
-        'client_id': _client!['client_id'],
+        'client_id': _client!.clientId,
         'email': identity['email'],
         'subject': identity['sub'],
         'expiresAt': DateTime.now()
@@ -248,9 +240,9 @@ class GoogleDriveAuth {
   Future<Map<String, dynamic>> _tokenRequest(Map<String, String> values) async {
     final fields = {
       ...values,
-      'client_id': _client!['client_id'] as String,
-      if (_client!['client_secret'] != null)
-        'client_secret': _client!['client_secret'] as String
+      'client_id': _client!.clientId,
+      if (_client!.clientSecret.isNotEmpty)
+        'client_secret': _client!.clientSecret
     };
     final bytes = utf8.encode(Uri(queryParameters: fields).query);
     final response = await http.send(_tokenUri,
@@ -262,7 +254,7 @@ class GoogleDriveAuth {
     if (response.status != 200 || result['access_token'] is! String) {
       throw StateError(result['error'] == 'invalid_grant'
           ? 'Google authorization expired. Reconnect your Google account.'
-          : 'Google sign-in failed. Check the Desktop OAuth configuration and try again.');
+          : 'Google could not connect your account. Please try again. If this continues, contact Lotus ERP support.');
     }
     return result;
   }

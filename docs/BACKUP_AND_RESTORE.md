@@ -44,27 +44,90 @@ with Drive backup enabled. **Retry Upload** also retries the existing file
 without taking another financial snapshot. Existing backups are not
 automatically deleted.
 
-## Google Drive: one-time setup
+## Connect a Google account
 
-Account setup was deferred during implementation. No Google account has been
-connected and no real business backup has been uploaded as part of development.
+The developer's Google application identity is configured in the local build
+settings. Initial account sign-in, account identification and the private Drive
+backup listing have been verified in the development build. A live business
+backup upload and restore have not been performed during this setup.
 
-1. Sign in to [Google Cloud](https://console.cloud.google.com/).
-2. Create/select the application project and enable **Google Drive API**.
-3. Configure the Google Auth Platform branding and audience. For testing, add
-   the intended Google account as a test user. Choose an appropriate personal
-   or production audience for continued use when supported by your Google
-   configuration; external testing-mode grants can expire after seven days.
-4. Create an OAuth client with application type **Desktop app** and download
-   its JSON configuration. A web client or service account cannot be used.
-5. In Lotus ERP select **Set Up Google Drive → Import Desktop Client JSON**.
-6. Select **Connect Google Account**. Use the external browser to sign in and
+1. Select **Connect Google Account**. Use the external browser to sign in and
    approve the requested backup permission.
-7. Keep **Include Google Drive** enabled to upload manual and scheduled backups.
+2. Return to Lotus ERP. The connected account appears in the Google Drive card.
+3. Keep **Include Google Drive** enabled to upload manual and scheduled backups.
 
-The desktop flow uses loopback redirect, state validation and PKCE. Tokens and
-client configuration use platform secure storage with separate development and
-production keys. Nothing is embedded as a customer credential in source code.
+There is no Google Cloud or JSON-import setup in the customer workspace. A build
+without the developer's application identity clearly reports that Google account
+connection is unavailable; local backup and restore continue to work.
+
+The desktop flow uses loopback redirect, state validation and PKCE. Account
+tokens use platform secure storage with separate development and production
+keys. Existing connections from the earlier configuration flow are retained
+when the application client ID matches. A different application ID requires
+connecting again and cannot reuse the previous application's account tokens.
+
+### Developer configuration before release
+
+This is a one-time application setup, not a task for each customer:
+
+1. Create/select the Lotus ERP project in [Google Cloud](https://console.cloud.google.com/)
+   and enable **Google Drive API**.
+2. Configure branding, audience and consent. During testing, add the intended
+   test accounts. Complete the applicable production publishing requirements
+   before distribution; external testing-mode grants can expire after seven days.
+3. Create an OAuth client of type **Desktop app**. Web and service-account
+   credentials are not supported by this desktop flow.
+4. Copy `config/google-drive.example.json` to `config/google-drive.local.json`.
+   Fill `LOTUS_GOOGLE_CLIENT_ID` and `LOTUS_GOOGLE_CLIENT_SECRET` with the
+   Desktop application's values. This is a Dart build-configuration file,
+   not Google's downloaded `installed` JSON. The local file is ignored by Git.
+   Never put a user's email, password, account tokens or business data in it.
+5. For development run:
+
+   ```powershell
+   flutter run -d windows --dart-define-from-file=config/google-drive.local.json
+   ```
+
+   In VS Code, select **Lotus ERP - Windows with Google Drive** in Run and Debug,
+   then start debugging. This profile passes the local build configuration
+   automatically. Stop and relaunch after changing application client values;
+   hot reload cannot change compile-time configuration. The local-backup-only
+   profile is available for development without Google configuration.
+6. `installer/build_windows_installer.ps1` automatically includes that local
+   configuration when it exists. Alternatively supply `-GoogleDriveConfig`
+   with the path to a build-configuration JSON. Invalid keys or values stop
+   packaging before the build. No JSON configuration file is copied beside
+   the installed application; the application identity is compiled into it.
+
+Desktop application identity is not an individual customer's login or backup
+data. Desktop client values are extractable from a distributed native binary;
+they must not be treated as confidential server credentials. Google grants
+access only after each user signs in and approves the requested permissions.
+Use the same application identity for updates and other installations that
+need access to the same private backup area.
+
+Before distributing to public customers, complete the production audience and
+branding requirements, including the application's public homepage and privacy
+policy. A Google project named "Production" is not proof that OAuth publishing
+is in production: verify the actual publishing status in Google Auth Platform.
+Testing-mode allowlists are for development and must not become a customer
+onboarding requirement.
+
+The public homepage and backup privacy-policy source is in `public_site/`.
+The reviewed pages are published at `https://lotus-erp-production.web.app/`
+and `https://lotus-erp-production.web.app/privacy.html` on Firebase Hosting's
+no-cost Spark plan. Analytics is disabled. These source files are not bundled
+with the desktop installer.
+
+The Google OAuth audience is External and its publishing status has been
+confirmed as In production. Google reports that data-access verification is
+not required for the configured non-sensitive scopes. App branding has its
+own verification status and must be checked separately before claiming that
+Google has approved the displayed application identity.
+
+Website ownership has been verified in Search Console. Google's branding check
+requires waiting 24 hours after ownership verification before retrying. The
+recorded retry time and remaining checks are in `GOOGLE_DRIVE_RELEASE_STATUS.md`.
 
 Drive access is limited to `drive.appdata`, plus basic account identity. Files
 are stored in the app's private `appDataFolder`, not the Gmail inbox or the

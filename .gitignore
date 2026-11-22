@@ -35,6 +35,8 @@ migrate_working_dir/
 /dist/
 /coverage/
 /tmp/
+/config/google-drive.local.json
+/public_site/.firebase/
 
 # Symbolication related
 app.*.symbols

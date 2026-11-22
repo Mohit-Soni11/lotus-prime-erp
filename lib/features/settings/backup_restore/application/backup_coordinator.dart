@@ -70,22 +70,6 @@ class BackupCoordinator extends ChangeNotifier {
     });
   }
 
-  Future<void> configureGoogle(File file) =>
-      _operation('Configuring Google Drive', () async {
-        await requireOwner();
-        if (await file.length() > 65536) {
-          throw const FormatException(
-              'Select the Google Desktop OAuth JSON file.');
-        }
-        await drive.auth.configure(await file.readAsString());
-        cloudRecords = [];
-        if (settings != null) {
-          settings = BackupSettings(
-              localFolder: settings!.localFolder, schedule: settings!.schedule);
-          await store.saveSettings(settings!);
-        }
-      });
-
   Future<void> connectGoogle() =>
       _operation('Waiting for Google sign-in', () async {
         await requireOwner();

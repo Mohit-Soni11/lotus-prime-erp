@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_auth.dart';
+import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_client.dart';
 import 'google_drive_backup_test_support.dart';
 
 void main() {
@@ -15,6 +16,8 @@ void main() {
         tokenCalls++;
         final form = Uri.splitQueryString(utf8.decode(body));
         expect(form['grant_type'], 'authorization_code');
+        expect(form['client_id'], 'test.apps.googleusercontent.com');
+        expect(form['client_secret'], 'desktop-test-secret');
         expect(GoogleDriveAuth.challenge(form['code_verifier']!),
             expectedChallenge);
         expect(form['code'], 'test-code');
@@ -31,6 +34,9 @@ void main() {
     final auth = GoogleDriveAuth(
         http: http,
         secrets: secrets,
+        applicationClient: const GoogleDriveClient(
+            clientId: 'test.apps.googleusercontent.com',
+            clientSecret: 'desktop-test-secret'),
         openBrowser: (uri) async {
           expect(uri.host, 'accounts.google.com');
           final query = uri.queryParameters;
@@ -61,15 +67,14 @@ void main() {
           }
           return true;
         });
-    await auth.configure(jsonEncode({
-      'installed': {'client_id': 'test.apps.googleusercontent.com'}
-    }));
+    await auth.load();
     await auth.signIn();
     expect(auth.connected, isTrue);
     expect(auth.email, 'owner@example.test');
     expect(await auth.accessToken(), 'access');
     expect(tokenCalls, 1);
     expect(secrets.values['google-tokens'], contains('refresh'));
+    expect(secrets.values.containsKey('google-client'), isFalse);
   });
 
   test(
@@ -101,17 +106,53 @@ void main() {
         'original-refresh');
   });
 
-  test(
-      'service account and web credentials cannot be imported as Desktop OAuth',
+  test('unconfigured builds do not launch a misleading Google sign-in',
       () async {
+    var openedBrowser = false;
     final auth = GoogleDriveAuth(
         http: FakeBackupHttp((a, b, c, d) async => backupJsonResponse({})),
-        secrets: MemoryBackupSecrets());
+        secrets: MemoryBackupSecrets(),
+        applicationClient: const GoogleDriveClient(clientId: ''),
+        openBrowser: (_) async {
+          openedBrowser = true;
+          return true;
+        });
+    await auth.load();
     await expectLater(
-        auth.configure(
-            '{"web":{"client_id":"test.apps.googleusercontent.com"}}'),
-        throwsFormatException);
-    await expectLater(
-        auth.configure('{"type":"service_account"}'), throwsFormatException);
+        auth.signIn(),
+        throwsA(isA<StateError>().having((error) => error.message, 'message',
+            contains('not available in this build'))));
+    expect(openedBrowser, isFalse);
+  });
+
+  test('application identity preserves matching tokens across updates',
+      () async {
+    final http = FakeBackupHttp((a, b, c, d) async => backupJsonResponse({}));
+    final existing = await connectedTestGoogle(http);
+    final auth = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(
+            clientId: 'test.apps.googleusercontent.com'));
+    await auth.load();
+    expect(auth.connected, isTrue);
+    expect(await auth.accessToken(), 'test-access');
+    expect(auth.email, 'owner@example.test');
+  });
+
+  test(
+      'application identity takes precedence and never reuses another client token',
+      () async {
+    final http = FakeBackupHttp((a, b, c, d) async => backupJsonResponse({}));
+    final existing = await connectedTestGoogle(http);
+    final auth = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(
+            clientId: 'replacement.apps.googleusercontent.com'));
+    await auth.load();
+    expect(auth.configured, isTrue);
+    expect(auth.connected, isFalse);
+    expect(await existing.secrets.read('google-tokens'), isNull);
   });
 }
