@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_archive_service.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/backup_file_safety.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_restore_service.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dart';
 import 'backup_restore_test_support.dart';
@@ -73,6 +74,36 @@ void main() {
       prior.dispose();
     }
     expect(await restore.applyPending(), isFalse);
+  });
+
+  test('a cloud-sync cleanup denial does not block a committed restore',
+      () async {
+    var denyOldDirectory = true;
+    final restore = BackupRestoreService(
+        destination.locations, destination.preferences,
+        clearSession: () async {}, cleanupDelete: (path) async {
+      if (denyOldDirectory && path.contains('.Photos.lotus-old-')) {
+        throw FileSystemException(
+            'Access is denied', path, const OSError('Access is denied', 5));
+      }
+      await deleteBackupEntity(path);
+    });
+    await restore.prepare(await package());
+    expect(await restore.applyPending(), isTrue);
+    expect(destination.amount(), 125);
+    expect(await restore.pending.exists(), isFalse);
+    expect(await restore.journal.exists(), isFalse);
+    expect(await restore.cleanupPending.exists(), isTrue);
+    expect(jsonDecode(await restore.lastResult.readAsString())['message'],
+        contains('cleanup will retry'));
+
+    expect(await restore.applyPending(), isFalse);
+    expect(await restore.cleanupPending.exists(), isTrue);
+
+    denyOldDirectory = false;
+    expect(await restore.applyPending(), isFalse);
+    expect(await restore.cleanupPending.exists(), isFalse);
+    expect(destination.amount(), 125);
   });
 
   test('legacy external photos are included and relocated into managed storage',

@@ -72,13 +72,17 @@ class BackupStore {
       BackupSettings(localFolder: locations.local.path));
   Future<void> saveSettings(BackupSettings settings) =>
       writeBackupJson(_settings, settings.toJson());
-  Future<List<BackupRecord>> records() => _read(
-      _catalog,
-      (value) => (value as List)
-          .map((item) =>
-              BackupRecord.fromJson(Map<String, dynamic>.from(item as Map)))
-          .toList(),
-      <BackupRecord>[]);
+  Future<List<BackupRecord>> records() async {
+    final items = await _read(
+        _catalog,
+        (value) => (value as List)
+            .map((item) =>
+                BackupRecord.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList(),
+        <BackupRecord>[]);
+    items.sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    return items;
+  }
 
   Future<T> _read<T>(File file, T Function(Object?) parse, T fallback) async {
     if (!await file.exists()) return fallback;
@@ -103,7 +107,8 @@ class BackupStore {
   Future<void> put(BackupRecord record) async {
     final items = await records();
     items.removeWhere((item) => item.id == record.id);
-    items.insert(0, record);
+    items.add(record);
+    items.sort((left, right) => right.createdAt.compareTo(left.createdAt));
     await writeBackupJson(
         _catalog, items.map((item) => item.toJson()).toList());
   }

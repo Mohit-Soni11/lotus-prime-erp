@@ -13,13 +13,18 @@ import 'backup_store.dart';
 /// open on the next launch. A durable journal permits recovery after power loss.
 class BackupRestoreService {
   BackupRestoreService(this.locations, this.preferences,
-      {required this.clearSession});
+      {required this.clearSession,
+      Future<void> Function(String)? cleanupDelete})
+      : cleanupDelete = cleanupDelete ?? deleteBackupEntity;
   final BackupLocations locations;
   final BusinessPreferences preferences;
   final Future<void> Function() clearSession;
+  final Future<void> Function(String) cleanupDelete;
   File get pending => File(p.join(locations.root.path, 'restore-pending.json'));
   File get journal => File(p.join(locations.root.path, 'restore-journal.json'));
   File get lastResult => File(p.join(locations.root.path, 'last-restore.json'));
+  File get cleanupPending =>
+      File(p.join(locations.root.path, 'restore-cleanup-pending.json'));
   File get _package => File(
       p.join(locations.root.path, 'RestorePending', 'package.lotusbackup'));
   File get _originalPreferences => File(p.join(
@@ -45,11 +50,14 @@ class BackupRestoreService {
   }
 
   Future<bool> applyPending() async {
+    await _retryCleanup();
     if (await journal.exists()) {
       final state = _read(await journal.readAsString());
       if (state['phase'] == 'committed') {
         await clearSession();
-        await _cleanup(state);
+        if (await _cleanup(state)) {
+          await _report(true, _cleanupWarning);
+        }
         return true;
       }
       await _rollback(state);
@@ -119,7 +127,9 @@ class BackupRestoreService {
       committed = true;
       await _report(true,
           'Backup restored successfully. Sign in with the account from the restored backup.');
-      await _cleanup(state);
+      if (await _cleanup(state)) {
+        await _report(true, _cleanupWarning);
+      }
       return true;
     } catch (_) {
       if (committed) rethrow;
@@ -189,19 +199,43 @@ class BackupRestoreService {
     if (await journal.exists()) await journal.delete();
   }
 
-  Future<void> _cleanup(Map<String, dynamic> state) async {
+  static const _cleanupWarning =
+      'Backup restored successfully. Some previous files could not be removed from OneDrive. Your recovery backup is safe; cleanup will retry when Lotus ERP next opens.';
+
+  Future<bool> _cleanup(Map<String, dynamic> state) async {
     final id = state['id'] as String;
     _validateId(id);
-    for (final resource in locations.resources) {
-      await deleteBackupEntity(_sibling(resource, id, 'old'));
-      await deleteBackupEntity(_sibling(resource, id, 'new'));
-    }
+    // Record the cleanup work before clearing the committed journal so a crash
+    // cannot lose track of old resources left by a cloud-sync provider.
+    await writeBackupJson(cleanupPending, {'id': id});
     if (await pending.exists()) await pending.delete();
     if (await journal.exists()) await journal.delete();
     if (await _package.exists()) await _package.delete();
     if (await _originalPreferences.exists()) {
       await _originalPreferences.delete();
     }
+    return _retryCleanup();
+  }
+
+  Future<bool> _retryCleanup() async {
+    if (!await cleanupPending.exists()) return false;
+    final request = _read(await cleanupPending.readAsString());
+    final id = request['id'] as String;
+    _validateId(id);
+    var deferred = false;
+    for (final resource in locations.resources) {
+      for (final kind in ['old', 'new']) {
+        try {
+          await cleanupDelete(_sibling(resource, id, kind));
+        } on FileSystemException {
+          // The committed data is usable. A cloud placeholder or open handle
+          // can temporarily deny removal of its previous sibling.
+          deferred = true;
+        }
+      }
+    }
+    if (!deferred) await cleanupPending.delete();
+    return deferred;
   }
 
   Future<void> _report(bool success, String message) =>

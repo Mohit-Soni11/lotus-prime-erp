@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:isolate';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/settings/backup_restore/application/backup_coordinator.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_http_transport.dart';
@@ -15,13 +16,34 @@ void main() {
   late BackupFixture fixture;
   late BackupCoordinator controller;
   late ReceivePort ownerPort;
+  late bool uploadSucceeds;
   setUp(() async {
+    uploadSucceeds = false;
     ownerPort = ReceivePort();
     fixture = BackupFixture(
         await Directory.systemTemp.createTemp('lotus-coordinator-'));
     await fixture.seed();
-    final http = FakeBackupHttp((a, b, c, d) async =>
-        const BackupHttpResponse(503, {}, Stream.empty()));
+    final http = FakeBackupHttp((uri, method, headers, body) async {
+      if (!uploadSucceeds) {
+        return const BackupHttpResponse(503, {}, Stream.empty());
+      }
+      if (uri.path == '/drive/v3/files') {
+        return backupJsonResponse({'files': []});
+      }
+      if (uri.path == '/upload/drive/v3/files') {
+        return backupJsonResponse({}, headers: {
+          'location': 'https://www.googleapis.com/upload/session/test'
+        });
+      }
+      if (uri.path == '/upload/session/test') {
+        return backupJsonResponse({
+          'id': 'verified-drive-backup',
+          'md5Checksum': md5.convert(body).toString(),
+          'size': '${body.length}'
+        });
+      }
+      throw StateError('Unexpected Google Drive request: ${uri.path}');
+    });
     controller = BackupCoordinator(
         locations: fixture.locations,
         store: BackupStore(fixture.locations),
@@ -62,6 +84,83 @@ void main() {
     expect(fixture.amount(), 125);
     await controller.scheduledTick(DateTime.now());
     expect(controller.records, hasLength(1));
+  });
+
+  test('Drive-only backup removes local staging after verified upload',
+      () async {
+    uploadSucceeds = true;
+    await controller.saveSettings(BackupSettings(
+        localFolder: fixture.locations.local.path,
+        localEnabled: false,
+        googleDriveEnabled: true));
+    await controller.backupNow();
+    final record = controller.records.single;
+    expect(record.localPath, isNull);
+    expect(record.driveId, 'verified-drive-backup');
+    expect(controller.cloudRecords.single.id, record.id);
+    expect(
+        await fixture.locations.local
+            .list()
+            .where((item) => item.path.endsWith('.lotusbackup'))
+            .isEmpty,
+        isTrue);
+    expect((await controller.store.records()).single.localPath, isNull);
+  });
+
+  test('failed Drive-only upload keeps a copy until retry succeeds', () async {
+    await controller.saveSettings(BackupSettings(
+        localFolder: fixture.locations.local.path,
+        localEnabled: false,
+        googleDriveEnabled: true));
+    await controller.backupNow();
+    final pending = controller.records.single;
+    expect(pending.localRequested, isFalse);
+    expect(await File(pending.localPath!).exists(), isTrue);
+    expect(pending.cloudError, isNotNull);
+
+    uploadSucceeds = true;
+    await controller.retryUpload(pending);
+    expect(controller.records.single.localPath, isNull);
+    expect(controller.records.single.driveId, 'verified-drive-backup');
+    expect(await File(pending.localPath!).exists(), isFalse);
+  });
+
+  test('Both destinations retain local file and verified Drive record',
+      () async {
+    uploadSucceeds = true;
+    await controller.saveSettings(BackupSettings(
+        localFolder: fixture.locations.local.path, googleDriveEnabled: true));
+    await controller.backupNow();
+    final record = controller.records.single;
+    expect(await File(record.localPath!).exists(), isTrue);
+    expect(record.driveId, 'verified-drive-backup');
+  });
+
+  test('at least one backup destination must stay selected', () async {
+    await expectLater(
+        controller.saveSettings(BackupSettings(
+            localFolder: fixture.locations.local.path, localEnabled: false)),
+        throwsStateError);
+  });
+
+  test('retrying an older upload does not change the latest backup', () async {
+    final older = BackupRecord(
+        id: 'older',
+        name: 'older.lotusbackup',
+        createdAt: DateTime.utc(2026, 1, 1),
+        size: 1,
+        sha256: 'a' * 64);
+    final newer = BackupRecord(
+        id: 'newer',
+        name: 'newer.lotusbackup',
+        createdAt: DateTime.utc(2026, 1, 2),
+        size: 1,
+        sha256: 'b' * 64);
+    await controller.store.put(older);
+    await controller.store.put(newer);
+    await controller.store.put(older.uploadFailed('Retry needed'));
+    expect((await controller.store.records()).map((item) => item.id),
+        ['newer', 'older']);
   });
 
   test(

@@ -31,8 +31,6 @@ class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
     return BackupPanel(
         title: 'Backups & Recovery',
         icon: Icons.restore_rounded,
-        subtitle:
-            'Restore a verified local backup or a backup from your Google account.',
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Wrap(
@@ -76,7 +74,10 @@ class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
                   OutlinedButton.icon(
                       onPressed: widget.enabled ? widget.onPickLocal : null,
                       icon: const Icon(Icons.file_open_outlined, size: 18),
-                      label: const Text('Restore Local File')),
+                      label: const Text('Restore Local File'),
+                      style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                              color: BackupWorkspaceTheme.gold))),
                 ]),
               ]),
           const SizedBox(height: 16),
@@ -132,55 +133,78 @@ class _BackupHistoryRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+          color: BackupWorkspaceTheme.surfaceLow,
           border: Border.all(color: BackupWorkspaceTheme.border),
           borderRadius: BorderRadius.circular(12)),
       child: LayoutBuilder(builder: (context, constraints) {
-        final details =
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(
-              DateFormat('d MMM yyyy · h:mm a')
-                  .format(record.createdAt.toLocal()),
-              style: const TextStyle(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 5),
-          Text(
-              '${_size(record.size)}  ·  Verified backup${record.driveId != null ? '  ·  Google Drive' : '  ·  Local'}',
-              style: const TextStyle(
-                  fontSize: 12, color: BackupWorkspaceTheme.muted)),
-          if (record.cloudError != null) ...[
-            const SizedBox(height: 5),
-            const Text('Local backup saved · Drive upload needs a retry',
-                style: TextStyle(fontSize: 12, color: Color(0xFFB45309)))
-          ],
-          if (record.missingMediaCount > 0) ...[
-            const SizedBox(height: 5),
-            Text(
-                '${record.missingMediaCount} linked media files were unavailable',
-                style: const TextStyle(fontSize: 12, color: Color(0xFFB45309))),
-          ],
+        final date = Text(
+            DateFormat('d MMM yyyy, hh:mm a')
+                .format(record.createdAt.toLocal()),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800));
+        final size = Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.storage_rounded, size: 20),
+          const SizedBox(width: 8),
+          Text(_size(record.size),
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
         ]);
         final actions = Wrap(spacing: 8, runSpacing: 6, children: [
           if (onRetryUpload != null)
-            TextButton.icon(
+            OutlinedButton.icon(
                 onPressed: enabled ? onRetryUpload : null,
                 icon: const Icon(Icons.cloud_upload_outlined, size: 18),
                 label: const Text('Retry Upload')),
-          OutlinedButton.icon(
+          FilledButton.icon(
               onPressed: enabled ? onRestore : null,
               icon: const Icon(Icons.restore_rounded, size: 18),
               label: const Text('Restore')),
         ]);
-        if (constraints.maxWidth < 660) {
+        final warnings = <Widget>[
+          if (record.cloudError != null)
+            const Text('Drive upload needs a retry. Local copy is safe.',
+                style:
+                    TextStyle(fontSize: 13, color: BackupWorkspaceTheme.amber)),
+          if (record.missingMediaCount > 0)
+            Text(
+                '${record.missingMediaCount} linked media files were unavailable',
+                style: const TextStyle(
+                    fontSize: 13, color: BackupWorkspaceTheme.amber)),
+        ];
+        if (constraints.maxWidth < (onRetryUpload == null ? 660 : 840)) {
           return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [details, const SizedBox(height: 12), actions]);
+              children: [
+                Row(children: [
+                  const Icon(Icons.check_circle_rounded,
+                      color: BackupWorkspaceTheme.green),
+                  const SizedBox(width: 10),
+                  Expanded(child: date),
+                ]),
+                const SizedBox(height: 10),
+                size,
+                for (final warning in warnings) ...[
+                  const SizedBox(height: 6),
+                  warning,
+                ],
+                const SizedBox(height: 12),
+                actions,
+              ]);
         }
-        return Row(children: [
-          const Icon(Icons.verified_outlined,
-              color: BackupWorkspaceTheme.green),
-          const SizedBox(width: 14),
-          Expanded(child: details),
-          const SizedBox(width: 12),
-          actions
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.check_circle_rounded,
+                color: BackupWorkspaceTheme.green),
+            const SizedBox(width: 14),
+            Expanded(child: date),
+            Container(width: 1, height: 28, color: BackupWorkspaceTheme.border),
+            const SizedBox(width: 30),
+            Expanded(child: size),
+            actions,
+          ]),
+          for (final warning in warnings) ...[
+            const SizedBox(height: 8),
+            warning,
+          ],
         ]);
       }));
   String _size(int bytes) => bytes >= 1024 * 1024 * 1024

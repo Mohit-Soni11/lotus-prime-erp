@@ -11,6 +11,7 @@ import 'package:lotus_erp/features/settings/backup_restore/domain/backup_schedul
 import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_client.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_restore_screen.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_app_bar.dart';
+import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_theme.dart';
 import 'package:lotus_erp/ui/settings/settings_dashboard/settings_screen.dart';
 import 'dart:io';
 import 'backup_restore_test_support.dart';
@@ -90,7 +91,12 @@ void main() {
         expect(find.text('BACKUP & RESTORE'), findsOneWidget);
         expect(find.text('Restore Local File'), findsOneWidget);
         expect(find.text('Back Up Now'), findsOneWidget);
-        expect(find.text('Next backup: Local only'), findsOneWidget);
+        expect(find.text('Business Data Backup'), findsOneWidget);
+        expect(find.text('Backup Type'), findsOneWidget);
+        expect(find.text('Next Backup'), findsNothing);
+        final theme = Theme.of(tester.element(find.text('Local Backup')));
+        expect(theme.brightness, Brightness.light);
+        expect(theme.scaffoldBackgroundColor, BackupWorkspaceTheme.canvas);
       });
     }
   }
@@ -201,10 +207,33 @@ void main() {
     await _pump(tester);
     expect(browserOpened, isTrue);
     expect(data.$2.drive.auth.connected, isTrue, reason: data.$2.error);
-    expect(data.$2.settings!.googleDriveEnabled, isTrue);
-    expect(find.text('Next backup: Local + Google Drive'), findsOneWidget);
+    expect(data.$2.settings!.googleDriveEnabled, isFalse);
     expect(find.text('owner@example.test'), findsOneWidget);
     expect(find.text('Change Account'), findsOneWidget);
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Select'));
+      await Future.doWhile(() async {
+        if (!data.$2.busy) return false;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return true;
+      }).timeout(const Duration(seconds: 5));
+    });
+    await _pump(tester);
+    expect(data.$2.settings!.googleDriveEnabled, isTrue);
+    expect(find.text('Selected'), findsNWidgets(2));
+    await tester.runAsync(() async {
+      await tester.tap(find.byTooltip('Local Backup selected'));
+      await Future.doWhile(() async {
+        if (!data.$2.busy) return false;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return true;
+      }).timeout(const Duration(seconds: 5));
+    });
+    await _pump(tester);
+    expect(data.$2.settings!.localEnabled, isFalse);
+    expect(data.$2.settings!.googleDriveEnabled, isTrue);
+    expect(
+        (await tester.runAsync(data.$2.store.settings))!.localEnabled, isFalse);
     expect(find.byType(AlertDialog), findsNothing);
     await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);

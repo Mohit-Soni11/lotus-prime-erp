@@ -37,7 +37,6 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
     return BackupPanel(
         title: 'Backup Schedule',
         icon: Icons.schedule_rounded,
-        subtitle: 'Choose when Lotus ERP creates your backup.',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Wrap(
               spacing: 14,
@@ -124,18 +123,12 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
                     icon: const Icon(Icons.save_outlined, size: 18),
                     label: const Text('Save Schedule')),
               ]),
-          const SizedBox(height: 14),
-          Text(
-              next == null
-                  ? 'Automatic backups are off. Use Back Up Now whenever needed.'
-                  : 'Next backup: ${DateFormat('d MMM yyyy, h:mm a').format(next)}',
-              style:
-                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-          const SizedBox(height: 6),
-          const Text(
-              'Scheduled backups run while Lotus ERP is open. Missed backups run when you next open and sign in. Times follow this computer’s local clock.',
-              style:
-                  TextStyle(fontSize: 12, color: BackupWorkspaceTheme.muted)),
+          if (next != null) ...[
+            const SizedBox(height: 14),
+            Text('Scheduled: ${DateFormat('d MMM yyyy, h:mm a').format(next)}',
+                style: const TextStyle(
+                    fontSize: 13, color: BackupWorkspaceTheme.muted)),
+          ],
         ]));
   }
 }

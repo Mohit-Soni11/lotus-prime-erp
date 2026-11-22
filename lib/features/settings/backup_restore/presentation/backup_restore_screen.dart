@@ -3,7 +3,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../../core/feedback/app_feedback.dart';
 import '../application/backup_coordinator.dart';
 import '../application/backup_runtime.dart';
 import '../data/backup_archive_service.dart';
@@ -26,23 +25,36 @@ class BackupRestoreScreen extends StatefulWidget {
 
 class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   late Future<BackupCoordinator> _loading = _load();
+  String? _notice;
+  bool _noticeError = false;
+
+  void _showNotice(String? message, {bool error = false}) {
+    if (!mounted) return;
+    setState(() {
+      _notice = message;
+      _noticeError = error;
+    });
+  }
+
+  String _errorMessage(Object error) => error
+      .toString()
+      .replaceFirst('Bad state: ', '')
+      .replaceFirst('FormatException: ', '');
+
   Future<BackupCoordinator> _load() async =>
       widget.controller ?? await BackupRuntime.instance.coordinator();
 
   Future<void> _action(Future<void> Function() action,
       {String? success}) async {
+    _showNotice(null);
     try {
       await action();
-      if (mounted && success != null) {
-        AppFeedback.success(context, message: success);
+      if (success != null && (await _loading).error == null) {
+        _showNotice(success);
       }
     } catch (error) {
-      if (mounted) {
-        AppFeedback.warning(context,
-            message: error
-                .toString()
-                .replaceFirst('Bad state: ', '')
-                .replaceFirst('FormatException: ', ''));
+      if ((await _loading).error == null) {
+        _showNotice(_errorMessage(error), error: true);
       }
     }
   }
@@ -58,6 +70,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
 
   Future<void> _restore(BackupCoordinator controller,
       {File? file, BackupRecord? record}) async {
+    _showNotice(null);
     VerifiedBackup? preview;
     File? downloaded;
     try {
@@ -89,8 +102,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             const SizedBox(height: 10),
                             Text(
                                 '${(preview.manifest['missingMedia'] as List).length} linked media files were missing when this backup was created and cannot be restored.',
-                                style:
-                                    const TextStyle(color: Color(0xFFB45309))),
+                                style: const TextStyle(
+                                    color: BackupWorkspaceTheme.amber)),
                           ],
                           const SizedBox(height: 16),
                           const Text(
@@ -122,12 +135,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       }
       await BackupRuntime.instance.restartForRestore();
     } catch (error) {
-      if (mounted) {
-        AppFeedback.warning(context,
-            message: error
-                .toString()
-                .replaceFirst('Bad state: ', '')
-                .replaceFirst('FormatException: ', ''));
+      if (controller.error == null) {
+        _showNotice(_errorMessage(error), error: true);
       }
     } finally {
       if (preview != null) await deleteBackupEntity(preview.directory.path);
@@ -174,7 +183,10 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                 : widget.onBack,
                             busy: controller.busy),
                         body: SingleChildScrollView(
-                            padding: const EdgeInsets.all(24),
+                            padding: EdgeInsets.all(
+                                MediaQuery.sizeOf(context).width < 600
+                                    ? 16
+                                    : 24),
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -182,8 +194,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                       controller: controller,
                                       onBackup: () => _action(
                                           controller.backupNow,
-                                          success:
-                                              'Local backup created and verified.')),
+                                          success: controller
+                                                  .settings!.googleDriveEnabled
+                                              ? controller
+                                                      .settings!.localEnabled
+                                                  ? 'Backup saved locally and uploaded to Google Drive.'
+                                                  : 'Google Drive backup created and verified.'
+                                              : 'Local backup created and verified.')),
                                   if (controller.busy) ...[
                                     const SizedBox(height: 16),
                                     LinearProgressIndicator(
@@ -198,10 +215,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                             child: const Text('Cancel Sign-in'))
                                     ])
                                   ],
-                                  if (controller.error != null) ...[
+                                  if (controller.error != null ||
+                                      _notice != null) ...[
                                     const SizedBox(height: 16),
                                     BackupWorkspaceNotice(
-                                        message: controller.error!, error: true)
+                                        message: controller.error ?? _notice!,
+                                        error: controller.error != null ||
+                                            _noticeError)
                                   ],
                                   if (controller.records.isNotEmpty &&
                                       controller
@@ -232,13 +252,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                         'Choose Local Backup Folder');
                                             if (folder != null) {
                                               await controller.saveSettings(
-                                                  BackupSettings(
-                                                      localFolder: folder,
-                                                      googleDriveEnabled:
-                                                          controller.settings!
-                                                              .googleDriveEnabled,
-                                                      schedule: controller
-                                                          .settings!.schedule));
+                                                  controller.settings!.copyWith(
+                                                      localFolder: folder));
                                             }
                                           }),
                                       onOpenFolder: () => _action(() async {
@@ -259,31 +274,27 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                               'Google Drive backup connected.'),
                                       onDisconnectGoogle: () =>
                                           _action(controller.disconnectGoogle),
+                                      onLocalEnabled: (value) => _action(() =>
+                                          controller.saveSettings(controller.settings!
+                                              .copyWith(localEnabled: value))),
                                       onDriveEnabled: (value) => _action(() =>
-                                          controller.saveSettings(
-                                              BackupSettings(
-                                                  localFolder: controller
-                                                      .settings!.localFolder,
-                                                  googleDriveEnabled: value,
-                                                  schedule: controller
-                                                      .settings!.schedule)))),
+                                          controller.saveSettings(controller.settings!
+                                              .copyWith(googleDriveEnabled: value)))),
                                   const SizedBox(height: 20),
                                   BackupSchedulePanel(
                                       schedule: controller.settings!.schedule,
                                       enabled: enabled,
                                       onSave: (schedule) => _action(
                                           () => controller.saveSettings(
-                                              BackupSettings(
-                                                  localFolder: controller
-                                                      .settings!.localFolder,
-                                                  googleDriveEnabled: controller
-                                                      .settings!
-                                                      .googleDriveEnabled,
+                                              controller.settings!.copyWith(
                                                   schedule: schedule)),
                                           success: 'Backup schedule saved.')),
                                   const SizedBox(height: 20),
                                   BackupHistoryPanel(
-                                      local: controller.records,
+                                      local: controller.records
+                                          .where((record) =>
+                                              record.localPath != null)
+                                          .toList(),
                                       cloud: controller.cloudRecords,
                                       connected:
                                           controller.drive.auth.connected,
@@ -297,12 +308,6 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                           () => controller.retryUpload(record),
                                           success:
                                               'Backup uploaded to Google Drive.')),
-                                  const SizedBox(height: 18),
-                                  const Text(
-                                      'Backups include business records, shop settings, photos and documents. Google authorization and active login sessions remain on this device.',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: BackupWorkspaceTheme.muted)),
                                 ])),
                       ));
                 });

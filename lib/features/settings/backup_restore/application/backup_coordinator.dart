@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import '../data/backup_archive_service.dart';
 import '../data/backup_file_safety.dart';
 import '../data/backup_locations.dart';
@@ -63,6 +64,9 @@ class BackupCoordinator extends ChangeNotifier {
       await requireOwner();
       locations.validateDestination(value.localFolder);
       await requireNoLinks(value.localFolder);
+      if (!value.localEnabled && !value.googleDriveEnabled) {
+        throw StateError('Select Local Backup or Google Drive Backup.');
+      }
       if (value.googleDriveEnabled && !drive.auth.connected) {
         throw StateError('Connect your Google account first.');
       }
@@ -79,11 +83,6 @@ class BackupCoordinator extends ChangeNotifier {
         try {
           await drive.auth.signIn();
           cloudRecords = await drive.list();
-          settings = BackupSettings(
-              localFolder: settings!.localFolder,
-              schedule: settings!.schedule,
-              googleDriveEnabled: true);
-          await store.saveSettings(settings!);
         } finally {
           signingIn = false;
         }
@@ -94,8 +93,8 @@ class BackupCoordinator extends ChangeNotifier {
         await requireOwner();
         await drive.auth.disconnect();
         cloudRecords = [];
-        settings = BackupSettings(
-            localFolder: settings!.localFolder, schedule: settings!.schedule);
+        settings =
+            settings!.copyWith(localEnabled: true, googleDriveEnabled: false);
         await store.saveSettings(settings!);
       });
 
@@ -108,29 +107,43 @@ class BackupCoordinator extends ChangeNotifier {
   Future<void> backupNow() =>
       _operation('Creating a verified local backup', () async {
         await requireOwner();
-        final folder = settings!.localFolder;
+        final destination = settings!;
+        if (!destination.localEnabled && !destination.googleDriveEnabled) {
+          throw StateError('Select a backup destination first.');
+        }
+        if (destination.googleDriveEnabled && !drive.auth.connected) {
+          throw StateError('Connect your Google account first.');
+        }
+        final folder = destination.localFolder;
         final values = await preferences.read();
         var record = await Isolate.run(
             CreateLocalBackupJob(locations, folder, values).call);
+        record = record.withLocalPreference(destination.localEnabled);
         await store.put(record);
-        settings = BackupSettings(
-            localFolder: settings!.localFolder,
-            googleDriveEnabled: settings!.googleDriveEnabled,
-            schedule: settings!.schedule.completed(DateTime.now()));
+        settings = destination.copyWith(
+            schedule: destination.schedule.completed(DateTime.now()));
         await store.saveSettings(settings!);
         records = await store.records();
         _emit();
-        if (settings!.googleDriveEnabled) {
+        if (destination.googleDriveEnabled) {
           try {
             record = await _upload(record);
           } catch (_) {
             record = record.uploadFailed(
-                'Local backup is safe. Google Drive upload needs a retry.');
+                'Google Drive upload needs a retry. A local recovery copy is safe.');
             error = record.cloudError;
             _cloudRetryAfter = DateTime.now().add(const Duration(minutes: 5));
           }
           await store.put(record);
+          record = await _finalizeDriveBackup(record);
+          await store.put(record);
           records = await store.records();
+          if (record.driveId != null) {
+            cloudRecords = [
+              record.withoutLocalCopy(),
+              ...cloudRecords.where((item) => item.id != record.id)
+            ];
+          }
         }
       });
 
@@ -142,11 +155,36 @@ class BackupCoordinator extends ChangeNotifier {
     return record.uploaded(id);
   }
 
+  Future<BackupRecord> _finalizeDriveBackup(BackupRecord record) async {
+    if (record.localRequested || record.driveId == null) return record;
+    final path = record.localPath;
+    if (path == null ||
+        p.basename(path) != record.name ||
+        !record.name.endsWith('.lotusbackup')) {
+      throw StateError('The temporary backup path is invalid.');
+    }
+    try {
+      await deleteBackupEntity(path);
+      return record.withoutLocalCopy();
+    } catch (_) {
+      error =
+          'Google Drive backup is verified, but the temporary local copy could not be removed.';
+      return record;
+    }
+  }
+
   Future<void> retryUpload(BackupRecord record) =>
       _operation('Uploading saved backup', () async {
         await requireOwner();
-        await store.put(await _upload(record));
+        var uploaded = await _upload(record);
+        await store.put(uploaded);
+        uploaded = await _finalizeDriveBackup(uploaded);
+        await store.put(uploaded);
         records = await store.records();
+        cloudRecords = [
+          uploaded.withoutLocalCopy(),
+          ...cloudRecords.where((item) => item.id != uploaded.id)
+        ];
         _cloudRetryAfter = null;
       });
 
