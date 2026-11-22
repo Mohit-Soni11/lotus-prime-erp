@@ -44,7 +44,9 @@ class BackupReferenceRelocator {
       if (value.startsWith('{') || value.startsWith('[')) {
         try {
           final decoded = jsonDecode(value);
-          return jsonEncode(_json(decoded));
+          var relocated = false;
+          final result = _json(decoded, () => relocated = true);
+          return relocated ? jsonEncode(result) : value;
         } on FormatException {
           return value;
         }
@@ -56,12 +58,37 @@ class BackupReferenceRelocator {
     return value;
   }
 
-  Object? _json(Object? value) => switch (value) {
-        String value => _path(value),
-        Map value => value.map((key, value) => MapEntry(key, _json(value))),
-        List value => value.map(_json).toList(),
+  Object? _json(Object? value, void Function() onChange) => switch (value) {
+        String value => _relocatePath(value, onChange),
+        Map value =>
+          value.map((key, value) => MapEntry(key, _json(value, onChange))),
+        List value => value.map((item) => _json(item, onChange)).toList(),
         _ => value,
       };
+
+  String _relocatePath(String value, void Function() onChange) {
+    final result = _path(value);
+    if (result != value) onChange();
+    return result;
+  }
+
+  String _relocateColumnValue(String column, String value) {
+    final direct = _path(value);
+    if (direct != value) return direct;
+    if (!RegExp('path|file|photo|logo|signature|document|attachment|image|json',
+            caseSensitive: false)
+        .hasMatch(column)) {
+      return value;
+    }
+    if (!value.startsWith('{') && !value.startsWith('[')) return value;
+    try {
+      var relocated = false;
+      final result = _json(jsonDecode(value), () => relocated = true);
+      return relocated ? jsonEncode(result) : value;
+    } on FormatException {
+      return value;
+    }
+  }
 
   void relocateDatabase(File file) {
     if (_external.isEmpty &&
@@ -95,7 +122,7 @@ class BackupReferenceRelocator {
             for (final column in columns) {
               final value = row[column];
               if (value is! String) continue;
-              final updated = _path(value);
+              final updated = _relocateColumnValue(column, value);
               if (updated != value) {
                 db.execute(
                     'UPDATE ${_quote(tableName)} SET ${_quote(column)}=? WHERE rowid=?',

@@ -52,6 +52,12 @@ class _MetalRatePanelState extends State<MetalRatePanel> {
                       height: 35,
                       fit: BoxFit.cover,
                       filterQuality: FilterQuality.medium,
+                      errorBuilder: (context, error, stackTrace) => SizedBox(
+                        width: 38,
+                        height: 35,
+                        child: Icon(Icons.diamond_outlined,
+                            color: accent, size: 26),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 9),

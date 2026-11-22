@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/live_rates/live_rates_model.dart';
 import 'package:lotus_erp/ui/dashboard/live_rates_card.dart';
@@ -28,6 +29,16 @@ void main() {
           description: 'Local Jewellery'),
     ],
   );
+
+  test('gold and silver dashboard images are in the Flutter asset bundle',
+      () async {
+    for (final asset in [
+      'lib/logo/gold.jpeg',
+      'lib/logo/silver and platinum .jpeg',
+    ]) {
+      expect((await rootBundle.load(asset)).lengthInBytes, greaterThan(0));
+    }
+  });
 
   testWidgets('shows compact gold and silver rates and expandable buy rates',
       (tester) async {
@@ -88,4 +99,25 @@ void main() {
     await tester.pump();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('missing metal image uses a compact icon without breaking rates',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: DefaultAssetBundle(
+        bundle: _MissingMetalImages(),
+        child: Scaffold(body: LiveRatesCard(ratesStream: Stream.value(rates))),
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byIcon(Icons.diamond_outlined), findsNWidgets(2));
+    expect(find.text('₹15,200'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _MissingMetalImages extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async =>
+      throw FlutterError('Asset unavailable during relaunch: $key');
 }

@@ -145,8 +145,11 @@ class BootstrapFailureApp extends StatelessWidget {
     return MaterialApp(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      darkTheme: ThemeData.dark(useMaterial3: true),
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD4A927)),
+      ),
       home: BootstrapFailureScreen(errorMessage: errorMessage),
     );
   }
@@ -163,7 +166,7 @@ class BootstrapFailureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E1116),
+      backgroundColor: const Color(0xFFF8F7F5),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -171,9 +174,16 @@ class BootstrapFailureScreen extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFF161C24),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF2B3442)),
+                border: Border.all(color: const Color(0xFFD9DDE3)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x12101827),
+                    blurRadius: 20,
+                    offset: Offset(0, 6),
+                  ),
+                ],
               ),
               child: Padding(
                 padding: const EdgeInsets.all(28),
@@ -185,7 +195,7 @@ class BootstrapFailureScreen extends StatelessWidget {
                       AppConfig.appName,
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
+                                color: const Color(0xFF101827),
                                 fontWeight: FontWeight.w700,
                               ),
                     ),
@@ -193,7 +203,7 @@ class BootstrapFailureScreen extends StatelessWidget {
                     Text(
                       'Application startup needs attention.',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
+                            color: const Color(0xFF101827),
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -201,15 +211,17 @@ class BootstrapFailureScreen extends StatelessWidget {
                     Text(
                       errorMessage,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFFCAD2DC),
+                            color: const Color(0xFF172435),
                             height: 1.5,
                           ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Check local database access and application settings before relaunching.',
-                      style: TextStyle(
-                        color: Color(0xFF8FA0B3),
+                    Text(
+                      errorMessage.contains('already open')
+                          ? 'Switch to the Lotus ERP window that is already running.'
+                          : 'Check local database access and application settings before relaunching.',
+                      style: const TextStyle(
+                        color: Color(0xFF596575),
                         height: 1.4,
                       ),
                     ),

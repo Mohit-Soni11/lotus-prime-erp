@@ -143,6 +143,45 @@ void main() {
     expect(destination.preferences.values['profile'], photo);
   });
 
+  test('nested photo paths in JSON columns are relocated after restore',
+      () async {
+    final sourcePhoto =
+        p.join(original.locations.resources[2].path, 'item.jpg');
+    final business = sqlite3.open(original.locations.resources.first.path);
+    try {
+      business.execute('ALTER TABLE bills ADD COLUMN photo_json TEXT');
+      business.execute('ALTER TABLE bills ADD COLUMN audit_json TEXT');
+      business.execute('UPDATE bills SET photo_json=?, audit_json=?', [
+        jsonEncode({
+          'items': [
+            {'photo': sourcePhoto}
+          ]
+        }),
+        '{ "amount": 125 }',
+      ]);
+    } finally {
+      business.dispose();
+    }
+
+    final restore = service();
+    await restore.prepare(await package());
+    expect(await restore.applyPending(), isTrue);
+    final restored = sqlite3.open(destination.locations.resources.first.path);
+    try {
+      final row =
+          restored.select('SELECT photo_json, audit_json FROM bills').single;
+      final data =
+          jsonDecode(row['photo_json'] as String) as Map<String, dynamic>;
+      final photo = (data['items'] as List).single['photo'] as String;
+      expect(
+          photo, p.join(destination.locations.resources[2].path, 'item.jpg'));
+      expect(await File(photo).readAsBytes(), [1, 2, 3, 4]);
+      expect(row['audit_json'], '{ "amount": 125 }');
+    } finally {
+      restored.dispose();
+    }
+  });
+
   test('a preferences failure rolls back all replaced resources', () async {
     final restore = service();
     await restore.prepare(await package());

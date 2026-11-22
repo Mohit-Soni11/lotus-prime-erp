@@ -67,6 +67,11 @@ class _PurchaseRateTile extends StatelessWidget {
               width: 32,
               height: 32,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => SizedBox(
+                width: 32,
+                height: 32,
+                child: Icon(Icons.diamond_outlined, color: accent, size: 24),
+              ),
             ),
           ),
           const SizedBox(width: 9),

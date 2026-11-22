@@ -107,7 +107,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       final approved = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
+          builder: (dialogContext) => Theme(
+              data: BackupWorkspaceTheme.of(dialogContext),
+              child: AlertDialog(
                 title: const Text('Restore This Backup?'),
                 content: SizedBox(
                     width: 520,
@@ -151,7 +153,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                       icon: const Icon(Icons.restore_rounded, size: 18),
                       label: const Text('Restore Backup'))
                 ],
-              ));
+              )));
       if (approved != true) return;
       await controller.prepareRestore(source);
       await deleteBackupEntity(preview.directory.path);

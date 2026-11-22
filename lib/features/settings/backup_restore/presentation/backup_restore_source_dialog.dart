@@ -23,43 +23,47 @@ Future<BackupRestoreSource?> chooseBackupRestoreSource(BuildContext context,
         {required bool googleDriveConnected}) =>
     showDialog<BackupRestoreSource>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Choose Restore Source'),
-        content: SizedBox(
-          width: 440,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('This backup has two copies. Choose one to restore.'),
-            ),
-            const SizedBox(height: 18),
-            _SourceOption(
-              icon: Icons.folder_outlined,
-              title: 'Local Backup',
-              subtitle: 'Restore the copy saved on this computer.',
-              onTap: () =>
-                  Navigator.pop(dialogContext, BackupRestoreSource.local),
-            ),
-            const SizedBox(height: 10),
-            _SourceOption(
-              icon: Icons.add_to_drive_rounded,
-              title: 'Google Drive Backup',
-              subtitle: googleDriveConnected
-                  ? 'Download and verify the copy in Google Drive.'
-                  : 'Connect Google Drive to restore this copy.',
-              onTap: googleDriveConnected
-                  ? () => Navigator.pop(
-                      dialogContext, BackupRestoreSource.googleDrive)
-                  : null,
-            ),
-          ]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+      builder: (dialogContext) => Theme(
+        data: BackupWorkspaceTheme.of(dialogContext),
+        child: AlertDialog(
+          title: const Text('Choose Restore Source'),
+          content: SizedBox(
+            width: 440,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child:
+                    Text('This backup has two copies. Choose one to restore.'),
+              ),
+              const SizedBox(height: 18),
+              _SourceOption(
+                icon: Icons.folder_outlined,
+                title: 'Local Backup',
+                subtitle: 'Restore the copy saved on this computer.',
+                onTap: () =>
+                    Navigator.pop(dialogContext, BackupRestoreSource.local),
+              ),
+              const SizedBox(height: 10),
+              _SourceOption(
+                icon: Icons.add_to_drive_rounded,
+                title: 'Google Drive Backup',
+                subtitle: googleDriveConnected
+                    ? 'Download and verify the copy in Google Drive.'
+                    : 'Connect Google Drive to restore this copy.',
+                onTap: googleDriveConnected
+                    ? () => Navigator.pop(
+                        dialogContext, BackupRestoreSource.googleDrive)
+                    : null,
+              ),
+            ]),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
       ),
     );
 

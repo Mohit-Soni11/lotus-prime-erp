@@ -115,6 +115,7 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
                 width: 220,
                 child: DropdownButtonFormField<BackupFrequency>(
                   isExpanded: true,
+                  dropdownColor: BackupWorkspaceTheme.surface,
                   key: const ValueKey('backup-frequency'),
                   initialValue: _frequency,
                   decoration: const InputDecoration(),
@@ -361,6 +362,7 @@ class _ScheduleDropdown<T> extends StatelessWidget {
         width: width,
         child: DropdownButtonFormField<T>(
           isExpanded: true,
+          dropdownColor: BackupWorkspaceTheme.surface,
           initialValue: value,
           decoration:
               InputDecoration(labelText: label, labelStyle: _scheduleText),

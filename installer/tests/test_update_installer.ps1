@@ -48,7 +48,7 @@ Set-Content -LiteralPath (Join-Path $payload 'flutter_windows.dll') -Value 'fixt
 Set-Content -LiteralPath (Join-Path $payload 'data\icudtl.dat') -Value 'fixture assets'
 $guardWindow = $null
 try {
-    $oldSetup = Invoke-Package '1.0.0'
+    $oldSetup = Invoke-Package '1.0.1'
     Assert-Condition ((Invoke-Setup $oldSetup 'initial.log' $true) -eq 0) 'Initial test install failed.'
     New-Item -ItemType Directory -Path (Join-Path $dataDir 'attachments'), (Join-Path $dataDir 'empty-folder'), $settingsDir -Force | Out-Null
     Set-Content -LiteralPath (Join-Path $dataDir 'business.sqlite') -Value 'synthetic database fixture'
@@ -56,11 +56,11 @@ try {
     Set-Content -LiteralPath (Join-Path $settingsDir 'preferences.json') -Value '{"fixture":true}'
     $dataHash = (Get-FileHash -LiteralPath (Join-Path $dataDir 'business.sqlite')).Hash
     $settingsHash = (Get-FileHash -LiteralPath (Join-Path $settingsDir 'preferences.json')).Hash
-    $newSetup = Invoke-Package '1.0.1'
+    $newSetup = Invoke-Package '1.0.2'
 
     Set-Content -LiteralPath $backupRoot -Value 'block backup directory creation'
     Assert-Condition ((Invoke-Setup $newSetup 'blocked-backup.log' $false) -ne 0) 'Setup continued after backup failure.'
-    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.0') 'Backup failure replaced the old application.'
+    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.1') 'Backup failure replaced the old application.'
     Remove-Item -LiteralPath $backupRoot
 
     Assert-Condition ((Invoke-Setup $newSetup 'blocked-data-folder.log' $true $dataParent) -ne 0) 'Setup accepted a program folder containing business data.'
@@ -74,13 +74,13 @@ try {
     $guardWindow.Text = $productName
     $null = $guardWindow.Handle
     Assert-Condition ((Invoke-Setup $newSetup 'blocked-running.log' $false) -ne 0) 'Setup continued while the app window was open.'
-    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.0') 'Open-app guard replaced the old application.'
+    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.1') 'Open-app guard replaced the old application.'
     $guardWindow.Dispose()
     $guardWindow = $null
 
     # No /DIR: the update must recover the previous install location itself.
     Assert-Condition ((Invoke-Setup $newSetup 'updated.log' $false) -eq 0) 'Test update failed.'
-    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.1') 'The existing installation was not updated.'
+    Assert-Condition ((Get-Content -LiteralPath (Join-Path $installDir 'lotus_erp.exe') -Raw).Trim() -eq 'fixture-1.0.2') 'The existing installation was not updated.'
     $completed = @(Get-ChildItem -LiteralPath $backupRoot -Filter 'backup-complete.txt' -File -Recurse)
     Assert-Condition ($completed.Count -eq 1) 'A verified backup completion record is missing.'
     $backup = $completed[0].DirectoryName

@@ -1,11 +1,27 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:lotus_erp/features/settings/backup_restore/application/backup_application_lease.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dart';
+import 'package:lotus_erp/main.dart';
 import 'backup_restore_test_support.dart';
 
 void main() {
+  testWidgets('duplicate launch notice uses the light workspace style',
+      (tester) async {
+    await tester.pumpWidget(const BootstrapFailureApp(
+      errorMessage:
+          'Lotus ERP is already open. Close the other window before starting this copy.',
+    ));
+    expect(Theme.of(tester.element(find.text('Lotus ERP'))).brightness,
+        Brightness.light);
+    expect(
+        find.textContaining('Switch to the Lotus ERP window'), findsOneWidget);
+    expect(tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+        const Color(0xFFF8F7F5));
+  });
+
   test('damaged metadata is preserved while local recovery remains available',
       () async {
     final fixture = BackupFixture(

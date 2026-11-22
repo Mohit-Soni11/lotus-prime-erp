@@ -17,10 +17,12 @@ void main() {
   testWidgets('single-copy backup resolves directly to its source',
       (tester) async {
     late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-      context = value;
-      return const Scaffold();
-    })));
+    await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Builder(builder: (value) {
+          context = value;
+          return const Scaffold();
+        })));
     expect(
         await selectBackupRestoreSource(
             context, _record(localPath: 'C:/Backups/backup.lotusbackup'),
@@ -36,10 +38,12 @@ void main() {
 
   testWidgets('two-copy backup lets the user pick one source', (tester) async {
     late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-      context = value;
-      return const Scaffold();
-    })));
+    await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Builder(builder: (value) {
+          context = value;
+          return const Scaffold();
+        })));
     final selection = selectBackupRestoreSource(
         context,
         _record(
@@ -48,6 +52,9 @@ void main() {
         googleDriveConnected: true);
     await tester.pumpAndSettle();
     expect(find.text('Choose Restore Source'), findsOneWidget);
+    expect(
+        Theme.of(tester.element(find.text('Choose Restore Source'))).brightness,
+        Brightness.light);
     await tester.tap(find.text('Google Drive Backup'));
     await tester.pumpAndSettle();
     expect(await selection, BackupRestoreSource.googleDrive);

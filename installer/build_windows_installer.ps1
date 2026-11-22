@@ -41,10 +41,10 @@ try {
         throw 'Release directory is outside the project build folder.'
     }
     if (Test-Path -LiteralPath $releaseDir) {
-        $existingDatabases = Get-ChildItem -LiteralPath $releaseDir -File -Recurse |
-            Where-Object { $_.Extension -in @('.db', '.sqlite', '.sqlite3') }
-        if ($existingDatabases) {
-            throw 'Release output contains a database. Clean build stopped to protect data.'
+        $existingBusinessData = Get-ChildItem -LiteralPath $releaseDir -File -Recurse |
+            Where-Object { $_.Extension -in @('.db', '.sqlite', '.sqlite3', '.lotusbackup') }
+        if ($existingBusinessData) {
+            throw 'Release output contains business data or a backup. Clean build stopped to protect data.'
         }
         Remove-Item -LiteralPath $releaseDir -Recurse -Force
     }
@@ -75,9 +75,13 @@ try {
         Copy-Item -LiteralPath $source -Destination (Join-Path $releaseDir $runtimeName) -Force
     }
     $unexpectedData = Get-ChildItem -LiteralPath $releaseDir -File -Recurse |
-        Where-Object { $_.Extension -in @('.db', '.sqlite', '.sqlite3') }
+        Where-Object {
+            $_.Extension -in @('.db', '.sqlite', '.sqlite3', '.lotusbackup', '.env', '.bak', '.log') -or
+            $_.Name -eq 'google-drive.local.json' -or
+            $_.FullName -match '[\\/](?:test|DevelopmentBackups|Debug)[\\/]'
+        }
     if ($unexpectedData) {
-        throw 'Release directory contains database files. Packaging stopped to protect customer data.'
+        throw 'Release directory contains business data or development files. Packaging stopped.'
     }
 
     $scriptPath = Join-Path $PSScriptRoot 'lotus_erp.iss'
