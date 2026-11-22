@@ -140,7 +140,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                               'A verified recovery backup of your current data will be kept locally before anything is replaced.'),
                           const SizedBox(height: 12),
                           const Text(
-                              'Lotus ERP will restart. Sign in with the account credentials saved in the restored backup.'),
+                              'Lotus ERP will close and reopen automatically to apply the restore. Sign in with the account credentials saved in the restored backup.'),
                         ]))),
                 actions: [
                   TextButton(
@@ -149,7 +149,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   FilledButton.icon(
                       onPressed: () => Navigator.pop(dialogContext, true),
                       icon: const Icon(Icons.restore_rounded, size: 18),
-                      label: const Text('Restore & Restart'))
+                      label: const Text('Restore Backup'))
                 ],
               ));
       if (approved != true) return;
@@ -269,7 +269,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                     const SizedBox(height: 16),
                                     BackupWorkspaceNotice(
                                         message:
-                                            'Restore is prepared. Restart Lotus ERP to safely apply the selected backup.',
+                                            'Restore is prepared. If Lotus ERP did not reopen automatically, retry opening it here.',
+                                        error: true,
+                                        actionLabel: 'Retry Reopen',
                                         action: () => _action(BackupRuntime
                                             .instance.restartForRestore))
                                   ],
@@ -316,6 +318,12 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                   BackupSchedulePanel(
                                       schedule: controller.settings!.schedule,
                                       enabled: enabled,
+                                      localEnabled:
+                                          controller.settings!.localEnabled,
+                                      googleDriveEnabled: controller
+                                          .settings!.googleDriveEnabled,
+                                      localFolder:
+                                          controller.settings!.localFolder,
                                       onSave: (schedule) => _action(
                                           () => controller.saveSettings(
                                               controller.settings!.copyWith(

@@ -178,6 +178,28 @@ void main() {
     expect(controller.records, hasLength(1));
   });
 
+  test('scheduled backup uses the chosen local folder and Google Drive',
+      () async {
+    uploadSucceeds = true;
+    final now = DateTime.now();
+    final chosenFolder = Directory('${fixture.directory.path}\\ChosenBackups');
+    await controller.saveSettings(BackupSettings(
+        localFolder: chosenFolder.path,
+        localEnabled: true,
+        googleDriveEnabled: true,
+        schedule: BackupSchedule(
+            frequency: BackupFrequency.daily,
+            hour: 0,
+            lastCompletedAt: DateTime(now.year, now.month, now.day - 2))));
+
+    await controller.scheduledTick(now);
+
+    final backup = controller.records.single;
+    expect(backup.localPath, startsWith(chosenFolder.path));
+    expect(await File(backup.localPath!).exists(), isTrue);
+    expect(backup.driveId, 'verified-drive-backup');
+  });
+
   test(
       'scheduled business errors stay in the workspace and a later tick retries',
       () async {

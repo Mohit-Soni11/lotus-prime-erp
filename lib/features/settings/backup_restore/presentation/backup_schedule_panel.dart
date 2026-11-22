@@ -4,16 +4,25 @@ import 'package:intl/intl.dart';
 import '../domain/backup_schedule.dart';
 import 'backup_workspace_theme.dart';
 
+const _scheduleText = TextStyle(
+    fontSize: 15, fontWeight: FontWeight.w700, color: BackupWorkspaceTheme.ink);
+
 class BackupSchedulePanel extends StatefulWidget {
   const BackupSchedulePanel({
     super.key,
     required this.schedule,
     required this.enabled,
+    required this.localEnabled,
+    required this.googleDriveEnabled,
+    required this.localFolder,
     required this.onSave,
   });
 
   final BackupSchedule schedule;
   final bool enabled;
+  final bool localEnabled;
+  final bool googleDriveEnabled;
+  final String localFolder;
   final ValueChanged<BackupSchedule> onSave;
 
   @override
@@ -21,6 +30,7 @@ class BackupSchedulePanel extends StatefulWidget {
 }
 
 class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
+  late bool _editing = widget.schedule.startedAt == null;
   late BackupFrequency _frequency = widget.schedule.frequency;
   late TimeOfDay _time =
       TimeOfDay(hour: widget.schedule.hour, minute: widget.schedule.minute);
@@ -34,12 +44,14 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
         oldWidget.schedule.hour != widget.schedule.hour ||
         oldWidget.schedule.minute != widget.schedule.minute ||
         oldWidget.schedule.weekday != widget.schedule.weekday ||
-        oldWidget.schedule.monthDay != widget.schedule.monthDay) {
+        oldWidget.schedule.monthDay != widget.schedule.monthDay ||
+        oldWidget.schedule.startedAt != widget.schedule.startedAt) {
       _frequency = widget.schedule.frequency;
       _time =
           TimeOfDay(hour: widget.schedule.hour, minute: widget.schedule.minute);
       _weekday = widget.schedule.weekday;
       _monthDay = widget.schedule.monthDay;
+      _editing = false;
     }
   }
 
@@ -69,78 +81,116 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
   @override
   Widget build(BuildContext context) {
     final automatic = _frequency != BackupFrequency.manual;
-    final next = automatic ? _draft.nextRun(DateTime.now()) : null;
+    final hasDestination = widget.localEnabled || widget.googleDriveEnabled;
+    final next = !automatic || !hasDestination
+        ? null
+        : !_editing
+            ? widget.schedule.nextRun(DateTime.now())
+            : _draft.nextRun(DateTime.now());
 
     return BackupPanel(
       title: 'Backup Schedule',
       icon: Icons.calendar_month_rounded,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const Text('Frequency',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: BackupWorkspaceTheme.muted)),
-            SizedBox(
-              width: 220,
-              child: DropdownButtonFormField<BackupFrequency>(
-                isExpanded: true,
-                key: const ValueKey('backup-frequency'),
-                initialValue: _frequency,
-                decoration: const InputDecoration(),
-                items: BackupFrequency.values
-                    .map((value) => DropdownMenuItem(
-                        value: value, child: Text(_frequencyLabel(value))))
-                    .toList(),
-                onChanged: !widget.enabled
-                    ? null
-                    : (value) => setState(() => _frequency = value!),
+        if (!_editing) ...[
+          _SavedScheduleSummary(
+              schedule: widget.schedule,
+              destinations: _destinations,
+              localFolder: widget.localEnabled ? widget.localFolder : null,
+              next: next),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+              onPressed:
+                  widget.enabled ? () => setState(() => _editing = true) : null,
+              icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+              label: const Text('Edit Schedule')),
+        ] else ...[
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('Frequency', style: _scheduleText),
+              SizedBox(
+                width: 220,
+                child: DropdownButtonFormField<BackupFrequency>(
+                  isExpanded: true,
+                  key: const ValueKey('backup-frequency'),
+                  initialValue: _frequency,
+                  decoration: const InputDecoration(),
+                  items: BackupFrequency.values
+                      .map((value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_frequencyLabel(value),
+                              style: _scheduleText)))
+                      .toList(),
+                  onChanged: !widget.enabled
+                      ? null
+                      : (value) => setState(() => _frequency = value!),
+                ),
               ),
+            ],
+          ),
+          if (automatic) ...[
+            const SizedBox(height: 16),
+            _AutomaticScheduleCard(
+              key: ValueKey(_frequency),
+              frequency: _frequency,
+              hour12: _hour12,
+              minute: _time.minute,
+              isPm: _isPm,
+              weekday: _weekday,
+              monthDay: _monthDay,
+              enabled: widget.enabled,
+              onHourChanged: (value) => _setTime(hour12: value),
+              onMinuteChanged: (value) => _setTime(minute: value),
+              onPeriodChanged: (value) => _setTime(isPm: value),
+              onWeekdayChanged: (value) => setState(() => _weekday = value),
+              onMonthDayChanged: (value) => setState(() => _monthDay = value),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: automatic
-              ? _AutomaticScheduleCard(
-                  key: ValueKey(_frequency),
-                  frequency: _frequency,
-                  hour12: _hour12,
-                  minute: _time.minute,
-                  isPm: _isPm,
-                  weekday: _weekday,
-                  monthDay: _monthDay,
-                  enabled: widget.enabled,
-                  onHourChanged: (value) => _setTime(hour12: value),
-                  onMinuteChanged: (value) => _setTime(minute: value),
-                  onPeriodChanged: (value) => _setTime(isPm: value),
-                  onWeekdayChanged: (value) => setState(() => _weekday = value),
-                  onMonthDayChanged: (value) =>
-                      setState(() => _monthDay = value),
-                )
-              : const _ManualScheduleMessage(key: ValueKey('manual')),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            FilledButton.icon(
-              onPressed: !widget.enabled ? null : () => widget.onSave(_draft),
-              icon: const Icon(Icons.save_outlined, size: 18),
-              label: const Text('Save Schedule'),
-            ),
-            if (next != null) _NextRunLabel(next: next),
-          ],
-        ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              FilledButton.icon(
+                onPressed: !widget.enabled ||
+                        (automatic &&
+                            !widget.localEnabled &&
+                            !widget.googleDriveEnabled)
+                    ? null
+                    : () => widget.onSave(_draft),
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Save Schedule'),
+              ),
+              if (next != null) _NextRunLabel(next: next),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('Automatic destination: $_destinations', style: _scheduleText),
+          if (automatic && !widget.localEnabled && !widget.googleDriveEnabled)
+            const Text(
+                'Select Local Backup or Google Drive Backup above before saving.',
+                style: TextStyle(color: BackupWorkspaceTheme.amber)),
+          if (widget.localEnabled)
+            Text('Local folder: ${widget.localFolder}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _scheduleText),
+        ],
       ]),
     );
+  }
+
+  String get _destinations {
+    if (widget.localEnabled && widget.googleDriveEnabled) {
+      return 'Local + Google Drive';
+    }
+    if (widget.localEnabled) return 'Local';
+    if (widget.googleDriveEnabled) return 'Google Drive';
+    return 'None selected';
   }
 
   String _frequencyLabel(BackupFrequency value) => switch (value) {
@@ -284,12 +334,7 @@ class _ScheduleFieldLabel extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: BackupWorkspaceTheme.amber, size: 20),
           const SizedBox(width: 8),
-          Flexible(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: BackupWorkspaceTheme.ink))),
+          Flexible(child: Text(label, style: _scheduleText)),
         ]),
       );
 }
@@ -317,7 +362,9 @@ class _ScheduleDropdown<T> extends StatelessWidget {
         child: DropdownButtonFormField<T>(
           isExpanded: true,
           initialValue: value,
-          decoration: InputDecoration(labelText: label),
+          decoration:
+              InputDecoration(labelText: label, labelStyle: _scheduleText),
+          style: _scheduleText,
           items: items,
           onChanged: !enabled
               ? null
@@ -325,28 +372,6 @@ class _ScheduleDropdown<T> extends StatelessWidget {
                   if (value != null) onChanged(value);
                 },
         ),
-      );
-}
-
-class _ManualScheduleMessage extends StatelessWidget {
-  const _ManualScheduleMessage({super.key});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: BackupWorkspaceTheme.surfaceLow,
-          border: Border.all(color: BackupWorkspaceTheme.border),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: const Row(children: [
-          Icon(Icons.info_outline_rounded, color: BackupWorkspaceTheme.muted),
-          SizedBox(width: 10),
-          Expanded(
-              child: Text(
-                  'Automatic backups are off. Choose Daily, Weekly or Monthly to set a backup time.')),
-        ]),
       );
 }
 
@@ -364,10 +389,62 @@ class _NextRunLabel extends StatelessWidget {
         ),
         child: Text(
           'Next automatic backup: ${DateFormat('d MMM yyyy, h:mm a').format(next)}',
-          style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: BackupWorkspaceTheme.ink),
+          style: _scheduleText,
         ),
       );
+}
+
+class _SavedScheduleSummary extends StatelessWidget {
+  const _SavedScheduleSummary({
+    required this.schedule,
+    required this.destinations,
+    required this.localFolder,
+    required this.next,
+  });
+
+  final BackupSchedule schedule;
+  final String destinations;
+  final String? localFolder;
+  final DateTime? next;
+
+  @override
+  Widget build(BuildContext context) {
+    final time = DateFormat('h:mm a')
+        .format(DateTime(2026, 1, 1, schedule.hour, schedule.minute));
+    final frequency = switch (schedule.frequency) {
+      BackupFrequency.manual => 'Manual only',
+      BackupFrequency.daily => 'Daily at $time',
+      BackupFrequency.weekly =>
+        'Every ${_AutomaticScheduleCard._weekdayName(schedule.weekday)} at $time',
+      BackupFrequency.monthly => 'Day ${schedule.monthDay} at $time',
+    };
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: BackupWorkspaceTheme.surfaceLow,
+        border: Border.all(color: BackupWorkspaceTheme.border),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.lock_outline_rounded,
+              color: BackupWorkspaceTheme.amber, size: 22),
+          const SizedBox(width: 10),
+          Text(frequency, style: _scheduleText),
+        ]),
+        const SizedBox(height: 10),
+        Text('Destination: $destinations', style: _scheduleText),
+        if (localFolder != null)
+          Text('Local folder: $localFolder',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: _scheduleText),
+        if (next != null) ...[
+          const SizedBox(height: 10),
+          _NextRunLabel(next: next!),
+        ],
+      ]),
+    );
+  }
 }

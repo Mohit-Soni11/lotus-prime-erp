@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import '../../../../../ui/auth/services/auth_result.dart';
 import '../../../../../ui/auth/services/auth_service.dart';
 import '../../../../../ui/auth/services/auth_session_controller.dart';
@@ -97,13 +96,8 @@ class BackupRuntime {
   }
 
   Future<void> restartForRestore() async {
-    if (!kReleaseMode) {
-      throw StateError(
-          'Restore is prepared. Stop and relaunch the development app to apply it.');
-    }
     if (!Platform.isWindows && !Platform.isLinux && !Platform.isMacOS) {
-      throw StateError(
-          'Restore is prepared. Close and reopen Lotus ERP to apply it.');
+      throw StateError('Automatic reopen is supported on the desktop app.');
     }
     final child = await Process.start(
         Platform.resolvedExecutable, ['--lotus-restore-restart'],

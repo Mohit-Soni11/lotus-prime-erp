@@ -167,11 +167,16 @@ class _SummaryDivider extends StatelessWidget {
 
 class BackupWorkspaceNotice extends StatelessWidget {
   const BackupWorkspaceNotice(
-      {super.key, required this.message, this.error = false, this.action});
+      {super.key,
+      required this.message,
+      this.error = false,
+      this.action,
+      this.actionLabel = 'Retry'});
 
   final String message;
   final bool error;
   final VoidCallback? action;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -198,7 +203,7 @@ class BackupWorkspaceNotice extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 14, color: BackupWorkspaceTheme.ink))),
           if (action != null)
-            TextButton(onPressed: action, child: const Text('Restart')),
+            TextButton(onPressed: action, child: Text(actionLabel)),
         ]),
       );
 }

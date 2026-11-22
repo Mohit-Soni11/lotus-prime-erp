@@ -96,9 +96,9 @@ void main() {
                     onRetryUpload: (_) {},
                     onPickLocal: () {})))));
     await tester.pump();
-    expect(find.text('Local'), findsOneWidget);
-    expect(find.text('Google Drive'), findsOneWidget);
-    expect(find.text('Local + Google Drive'), findsOneWidget);
+    expect(find.text('Local'), findsWidgets);
+    expect(find.text('Google Drive'), findsWidgets);
+    expect(find.text('Local + Google Drive'), findsWidgets);
     expect(find.byType(SegmentedButton<bool>), findsNothing);
     expect(find.text('Restore Backup File'), findsOneWidget);
   });
@@ -139,6 +139,45 @@ void main() {
     await tester.tap(restoreSelected);
 
     expect(restored?.id, 'drive');
+  });
+
+  testWidgets('repeated backups share one destination card and keep history',
+      (tester) async {
+    final older = BackupRecord(
+        id: 'older',
+        name: 'older.lotusbackup',
+        createdAt: DateTime.utc(2026, 11, 21),
+        size: 1024,
+        sha256: 'a' * 64,
+        localPath: 'C:/Backups/older.lotusbackup');
+    final latest = BackupRecord(
+        id: 'latest',
+        name: 'latest.lotusbackup',
+        createdAt: DateTime.utc(2026, 11, 22),
+        size: 2048,
+        sha256: 'b' * 64,
+        localPath: 'C:/Backups/latest.lotusbackup');
+    BackupRecord? restored;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: BackupHistoryPanel(
+                    records: [older, latest],
+                    enabled: true,
+                    connected: false,
+                    onRefreshCloud: () {},
+                    onRestore: (record) => restored = record,
+                    onRetryUpload: (_) {},
+                    onPickLocal: () {})))));
+    expect(find.text('2 recovery points'), findsOneWidget);
+    expect(find.text('Earlier recovery points (1)'), findsOneWidget);
+    expect(find.byKey(const ValueKey('backup-row-latest')), findsOneWidget);
+    await tester.tap(find.text('Earlier recovery points (1)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('backup-row-older')));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Restore Selected'));
+    expect(restored?.id, 'older');
   });
 
   for (final width in [500.0, 1600.0]) {
@@ -220,6 +259,12 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await _pump(tester);
     expect(data.$2.settings!.schedule.frequency, BackupFrequency.weekly);
+    expect(find.text('Edit Schedule'), findsOneWidget);
+    expect(find.byKey(const ValueKey('backup-frequency')), findsNothing);
+    await tester.ensureVisible(find.text('Edit Schedule'));
+    await tester.tap(find.text('Edit Schedule'));
+    await _pump(tester);
+    expect(find.byKey(const ValueKey('backup-frequency')), findsOneWidget);
     expect(find.text('Set Up Google Drive'), findsNothing);
     expect(find.text('Connection Setup'), findsNothing);
     expect(find.text('Import Desktop Client JSON'), findsNothing);
@@ -307,6 +352,8 @@ void main() {
     });
     await _pump(tester);
     expect(data.$2.settings!.googleDriveEnabled, isTrue);
+    await tester.ensureVisible(find.byTooltip('Local Backup selected'));
+    await _pump(tester);
     await tester.runAsync(() async {
       await tester.tap(find.byTooltip('Local Backup selected'));
       await Future.doWhile(() async {

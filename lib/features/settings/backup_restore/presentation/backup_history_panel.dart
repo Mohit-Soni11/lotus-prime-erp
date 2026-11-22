@@ -29,7 +29,6 @@ class BackupHistoryPanel extends StatefulWidget {
 }
 
 class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
-  int _limit = 10;
   String? _selectedRecordId;
 
   BackupRecord? get _selectedRecord {
@@ -48,60 +47,143 @@ class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
   }
 
   @override
-  Widget build(BuildContext context) => BackupPanel(
-        title: 'Backups & Recovery',
-        icon: Icons.storage_rounded,
-        trailing: Wrap(spacing: 8, children: [
-          if (widget.connected)
-            IconButton(
-              tooltip: 'Refresh Google Drive backups',
-              onPressed: widget.enabled ? widget.onRefreshCloud : null,
-              icon: const Icon(Icons.refresh_rounded),
-              style: IconButton.styleFrom(
-                foregroundColor: BackupWorkspaceTheme.amber,
-                side: const BorderSide(color: BackupWorkspaceTheme.gold),
-              ),
-            ),
-          OutlinedButton.icon(
-            onPressed: widget.enabled ? widget.onPickLocal : null,
-            icon: const Icon(Icons.file_open_outlined, size: 18),
-            label: const Text('Restore Backup File'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: BackupWorkspaceTheme.ink,
+  Widget build(BuildContext context) {
+    final groups = <String, List<BackupRecord>>{};
+    for (final record in widget.records) {
+      groups.putIfAbsent(_destinationLabel(record), () => []).add(record);
+    }
+    for (final records in groups.values) {
+      records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return BackupPanel(
+      title: 'Backups & Recovery',
+      icon: Icons.storage_rounded,
+      trailing: Wrap(spacing: 8, children: [
+        if (widget.connected)
+          IconButton(
+            tooltip: 'Refresh Google Drive backups',
+            onPressed: widget.enabled ? widget.onRefreshCloud : null,
+            icon: const Icon(Icons.refresh_rounded),
+            style: IconButton.styleFrom(
+              foregroundColor: BackupWorkspaceTheme.amber,
               side: const BorderSide(color: BackupWorkspaceTheme.gold),
             ),
           ),
-          FilledButton.icon(
-            onPressed: widget.enabled && _selectedRecord != null
-                ? () => widget.onRestore(_selectedRecord!)
-                : null,
-            icon: const Icon(Icons.restore_rounded, size: 18),
-            label: const Text('Restore Selected'),
+        OutlinedButton.icon(
+          onPressed: widget.enabled ? widget.onPickLocal : null,
+          icon: const Icon(Icons.file_open_outlined, size: 18),
+          label: const Text('Restore Backup File'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: BackupWorkspaceTheme.ink,
+            side: const BorderSide(color: BackupWorkspaceTheme.gold),
           ),
-        ]),
+        ),
+        FilledButton.icon(
+          onPressed: widget.enabled && _selectedRecord != null
+              ? () => widget.onRestore(_selectedRecord!)
+              : null,
+          icon: const Icon(Icons.restore_rounded, size: 18),
+          label: const Text('Restore Selected'),
+        ),
+      ]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (widget.records.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: _EmptyBackupHistory(),
+          ),
+        for (final label in const [
+          'Local',
+          'Google Drive',
+          'Local + Google Drive'
+        ])
+          if (groups[label] case final records?)
+            _BackupGroup(
+              label: label,
+              records: records,
+              selectedRecordId: _selectedRecordId,
+              enabled: widget.enabled,
+              connected: widget.connected,
+              onSelect: (record) =>
+                  setState(() => _selectedRecordId = record.id),
+              onRetryUpload: widget.onRetryUpload,
+            ),
+      ]),
+    );
+  }
+}
+
+class _BackupGroup extends StatelessWidget {
+  const _BackupGroup({
+    required this.label,
+    required this.records,
+    required this.selectedRecordId,
+    required this.enabled,
+    required this.connected,
+    required this.onSelect,
+    required this.onRetryUpload,
+  });
+
+  final String label;
+  final List<BackupRecord> records;
+  final String? selectedRecordId;
+  final bool enabled;
+  final bool connected;
+  final ValueChanged<BackupRecord> onSelect;
+  final ValueChanged<BackupRecord> onRetryUpload;
+
+  Widget _row(BackupRecord record) => _BackupHistoryRow(
+        record: record,
+        selected: record.id == selectedRecordId,
+        enabled: enabled,
+        onSelect: () => onSelect(record),
+        onRetryUpload:
+            connected && record.localPath != null && record.cloudError != null
+                ? () => onRetryUpload(record)
+                : null,
+      );
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: BackupWorkspaceTheme.surfaceLow,
+          border: Border.all(color: BackupWorkspaceTheme.border),
+          borderRadius: BorderRadius.circular(14),
+        ),
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (widget.records.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: _EmptyBackupHistory(),
+          Row(children: [
+            Icon(
+              label == 'Local'
+                  ? Icons.folder_outlined
+                  : label == 'Google Drive'
+                      ? Icons.add_to_drive_rounded
+                      : Icons.cloud_done_outlined,
+              color: BackupWorkspaceTheme.amber,
             ),
-          for (final record in widget.records.take(_limit))
-            _BackupHistoryRow(
-              record: record,
-              selected: record.id == _selectedRecordId,
-              enabled: widget.enabled,
-              onSelect: () => setState(() => _selectedRecordId = record.id),
-              onRetryUpload: widget.connected &&
-                      record.localPath != null &&
-                      record.cloudError != null
-                  ? () => widget.onRetryUpload(record)
-                  : null,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: BackupWorkspaceTheme.ink)),
             ),
-          if (widget.records.length > _limit)
-            TextButton(
-              onPressed: () => setState(() => _limit += 10),
-              child: const Text('Show More Backups'),
+            Text(
+                '${records.length} recovery ${records.length == 1 ? 'point' : 'points'}',
+                style: const TextStyle(color: BackupWorkspaceTheme.muted)),
+          ]),
+          const SizedBox(height: 12),
+          _row(records.first),
+          if (records.length > 1)
+            ExpansionTile(
+              key: PageStorageKey('backup-history-$label'),
+              title: Text('Earlier recovery points (${records.length - 1})'),
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              children: [for (final record in records.skip(1)) _row(record)],
             ),
         ]),
       );
