@@ -9,39 +9,50 @@ class BackupWorkspaceOverview extends StatelessWidget {
   final BackupCoordinator controller;
   final VoidCallback onBackup;
   @override
-  Widget build(BuildContext context) => BackupPanel(
-      title: 'Protect Your Business Data',
-      icon: Icons.shield_outlined,
-      subtitle: 'Local recovery and Google Drive backup in one place.',
-      child: Wrap(
-          spacing: 24,
-          runSpacing: 16,
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Last verified local backup',
-                  style: TextStyle(
-                      fontSize: 12, color: BackupWorkspaceTheme.muted)),
-              const SizedBox(height: 5),
-              Text(
-                  controller.records.isEmpty
-                      ? 'No backup created yet'
-                      : DateFormat('d MMM yyyy · h:mm a')
-                          .format(controller.records.first.createdAt.toLocal()),
-                  style: const TextStyle(
-                      fontSize: 19, fontWeight: FontWeight.w800)),
-            ]),
-            FilledButton.icon(
-                onPressed: controller.busy || controller.restorePending
-                    ? null
-                    : onBackup,
-                icon: const Icon(Icons.backup_rounded),
-                label: const Text('Back Up Now'),
-                style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 18))),
-          ]));
+  Widget build(BuildContext context) {
+    final includeDrive = controller.settings!.googleDriveEnabled;
+    return BackupPanel(
+        title: 'Protect Your Business Data',
+        icon: Icons.shield_outlined,
+        subtitle:
+            'A verified local copy is created first. Choose whether to also upload it to Google Drive below.',
+        child: Wrap(
+            spacing: 24,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Last verified local backup',
+                    style: TextStyle(
+                        fontSize: 12, color: BackupWorkspaceTheme.muted)),
+                const SizedBox(height: 5),
+                Text(
+                    controller.records.isEmpty
+                        ? 'No backup created yet'
+                        : DateFormat('d MMM yyyy · h:mm a').format(
+                            controller.records.first.createdAt.toLocal()),
+                    style: const TextStyle(
+                        fontSize: 19, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                Text(
+                    includeDrive
+                        ? 'Next backup: Local + Google Drive'
+                        : 'Next backup: Local only',
+                    style: const TextStyle(
+                        fontSize: 12, color: BackupWorkspaceTheme.muted)),
+              ]),
+              FilledButton.icon(
+                  onPressed: controller.busy || controller.restorePending
+                      ? null
+                      : onBackup,
+                  icon: const Icon(Icons.backup_rounded),
+                  label: const Text('Back Up Now'),
+                  style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 18))),
+            ]));
+  }
 }
 
 class BackupWorkspaceNotice extends StatelessWidget {

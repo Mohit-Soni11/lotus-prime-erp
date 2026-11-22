@@ -57,11 +57,14 @@ Future<void> copyBackupTree(String source, String destination) async {
     throw StateError('Unsupported backup source.');
   }
   await for (final child in Directory(source).list(followLinks: false)) {
+    final name = p.basename(child.path);
+    // Some Windows cloud folders expose a synthetic parent entry to Dart.
+    // Neither name can be a real file in a directory.
+    if (name == '.' || name == '..') continue;
     if (child is Link) {
       throw StateError('Linked files cannot be included in the backup.');
     }
-    await copyBackupTree(
-        child.path, p.join(destination, p.basename(child.path)));
+    await copyBackupTree(child.path, p.join(destination, name));
   }
 }
 

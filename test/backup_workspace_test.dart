@@ -90,6 +90,7 @@ void main() {
         expect(find.text('BACKUP & RESTORE'), findsOneWidget);
         expect(find.text('Restore Local File'), findsOneWidget);
         expect(find.text('Back Up Now'), findsOneWidget);
+        expect(find.text('Next backup: Local only'), findsOneWidget);
       });
     }
   }
@@ -201,6 +202,7 @@ void main() {
     expect(browserOpened, isTrue);
     expect(data.$2.drive.auth.connected, isTrue, reason: data.$2.error);
     expect(data.$2.settings!.googleDriveEnabled, isTrue);
+    expect(find.text('Next backup: Local + Google Drive'), findsOneWidget);
     expect(find.text('owner@example.test'), findsOneWidget);
     expect(find.text('Change Account'), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);

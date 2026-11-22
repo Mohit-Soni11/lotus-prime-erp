@@ -10,6 +10,13 @@ sidebar and returns to Settings with Back.
 3. Wait for the local copy to finish verification. A completed file has the
    `.lotusbackup` extension; incomplete work is never listed as a usable backup.
 
+The Google Drive card has an **Also save to Google Drive** switch. With it off,
+**Back Up Now** creates a local backup only. With it on, the same action first
+creates and verifies a local backup, then uploads that package to the connected
+Google account. The status card shows the destination for the next backup.
+The switch also applies to scheduled backups; selecting **Google Drive** in
+**Backups & Recovery** changes which history is displayed, not the destination.
+
 The package includes both business and owner/shop databases, business
 preferences, customer and pledged-item photos, shop identity documents,
 supplier attachments and issued invoice documents. Legacy attachments outside
@@ -54,7 +61,8 @@ backup upload and restore have not been performed during this setup.
 1. Select **Connect Google Account**. Use the external browser to sign in and
    approve the requested backup permission.
 2. Return to Lotus ERP. The connected account appears in the Google Drive card.
-3. Keep **Include Google Drive** enabled to upload manual and scheduled backups.
+3. Turn on **Also save to Google Drive** when you want manual and scheduled
+   backups uploaded to that account. Turn it off for local-only backups.
 
 There is no Google Cloud or JSON-import setup in the customer workspace. A build
 with the developer's application identity retains that identity in device secure

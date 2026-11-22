@@ -91,10 +91,10 @@ class BackupDestinationPanels extends StatelessWidget {
           ],
           SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Include Google Drive',
+              title: const Text('Also save to Google Drive',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
               subtitle: const Text(
-                  'Upload manual and scheduled backups after the local copy is verified.',
+                  'On: Local + Drive. Off: Local only. Applies to every backup.',
                   style: TextStyle(fontSize: 12)),
               value: controller.settings!.googleDriveEnabled,
               onChanged: disabled || !controller.drive.auth.connected
