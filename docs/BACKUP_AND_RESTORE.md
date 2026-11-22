@@ -57,8 +57,11 @@ backup upload and restore have not been performed during this setup.
 3. Keep **Include Google Drive** enabled to upload manual and scheduled backups.
 
 There is no Google Cloud or JSON-import setup in the customer workspace. A build
-without the developer's application identity clearly reports that Google account
-connection is unavailable; local backup and restore continue to work.
+with the developer's application identity retains that identity in device secure
+storage so subsequent application starts can reuse it. Missing build settings do
+not delete a saved Google connection. If neither build settings nor a saved
+application identity are available, Google connection is unavailable while local
+backup and restore continue to work.
 
 The desktop flow uses loopback redirect, state validation and PKCE. Account
 tokens use platform secure storage with separate development and production
@@ -91,12 +94,14 @@ This is a one-time application setup, not a task for each customer:
    In VS Code, select **Lotus ERP - Windows with Google Drive** in Run and Debug,
    then start debugging. This profile passes the local build configuration
    automatically. Stop and relaunch after changing application client values;
-   hot reload cannot change compile-time configuration. The local-backup-only
-   profile is available for development without Google configuration.
+   hot reload cannot change compile-time configuration. The workspace has one
+   Windows run profile, which includes Google configuration.
 6. `installer/build_windows_installer.ps1` automatically includes that local
    configuration when it exists. Alternatively supply `-GoogleDriveConfig`
-   with the path to a build-configuration JSON. Invalid keys or values stop
-   packaging before the build. No JSON configuration file is copied beside
+   with the path to a build-configuration JSON. Missing configuration, invalid
+   keys or invalid values stop packaging before the build. An intentional build
+   without Google configuration requires `-AllowLocalBackupOnly`. No JSON
+   configuration file is copied beside
    the installed application; the application identity is compiled into it.
 
 Desktop application identity is not an individual customer's login or backup

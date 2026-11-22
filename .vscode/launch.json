@@ -10,13 +10,6 @@
       "toolArgs": [
         "--dart-define-from-file=config/google-drive.local.json"
       ]
-    },
-    {
-      "name": "Lotus ERP - Windows local backup only",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "deviceId": "windows"
     }
   ]
 }

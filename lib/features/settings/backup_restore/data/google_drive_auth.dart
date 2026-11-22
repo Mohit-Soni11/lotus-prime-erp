@@ -53,23 +53,33 @@ class GoogleDriveAuth {
   String? get email => _tokens?['email'] as String?;
 
   Future<void> load() async {
+    _client = null;
+    _tokens = null;
+    final cachedClient = await secrets.read('google-client');
     _client = applicationClient.configured
         ? applicationClient
-        : await _legacyClient();
-    final tokens = await secrets.read('google-tokens');
-    _tokens = tokens == null
-        ? null
-        : Map<String, dynamic>.from(jsonDecode(tokens) as Map);
-    if (_tokens != null &&
-        (_client == null || _tokens!['client_id'] != _client!.clientId)) {
-      _tokens = null;
-      await secrets.delete('google-tokens');
+        : _storedClient(cachedClient);
+    if (applicationClient.configured) {
+      final encodedClient = jsonEncode({
+        'client_id': applicationClient.clientId,
+        if (applicationClient.clientSecret.isNotEmpty)
+          'client_secret': applicationClient.clientSecret,
+      });
+      if (cachedClient != encodedClient) {
+        await secrets.write('google-client', encodedClient);
+      }
     }
+    final tokens = await secrets.read('google-tokens');
+    if (_client == null || tokens == null) return;
+    final savedTokens = Map<String, dynamic>.from(jsonDecode(tokens) as Map);
+    if (savedTokens['client_id'] == _client!.clientId) {
+      _tokens = savedTokens;
+    }
+    // A missing or different build identity must not erase a saved connection.
+    // Tokens are replaced after successful sign-in or removed by Disconnect.
   }
 
-  Future<GoogleDriveClient?> _legacyClient() async {
-    // Preserve connections created before application-level configuration.
-    final stored = await secrets.read('google-client');
+  GoogleDriveClient? _storedClient(String? stored) {
     if (stored == null) return null;
     final values = jsonDecode(stored) as Map;
     final client = GoogleDriveClient(

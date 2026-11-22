@@ -2,7 +2,8 @@ function Get-GoogleDriveBuildArguments {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$ProjectRoot,
-        [string]$ConfigurationPath
+        [string]$ConfigurationPath,
+        [switch]$AllowLocalBackupOnly
     )
 
     if (-not $ConfigurationPath) {
@@ -10,7 +11,10 @@ function Get-GoogleDriveBuildArguments {
         if (Test-Path -LiteralPath $defaultConfig) {
             $ConfigurationPath = $defaultConfig
         } else {
-            Write-Warning 'Google account connection will be unavailable in this build. Local backup and restore remain available. Configure the application identity before releasing Google Drive backup.'
+            if (-not $AllowLocalBackupOnly) {
+                throw 'Google Drive application configuration is missing. Release packaging stopped. Supply config\google-drive.local.json or -GoogleDriveConfig. Use -AllowLocalBackupOnly only for an intentional build without Google Drive.'
+            }
+            Write-Warning 'Building without Google Drive application configuration because -AllowLocalBackupOnly was explicitly requested.'
             return
         }
     }

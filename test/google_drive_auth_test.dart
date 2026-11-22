@@ -74,7 +74,14 @@ void main() {
     expect(await auth.accessToken(), 'access');
     expect(tokenCalls, 1);
     expect(secrets.values['google-tokens'], contains('refresh'));
-    expect(secrets.values.containsKey('google-client'), isFalse);
+    final restarted = GoogleDriveAuth(
+        http: http,
+        secrets: secrets,
+        applicationClient: const GoogleDriveClient(clientId: ''));
+    await restarted.load();
+    expect(restarted.configured, isTrue);
+    expect(restarted.connected, isTrue);
+    expect(await restarted.accessToken(), 'access');
   });
 
   test(
@@ -153,6 +160,55 @@ void main() {
     await auth.load();
     expect(auth.configured, isTrue);
     expect(auth.connected, isFalse);
-    expect(await existing.secrets.read('google-tokens'), isNull);
+    expect(auth.email, isNull);
+    expect(await existing.secrets.read('google-tokens'), isNotNull);
+    await expectLater(auth.accessToken(), throwsStateError);
+  });
+
+  test('missing application identity never erases a saved Google connection',
+      () async {
+    final http = FakeBackupHttp((a, b, c, d) async => backupJsonResponse({}));
+    final existing = await connectedTestGoogle(http);
+    await existing.secrets.delete('google-client');
+    final originalTokens = await existing.secrets.read('google-tokens');
+    final missingIdentity = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(clientId: ''));
+    await missingIdentity.load();
+    expect(missingIdentity.configured, isFalse);
+    expect(missingIdentity.connected, isFalse);
+    expect(missingIdentity.email, isNull);
+    expect(await existing.secrets.read('google-tokens'), originalTokens);
+
+    final restoredIdentity = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(
+            clientId: 'test.apps.googleusercontent.com'));
+    await restoredIdentity.load();
+    expect(restoredIdentity.connected, isTrue);
+    expect(await restoredIdentity.accessToken(), 'test-access');
+  });
+
+  test('a configured build repairs malformed cached application identity',
+      () async {
+    final http = FakeBackupHttp((a, b, c, d) async => backupJsonResponse({}));
+    final existing = await connectedTestGoogle(http);
+    await existing.secrets.write('google-client', '{broken');
+    final configured = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(
+            clientId: 'test.apps.googleusercontent.com',
+            clientSecret: 'test-desktop-secret'));
+    await configured.load();
+    final restarted = GoogleDriveAuth(
+        http: http,
+        secrets: existing.secrets,
+        applicationClient: const GoogleDriveClient(clientId: ''));
+    await restarted.load();
+    expect(restarted.connected, isTrue);
+    expect(await restarted.accessToken(), 'test-access');
   });
 }

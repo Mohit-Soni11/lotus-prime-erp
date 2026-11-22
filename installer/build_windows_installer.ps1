@@ -1,4 +1,7 @@
-param([string]$GoogleDriveConfig)
+param(
+    [string]$GoogleDriveConfig,
+    [switch]$AllowLocalBackupOnly
+)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -15,7 +18,7 @@ $appBuild = $versionMatch.Groups[2].Value
 
 . (Join-Path $PSScriptRoot 'google_drive_build_config.ps1')
 $flutterBuildArguments = @('build', 'windows', '--release', '--no-pub')
-$flutterBuildArguments += @(Get-GoogleDriveBuildArguments -ProjectRoot $projectRoot -ConfigurationPath $GoogleDriveConfig)
+$flutterBuildArguments += @(Get-GoogleDriveBuildArguments -ProjectRoot $projectRoot -ConfigurationPath $GoogleDriveConfig -AllowLocalBackupOnly:$AllowLocalBackupOnly)
 
 $compilerCandidates = @(
     (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),
