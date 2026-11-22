@@ -41,16 +41,21 @@ class BackupDestinationPanels extends StatelessWidget {
             : () => onLocalEnabled(!localSelected),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Backup Folder',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
+        const Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.folder_open_outlined,
+              size: 22, color: BackupWorkspaceTheme.ink),
+          SizedBox(width: 14),
+          Text('Backup Folder',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        ]),
+        const SizedBox(height: 10),
         Wrap(
             spacing: 10,
             runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
-                constraints: const BoxConstraints(minWidth: 200, maxWidth: 320),
+                constraints: const BoxConstraints(minWidth: 220, maxWidth: 330),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
                 decoration: BoxDecoration(
@@ -146,12 +151,12 @@ class BackupDestinationPanels extends StatelessWidget {
           : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
                   child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 250),
+                      constraints: const BoxConstraints(minHeight: 202),
                       child: local)),
               const SizedBox(width: 16),
               Expanded(
                   child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 250),
+                      constraints: const BoxConstraints(minHeight: 202),
                       child: cloud)),
             ]),
     );
@@ -174,13 +179,12 @@ class _DestinationButton extends StatelessWidget {
         message: onPressed == null && selected
             ? 'Select the other destination before turning this one off.'
             : '$label ${selected ? 'selected' : 'not selected'}',
-        child: OutlinedButton.icon(
+        child: IconButton(
           onPressed: onPressed,
           icon: Icon(
               selected ? Icons.check_circle_rounded : Icons.add_circle_outline,
-              size: 17),
-          label: Text(selected ? 'Selected' : 'Select'),
-          style: OutlinedButton.styleFrom(
+              size: 22),
+          style: IconButton.styleFrom(
             backgroundColor: selected
                 ? BackupWorkspaceTheme.gold
                 : BackupWorkspaceTheme.surface,
@@ -189,7 +193,7 @@ class _DestinationButton extends StatelessWidget {
                 color: selected
                     ? BackupWorkspaceTheme.gold
                     : BackupWorkspaceTheme.border),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            fixedSize: const Size(40, 40),
           ),
         ),
       );

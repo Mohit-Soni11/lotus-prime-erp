@@ -43,14 +43,18 @@ class _BackupSchedulePanelState extends State<BackupSchedulePanel> {
               runSpacing: 14,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                const Text('Frequency',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: BackupWorkspaceTheme.muted)),
                 SizedBox(
                     width: 210,
                     child: DropdownButtonFormField<BackupFrequency>(
                         isExpanded: true,
                         key: const ValueKey('backup-frequency'),
                         initialValue: _frequency,
-                        decoration:
-                            const InputDecoration(labelText: 'Frequency'),
+                        decoration: const InputDecoration(),
                         items: BackupFrequency.values
                             .map((value) => DropdownMenuItem(
                                 value: value,

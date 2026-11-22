@@ -8,7 +8,9 @@ import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dar
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_auth.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_backup_service.dart';
 import 'package:lotus_erp/features/settings/backup_restore/domain/backup_schedule.dart';
+import 'package:lotus_erp/features/settings/backup_restore/domain/backup_record.dart';
 import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_client.dart';
+import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_history_panel.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_restore_screen.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_app_bar.dart';
 import 'package:lotus_erp/features/settings/backup_restore/presentation/backup_workspace_theme.dart';
@@ -54,6 +56,52 @@ Future<void> _pump(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('recovery keeps every destination in one labelled list',
+      (tester) async {
+    final records = [
+      BackupRecord(
+          id: 'local',
+          name: 'local.lotusbackup',
+          createdAt: DateTime.utc(2026, 11, 22, 8),
+          size: 1024,
+          sha256: 'a' * 64,
+          localPath: 'C:/Backups/local.lotusbackup'),
+      BackupRecord(
+          id: 'drive',
+          name: 'drive.lotusbackup',
+          createdAt: DateTime.utc(2026, 11, 22, 9),
+          size: 1024,
+          sha256: 'b' * 64,
+          driveId: 'drive-backup'),
+      BackupRecord(
+          id: 'both',
+          name: 'both.lotusbackup',
+          createdAt: DateTime.utc(2026, 11, 22, 10),
+          size: 1024,
+          sha256: 'c' * 64,
+          localPath: 'C:/Backups/both.lotusbackup',
+          driveId: 'both-backup'),
+    ];
+    await tester.binding.setSurfaceSize(const Size(1280, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: BackupHistoryPanel(
+                records: records,
+                enabled: true,
+                connected: true,
+                onRefreshCloud: () {},
+                onRestore: (_) {},
+                onRetryUpload: (_) {},
+                onPickLocal: () {}))));
+    await tester.pump();
+    expect(find.text('Local'), findsOneWidget);
+    expect(find.text('Google Drive'), findsOneWidget);
+    expect(find.text('Local + Google Drive'), findsOneWidget);
+    expect(find.byType(SegmentedButton<bool>), findsNothing);
+    expect(find.text('Restore Backup File'), findsOneWidget);
+  });
+
   for (final width in [500.0, 1600.0]) {
     for (final scale in [1.0, 1.3]) {
       testWidgets('backup workspace at $width px and $scale text scale',
@@ -89,7 +137,7 @@ void main() {
           expect(tester.takeException(), isNull, reason: title);
         }
         expect(find.text('BACKUP & RESTORE'), findsOneWidget);
-        expect(find.text('Restore Local File'), findsOneWidget);
+        expect(find.text('Restore Backup File'), findsOneWidget);
         expect(find.text('Back Up Now'), findsOneWidget);
         expect(find.text('Business Data Backup'), findsOneWidget);
         expect(find.text('Backup Type'), findsOneWidget);
@@ -211,7 +259,7 @@ void main() {
     expect(find.text('owner@example.test'), findsOneWidget);
     expect(find.text('Change Account'), findsOneWidget);
     await tester.runAsync(() async {
-      await tester.tap(find.text('Select'));
+      await tester.tap(find.byTooltip('Google Drive Backup not selected'));
       await Future.doWhile(() async {
         if (!data.$2.busy) return false;
         await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -220,7 +268,6 @@ void main() {
     });
     await _pump(tester);
     expect(data.$2.settings!.googleDriveEnabled, isTrue);
-    expect(find.text('Selected'), findsNWidgets(2));
     await tester.runAsync(() async {
       await tester.tap(find.byTooltip('Local Backup selected'));
       await Future.doWhile(() async {

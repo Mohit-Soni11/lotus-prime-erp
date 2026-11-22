@@ -41,6 +41,23 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       .replaceFirst('Bad state: ', '')
       .replaceFirst('FormatException: ', '');
 
+  List<BackupRecord> _recoveryRecords(BackupCoordinator controller) {
+    final byId = <String, BackupRecord>{
+      for (final record in controller.records) record.id: record,
+    };
+    for (final cloudRecord in controller.cloudRecords) {
+      final saved = byId[cloudRecord.id];
+      if (saved == null) {
+        byId[cloudRecord.id] = cloudRecord;
+      } else if (saved.driveId == null && cloudRecord.driveId != null) {
+        byId[cloudRecord.id] = saved.uploaded(cloudRecord.driveId!);
+      }
+    }
+    final records = byId.values.toList()
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    return records;
+  }
+
   Future<BackupCoordinator> _load() async =>
       widget.controller ?? await BackupRuntime.instance.coordinator();
 
@@ -291,11 +308,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                           success: 'Backup schedule saved.')),
                                   const SizedBox(height: 20),
                                   BackupHistoryPanel(
-                                      local: controller.records
-                                          .where((record) =>
-                                              record.localPath != null)
-                                          .toList(),
-                                      cloud: controller.cloudRecords,
+                                      records: _recoveryRecords(controller),
                                       connected:
                                           controller.drive.auth.connected,
                                       enabled: enabled,

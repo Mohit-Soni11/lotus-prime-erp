@@ -146,7 +146,7 @@ class BackupPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
         decoration: BoxDecoration(
           color: BackupWorkspaceTheme.surface,
           borderRadius: BorderRadius.circular(16),
@@ -182,7 +182,7 @@ class BackupPanel extends StatelessWidget {
                   Flexible(
                     child: Text(title!,
                         style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 24,
                             fontWeight: FontWeight.w800,
                             color: BackupWorkspaceTheme.ink)),
                   ),

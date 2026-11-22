@@ -16,37 +16,55 @@ class BackupWorkspaceOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final latest = controller.records.isEmpty ? null : controller.records.first;
     return BackupPanel(
-      child: Wrap(
-        spacing: 28,
-        runSpacing: 18,
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          const _SummaryHeading(),
-          _SummaryDetail(
-            icon: Icons.calendar_month_outlined,
-            label: 'Last Backup',
-            value: latest == null
-                ? 'No backup yet'
-                : DateFormat('d MMM yyyy, hh:mm a')
-                    .format(latest.createdAt.toLocal()),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final action = FilledButton.icon(
+          onPressed:
+              controller.busy || controller.restorePending ? null : onBackup,
+          icon: const Icon(Icons.cloud_upload_outlined, size: 23),
+          label: const Text('Back Up Now'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
           ),
-          _SummaryDetail(
-            icon: Icons.storage_rounded,
-            label: 'Backup Type',
-            value: _backupType(latest),
-          ),
-          FilledButton.icon(
-            onPressed:
-                controller.busy || controller.restorePending ? null : onBackup,
-            icon: const Icon(Icons.cloud_upload_outlined),
-            label: const Text('Back Up Now'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-            ),
-          ),
-        ],
-      ),
+        );
+        final lastBackup = _SummaryDetail(
+          icon: Icons.calendar_month_outlined,
+          label: 'Last Backup',
+          value: latest == null
+              ? 'No backup yet'
+              : DateFormat('d MMM yyyy, hh:mm a')
+                  .format(latest.createdAt.toLocal()),
+        );
+        final backupType = _SummaryDetail(
+          icon: Icons.storage_rounded,
+          label: 'Backup Type',
+          value: _backupType(latest),
+        );
+        // The primary summary intentionally remains a single information bar on
+        // desktop, matching the Backup & Restore workspace layout.
+        if (constraints.maxWidth >= 1000) {
+          return Row(children: [
+            const Expanded(flex: 4, child: _SummaryHeading()),
+            const _SummaryDivider(),
+            Expanded(flex: 3, child: lastBackup),
+            const _SummaryDivider(),
+            Expanded(flex: 3, child: backupType),
+            const SizedBox(width: 20),
+            action,
+          ]);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SummaryHeading(),
+            const SizedBox(height: 20),
+            lastBackup,
+            const SizedBox(height: 16),
+            backupType,
+            const SizedBox(height: 20),
+            Align(alignment: Alignment.centerLeft, child: action),
+          ],
+        );
+      }),
     );
   }
 
@@ -64,14 +82,13 @@ class _SummaryHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           _SummaryIcon(Icons.verified_user_outlined),
           SizedBox(width: 14),
           Flexible(
               child: Text('Business Data Backup',
                   style: TextStyle(
-                      fontSize: 21,
+                      fontSize: 23,
                       fontWeight: FontWeight.w800,
                       color: BackupWorkspaceTheme.ink))),
         ],
@@ -92,17 +109,24 @@ class _SummaryDetail extends StatelessWidget {
         children: [
           _SummaryIcon(icon),
           const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: BackupWorkspaceTheme.muted)),
-            const SizedBox(height: 3),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: BackupWorkspaceTheme.ink)),
-          ]),
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: BackupWorkspaceTheme.muted)),
+              const SizedBox(height: 3),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: BackupWorkspaceTheme.ink)),
+            ]),
+          ),
         ],
       );
 }
@@ -114,14 +138,26 @@ class _SummaryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 44,
-        height: 44,
+        width: 48,
+        height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: BackupWorkspaceTheme.gold.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: BackupWorkspaceTheme.ink, size: 22),
+        child: Icon(icon, color: BackupWorkspaceTheme.amber, size: 24),
+      );
+}
+
+class _SummaryDivider extends StatelessWidget {
+  const _SummaryDivider();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 1,
+        height: 46,
+        margin: const EdgeInsets.symmetric(horizontal: 28),
+        color: BackupWorkspaceTheme.border,
       );
 }
 
