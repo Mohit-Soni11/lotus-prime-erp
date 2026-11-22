@@ -8,6 +8,7 @@ import '../data/backup_restore_service.dart';
 import '../data/backup_store.dart';
 import '../data/google_drive_backup_service.dart';
 import '../domain/backup_record.dart';
+import 'backup_isolate_jobs.dart';
 
 class BackupCoordinator extends ChangeNotifier {
   BackupCoordinator(
@@ -107,11 +108,10 @@ class BackupCoordinator extends ChangeNotifier {
   Future<void> backupNow() =>
       _operation('Creating a verified local backup', () async {
         await requireOwner();
-        final paths = locations;
         final folder = settings!.localFolder;
         final values = await preferences.read();
         var record = await Isolate.run(
-            () => BackupArchiveService(paths).create(folder, values));
+            CreateLocalBackupJob(locations, folder, values).call);
         await store.put(record);
         settings = BackupSettings(
             localFolder: settings!.localFolder,
@@ -167,9 +167,8 @@ class BackupCoordinator extends ChangeNotifier {
     VerifiedBackup? verified;
     await _operation('Checking backup integrity', () async {
       await requireOwner();
-      final paths = locations;
       verified =
-          await Isolate.run(() => BackupArchiveService(paths).verify(file));
+          await Isolate.run(VerifyLocalBackupJob(locations, file.path).call);
     });
     return verified!;
   }
@@ -177,13 +176,8 @@ class BackupCoordinator extends ChangeNotifier {
   Future<void> prepareRestore(File file) =>
       _operation('Preparing safe restore', () async {
         await requireOwner();
-        final paths = locations;
-        final source = file.path;
         // Staging is filesystem-only; platform preferences are applied at boot.
-        await Isolate.run(() => BackupRestoreService(
-                paths, SharedBusinessPreferences(),
-                clearSession: () async {})
-            .prepare(File(source)));
+        await Isolate.run(PrepareLocalRestoreJob(locations, file.path).call);
         restorePending = true;
       });
 

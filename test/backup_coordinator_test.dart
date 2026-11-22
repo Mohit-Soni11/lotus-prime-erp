@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/settings/backup_restore/application/backup_coordinator.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_http_transport.dart';
@@ -13,7 +14,9 @@ import 'google_drive_backup_test_support.dart';
 void main() {
   late BackupFixture fixture;
   late BackupCoordinator controller;
+  late ReceivePort ownerPort;
   setUp(() async {
+    ownerPort = ReceivePort();
     fixture = BackupFixture(
         await Directory.systemTemp.createTemp('lotus-coordinator-'));
     await fixture.seed();
@@ -27,11 +30,12 @@ void main() {
             auth: await connectedTestGoogle(http), http: http),
         restore: BackupRestoreService(fixture.locations, fixture.preferences,
             clearSession: () async {}),
-        requireOwner: () async {});
+        requireOwner: () async => ownerPort.sendPort.send(null));
     await controller.initialize();
   });
   tearDown(() async {
     controller.dispose();
+    ownerPort.close();
     await fixture.directory.delete(recursive: true);
   });
 
