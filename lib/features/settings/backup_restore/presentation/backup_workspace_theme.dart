@@ -188,7 +188,7 @@ class BackupPanel extends StatelessWidget {
                   ),
                 ]);
                 if (trailing == null) return heading;
-                if (constraints.maxWidth < 540) {
+                if (constraints.maxWidth < 900) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

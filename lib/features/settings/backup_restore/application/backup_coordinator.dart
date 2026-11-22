@@ -64,9 +64,6 @@ class BackupCoordinator extends ChangeNotifier {
       await requireOwner();
       locations.validateDestination(value.localFolder);
       await requireNoLinks(value.localFolder);
-      if (!value.localEnabled && !value.googleDriveEnabled) {
-        throw StateError('Select Local Backup or Google Drive Backup.');
-      }
       if (value.googleDriveEnabled && !drive.auth.connected) {
         throw StateError('Connect your Google account first.');
       }
@@ -93,8 +90,7 @@ class BackupCoordinator extends ChangeNotifier {
         await requireOwner();
         await drive.auth.disconnect();
         cloudRecords = [];
-        settings =
-            settings!.copyWith(localEnabled: true, googleDriveEnabled: false);
+        settings = settings!.copyWith(googleDriveEnabled: false);
         await store.saveSettings(settings!);
       });
 
@@ -221,6 +217,7 @@ class BackupCoordinator extends ChangeNotifier {
 
   Future<void> scheduledTick(DateTime now) async {
     if (!initialized || busy || restorePending || settings == null) return;
+    if (!settings!.localEnabled && !settings!.googleDriveEnabled) return;
     if (settings!.schedule.isDue(now)) {
       try {
         await backupNow();

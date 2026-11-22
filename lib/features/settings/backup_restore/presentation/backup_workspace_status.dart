@@ -18,8 +18,12 @@ class BackupWorkspaceOverview extends StatelessWidget {
     return BackupPanel(
       child: LayoutBuilder(builder: (context, constraints) {
         final action = FilledButton.icon(
-          onPressed:
-              controller.busy || controller.restorePending ? null : onBackup,
+          onPressed: controller.busy ||
+                  controller.restorePending ||
+                  (!controller.settings!.localEnabled &&
+                      !controller.settings!.googleDriveEnabled)
+              ? null
+              : onBackup,
           icon: const Icon(Icons.cloud_upload_outlined, size: 23),
           label: const Text('Back Up Now'),
           style: FilledButton.styleFrom(
@@ -69,7 +73,7 @@ class BackupWorkspaceOverview extends StatelessWidget {
   }
 
   String _backupType(BackupRecord? record) {
-    if (record == null) return '—';
+    if (record == null) return 'No destination selected';
     if (record.localPath != null && record.driveId != null) {
       return 'Local + Google Drive';
     }

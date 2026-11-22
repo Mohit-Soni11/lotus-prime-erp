@@ -10,6 +10,7 @@ import '../data/backup_file_safety.dart';
 import '../domain/backup_record.dart';
 import 'backup_destination_panels.dart';
 import 'backup_history_panel.dart';
+import 'backup_restore_source_dialog.dart';
 import 'backup_schedule_panel.dart';
 import 'backup_workspace_app_bar.dart';
 import 'backup_workspace_theme.dart';
@@ -91,10 +92,16 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     VerifiedBackup? preview;
     File? downloaded;
     try {
+      BackupRestoreSource? restoreSource;
+      if (file == null) {
+        restoreSource = await selectBackupRestoreSource(context, record!,
+            googleDriveConnected: controller.drive.auth.connected);
+        if (restoreSource == null || !mounted) return;
+      }
       final source = file ??
-          (record!.localPath != null
-              ? File(record.localPath!)
-              : downloaded = await controller.download(record));
+          (restoreSource == BackupRestoreSource.local
+              ? File(record!.localPath!)
+              : downloaded = await controller.download(record!));
       preview = await controller.inspect(source);
       if (!mounted) return;
       final approved = await showDialog<bool>(
@@ -111,6 +118,9 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             children: [
                           Text(
                               'Created: ${DateFormat('d MMM yyyy, h:mm a').format(preview!.createdAt.toLocal())}'),
+                          const SizedBox(height: 8),
+                          Text(
+                              'Source: ${restoreSource == BackupRestoreSource.googleDrive ? 'Google Drive' : 'Local Backup'}'),
                           const SizedBox(height: 8),
                           Text(
                               '${preview.fileCount} files verified · Databases checked'),
@@ -189,8 +199,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
             return AnimatedBuilder(
                 animation: controller,
                 builder: (context, _) {
-                  final enabled =
-                      !controller.busy && !controller.restorePending;
+                  // Saving a preference is intentionally non-disruptive: the
+                  // destination selection remains visually stable while it is
+                  // persisted, instead of dimming the complete workspace.
+                  final savingSettings = controller.busy &&
+                      controller.phase == 'Saving backup settings';
+                  final enabled = !controller.restorePending &&
+                      (!controller.busy || savingSettings);
                   return PopScope(
                       canPop: !controller.restorePending,
                       child: Scaffold(
@@ -198,7 +213,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                             onBack: controller.restorePending
                                 ? null
                                 : widget.onBack,
-                            busy: controller.busy),
+                            busy: controller.busy && !savingSettings),
                         body: SingleChildScrollView(
                             padding: EdgeInsets.all(
                                 MediaQuery.sizeOf(context).width < 600
@@ -218,7 +233,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                   ? 'Backup saved locally and uploaded to Google Drive.'
                                                   : 'Google Drive backup created and verified.'
                                               : 'Local backup created and verified.')),
-                                  if (controller.busy) ...[
+                                  if (controller.busy && !savingSettings) ...[
                                     const SizedBox(height: 16),
                                     LinearProgressIndicator(
                                         value: controller.progress),

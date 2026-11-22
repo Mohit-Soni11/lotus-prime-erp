@@ -25,7 +25,10 @@ class BackupDestinationPanels extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final disabled = controller.busy || controller.restorePending;
+    final savingSelection =
+        controller.busy && controller.phase == 'Saving backup settings';
+    final disabled =
+        (controller.busy && !savingSelection) || controller.restorePending;
     final localSelected = controller.settings!.localEnabled;
     final driveSelected = controller.settings!.googleDriveEnabled;
     final connected = controller.drive.auth.connected;
@@ -36,9 +39,7 @@ class BackupDestinationPanels extends StatelessWidget {
       trailing: _DestinationButton(
         label: 'Local Backup',
         selected: localSelected,
-        onPressed: disabled || (localSelected && !driveSelected)
-            ? null
-            : () => onLocalEnabled(!localSelected),
+        onPressed: disabled ? null : () => onLocalEnabled(!localSelected),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Row(mainAxisSize: MainAxisSize.min, children: [
@@ -96,9 +97,7 @@ class BackupDestinationPanels extends StatelessWidget {
       trailing: _DestinationButton(
         label: 'Google Drive Backup',
         selected: driveSelected,
-        onPressed: disabled ||
-                (!driveSelected && !connected) ||
-                (driveSelected && !localSelected)
+        onPressed: disabled || (!driveSelected && !connected)
             ? null
             : () => onDriveEnabled(!driveSelected),
       ),
@@ -176,8 +175,8 @@ class _DestinationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-        message: onPressed == null && selected
-            ? 'Select the other destination before turning this one off.'
+        message: onPressed == null
+            ? '$label is unavailable while backup is in progress or Google Drive is not connected.'
             : '$label ${selected ? 'selected' : 'not selected'}',
         child: IconButton(
           onPressed: onPressed,

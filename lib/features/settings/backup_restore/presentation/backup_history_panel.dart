@@ -30,6 +30,22 @@ class BackupHistoryPanel extends StatefulWidget {
 
 class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
   int _limit = 10;
+  String? _selectedRecordId;
+
+  BackupRecord? get _selectedRecord {
+    for (final record in widget.records) {
+      if (record.id == _selectedRecordId) return record;
+    }
+    return null;
+  }
+
+  @override
+  void didUpdateWidget(covariant BackupHistoryPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selectedRecordId != null && _selectedRecord == null) {
+      _selectedRecordId = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) => BackupPanel(
@@ -55,6 +71,13 @@ class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
               side: const BorderSide(color: BackupWorkspaceTheme.gold),
             ),
           ),
+          FilledButton.icon(
+            onPressed: widget.enabled && _selectedRecord != null
+                ? () => widget.onRestore(_selectedRecord!)
+                : null,
+            icon: const Icon(Icons.restore_rounded, size: 18),
+            label: const Text('Restore Selected'),
+          ),
         ]),
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -66,8 +89,9 @@ class _BackupHistoryPanelState extends State<BackupHistoryPanel> {
           for (final record in widget.records.take(_limit))
             _BackupHistoryRow(
               record: record,
+              selected: record.id == _selectedRecordId,
               enabled: widget.enabled,
-              onRestore: () => widget.onRestore(record),
+              onSelect: () => setState(() => _selectedRecordId = record.id),
               onRetryUpload: widget.connected &&
                       record.localPath != null &&
                       record.cloudError != null
@@ -104,83 +128,106 @@ class _EmptyBackupHistory extends StatelessWidget {
 class _BackupHistoryRow extends StatelessWidget {
   const _BackupHistoryRow({
     required this.record,
+    required this.selected,
     required this.enabled,
-    required this.onRestore,
+    required this.onSelect,
     this.onRetryUpload,
   });
 
   final BackupRecord record;
+  final bool selected;
   final bool enabled;
-  final VoidCallback onRestore;
+  final VoidCallback onSelect;
   final VoidCallback? onRetryUpload;
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: BackupWorkspaceTheme.surface,
-          border: Border.all(color: BackupWorkspaceTheme.border),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: LayoutBuilder(builder: (context, constraints) {
-          final primary = _BackupIdentity(record: record);
-          final actions = Wrap(spacing: 8, runSpacing: 8, children: [
-            if (onRetryUpload != null)
-              OutlinedButton.icon(
-                onPressed: enabled ? onRetryUpload : null,
-                icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                label: const Text('Retry Upload'),
+  Widget build(BuildContext context) => Semantics(
+        selected: selected,
+        button: true,
+        label: 'Select ${_destinationLabel(record)} backup',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: ValueKey('backup-row-${record.id}'),
+            onTap: enabled ? onSelect : null,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                color: selected
+                    ? BackupWorkspaceTheme.gold.withValues(alpha: 0.10)
+                    : BackupWorkspaceTheme.surface,
+                border: Border.all(
+                    color: selected
+                        ? BackupWorkspaceTheme.gold
+                        : BackupWorkspaceTheme.border,
+                    width: selected ? 1.5 : 1),
+                borderRadius: BorderRadius.circular(12),
               ),
-            FilledButton.icon(
-              onPressed: enabled ? onRestore : null,
-              icon: const Icon(Icons.restore_rounded, size: 18),
-              label: const Text('Restore'),
-              style: FilledButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14)),
-            ),
-          ]);
-          final warning = record.cloudError == null
-              ? null
-              : const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                      'Google Drive upload needs a retry. Local copy is safe.',
-                      style: TextStyle(
-                          fontSize: 13, color: BackupWorkspaceTheme.amber)),
-                );
-
-          if (constraints.maxWidth < 760) {
-            return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  primary,
-                  if (warning != null) warning,
-                  if (record.missingMediaCount > 0) _MissingMediaNotice(record),
-                  const SizedBox(height: 14),
-                  actions,
+              child: LayoutBuilder(builder: (context, constraints) {
+                final primary =
+                    _BackupIdentity(record: record, selected: selected);
+                final actions = Wrap(spacing: 8, runSpacing: 8, children: [
+                  if (onRetryUpload != null)
+                    OutlinedButton.icon(
+                      onPressed: enabled ? onRetryUpload : null,
+                      icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                      label: const Text('Retry Upload'),
+                    ),
                 ]);
-          }
-          return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(flex: 5, child: primary),
-                  _VerticalDivider(),
-                  Expanded(
-                      flex: 2,
-                      child: _BackupMetric(
-                        icon: Icons.storage_rounded,
-                        value: _size(record.size),
-                      )),
-                  const SizedBox(width: 16),
-                  actions,
-                ]),
-                if (warning != null) warning,
-                if (record.missingMediaCount > 0) _MissingMediaNotice(record),
-              ]);
-        }),
+                final warning = record.cloudError == null
+                    ? null
+                    : const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                            'Google Drive upload needs a retry. Local copy is safe.',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: BackupWorkspaceTheme.amber)),
+                      );
+
+                if (constraints.maxWidth < 760) {
+                  return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        primary,
+                        if (warning != null) warning,
+                        if (record.missingMediaCount > 0)
+                          _MissingMediaNotice(record),
+                        const SizedBox(height: 14),
+                        actions,
+                      ]);
+                }
+                return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Expanded(flex: 5, child: primary),
+                        _VerticalDivider(),
+                        Expanded(
+                            flex: 3,
+                            child: Center(
+                                child:
+                                    _BackupDestinationBadge(record: record))),
+                        _VerticalDivider(),
+                        Expanded(
+                            flex: 2,
+                            child: _BackupMetric(
+                              icon: Icons.storage_rounded,
+                              value: _size(record.size),
+                            )),
+                        const SizedBox(width: 16),
+                        actions,
+                      ]),
+                      if (warning != null) warning,
+                      if (record.missingMediaCount > 0)
+                        _MissingMediaNotice(record),
+                    ]);
+              }),
+            ),
+          ),
+        ),
       );
 
   String _size(int bytes) => bytes >= 1024 * 1024 * 1024
@@ -191,16 +238,21 @@ class _BackupHistoryRow extends StatelessWidget {
 }
 
 class _BackupIdentity extends StatelessWidget {
-  const _BackupIdentity({required this.record});
+  const _BackupIdentity({required this.record, required this.selected});
 
   final BackupRecord record;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) =>
       Row(mainAxisSize: MainAxisSize.min, children: [
-        const _BackupIcon(
-            icon: Icons.check_circle_rounded,
-            color: BackupWorkspaceTheme.green),
+        _BackupIcon(
+            icon: selected
+                ? Icons.radio_button_checked_rounded
+                : Icons.radio_button_off_rounded,
+            color: selected
+                ? BackupWorkspaceTheme.amber
+                : BackupWorkspaceTheme.muted),
         const SizedBox(width: 12),
         Flexible(
           child:
@@ -214,8 +266,6 @@ class _BackupIdentity extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: BackupWorkspaceTheme.ink)),
-            const SizedBox(height: 6),
-            _BackupDestinationBadge(record: record),
           ]),
         ),
       ]);
@@ -252,11 +302,7 @@ class _BackupDestinationBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = record.localPath != null;
     final drive = record.driveId != null;
-    final label = local && drive
-        ? 'Local + Google Drive'
-        : drive
-            ? 'Google Drive'
-            : 'Local';
+    final label = _destinationLabel(record);
     final icon = local && drive
         ? Icons.sync_rounded
         : drive
@@ -281,6 +327,13 @@ class _BackupDestinationBadge extends StatelessWidget {
       ]),
     );
   }
+}
+
+String _destinationLabel(BackupRecord record) {
+  final local = record.localPath != null;
+  final drive = record.driveId != null;
+  if (local && drive) return 'Local + Google Drive';
+  return drive ? 'Google Drive' : 'Local';
 }
 
 class _MissingMediaNotice extends StatelessWidget {

@@ -136,11 +136,11 @@ void main() {
     expect(record.driveId, 'verified-drive-backup');
   });
 
-  test('at least one backup destination must stay selected', () async {
-    await expectLater(
-        controller.saveSettings(BackupSettings(
-            localFolder: fixture.locations.local.path, localEnabled: false)),
-        throwsStateError);
+  test('both backup destinations may be left unselected', () async {
+    await controller.saveSettings(BackupSettings(
+        localFolder: fixture.locations.local.path, localEnabled: false));
+    expect(controller.settings!.localEnabled, isFalse);
+    expect(controller.settings!.googleDriveEnabled, isFalse);
   });
 
   test('retrying an older upload does not change the latest backup', () async {

@@ -86,20 +86,59 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-            body: BackupHistoryPanel(
-                records: records,
-                enabled: true,
-                connected: true,
-                onRefreshCloud: () {},
-                onRestore: (_) {},
-                onRetryUpload: (_) {},
-                onPickLocal: () {}))));
+            body: SingleChildScrollView(
+                child: BackupHistoryPanel(
+                    records: records,
+                    enabled: true,
+                    connected: true,
+                    onRefreshCloud: () {},
+                    onRestore: (_) {},
+                    onRetryUpload: (_) {},
+                    onPickLocal: () {})))));
     await tester.pump();
     expect(find.text('Local'), findsOneWidget);
     expect(find.text('Google Drive'), findsOneWidget);
     expect(find.text('Local + Google Drive'), findsOneWidget);
     expect(find.byType(SegmentedButton<bool>), findsNothing);
     expect(find.text('Restore Backup File'), findsOneWidget);
+  });
+
+  testWidgets('recovery restores only the backup selected by the user',
+      (tester) async {
+    final local = BackupRecord(
+        id: 'local',
+        name: 'local.lotusbackup',
+        createdAt: DateTime.utc(2026, 11, 22, 8),
+        size: 1024,
+        sha256: 'a' * 64,
+        localPath: 'C:/Backups/local.lotusbackup');
+    final drive = BackupRecord(
+        id: 'drive',
+        name: 'drive.lotusbackup',
+        createdAt: DateTime.utc(2026, 11, 22, 9),
+        size: 1024,
+        sha256: 'b' * 64,
+        driveId: 'drive-backup');
+    BackupRecord? restored;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: BackupHistoryPanel(
+                records: [local, drive],
+                enabled: true,
+                connected: true,
+                onRefreshCloud: () {},
+                onRestore: (record) => restored = record,
+                onRetryUpload: (_) {},
+                onPickLocal: () {}))));
+
+    final restoreSelected =
+        find.widgetWithText(FilledButton, 'Restore Selected');
+    expect(tester.widget<FilledButton>(restoreSelected).onPressed, isNull);
+    await tester.tap(find.byKey(const ValueKey('backup-row-drive')));
+    await tester.pump();
+    await tester.tap(restoreSelected);
+
+    expect(restored?.id, 'drive');
   });
 
   for (final width in [500.0, 1600.0]) {
