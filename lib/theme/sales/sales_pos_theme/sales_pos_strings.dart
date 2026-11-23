@@ -63,7 +63,7 @@ class SalesPosStrings {
   static const String lblTaxableAmt = "Taxable Amount";
   static const String headerPaymentMode = "PAYMENT MODE";
   static const String lblCash = "Cash Amount";
-  static const String lblUpi = "UPI / Bank";
+  static const String lblUpi = "UPI";
   static const String lblCard = "Card Payment";
   static const String lblAdvance = "Advance Used";
   static const String lblRefund = "REFUND TO CUSTOMER";

@@ -259,6 +259,39 @@ void main() {
     expect(controller.pdfBytes, orderedEquals(issuedBytes));
   });
 
+  test('missing committed bill cannot be exported as a saved invoice',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final billing = PosBillingController();
+    final controller = _invoiceControllerForTest(billing, db);
+    addTearDown(() async {
+      controller.dispose();
+      billing.dispose();
+      await db.close();
+    });
+
+    final item = SaleItemModel(metal: MetalType.gold);
+    item.descCtrl.text = 'Gold Ring';
+    item.purityCtrl.text = '22KT';
+    item.grossCtrl.text = '1';
+    item.rateCtrl.text = '1000';
+    billing.saleItems.add(item);
+
+    await controller.generateInvoice();
+    billing.markCurrentSaleCommitted(controller.invoice!.invoiceNumber);
+
+    await expectLater(
+      controller.finalizeInvoiceIfNeeded(),
+      throwsA(isA<StateError>().having(
+        (error) => error.message,
+        'message',
+        contains('missing from the database'),
+      )),
+    );
+    expect(controller.isSavedToDb, isFalse);
+    expect(await db.select(db.bills).get(), isEmpty);
+  });
+
   test('finalizing a sale stores the displayed PDF bytes', () async {
     final root = await Directory.systemTemp.createTemp('pos_finalize_pdf_');
     var failArchive = true;

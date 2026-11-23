@@ -1006,7 +1006,7 @@ void main() {
       final payments = PosInvoiceFinancialBreakdown.payments(invoice);
       expect(payments.map((entry) => entry.label), [
         'Cash',
-        'UPI / Bank Transfer',
+        'UPI',
         'Customer Advance',
       ]);
       expect(payments.map((entry) => entry.amount), [12000, 2500, 500]);

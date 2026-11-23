@@ -394,6 +394,10 @@ void main() {
       );
 
       expect(result, contains('Cash received cannot be negative'));
+      expect(
+          const PosInvoiceReadinessValidator()
+              .validate(_input(saleItems: [item], upiInput: -1)),
+          contains('UPI cannot be negative'));
       item.dispose();
     });
   });
@@ -612,6 +616,34 @@ void main() {
       item.dispose();
     });
 
+    test('wholesale tax breakdown uses configured rates and matches totals',
+        () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 10,
+        rate: 1000,
+        makingInput: 100,
+      );
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billingMode: BillingMode.wholesale,
+          billType: BillType.gst,
+          goldBhawInput: 60000,
+          metalGstRates: const {MetalType.gold: 0.04},
+          makingGstRate: 0.07,
+        ),
+      );
+      final tax = totals.metalTaxBreakdowns[MetalType.gold]!;
+      expect(tax.metalTaxable, 55002);
+      expect(tax.labourTaxable, 1000);
+      expect(tax.metalTax, 2200.08);
+      expect(tax.labourTax, 70);
+      expect(tax.metalTax + tax.labourTax, totals.goldGst);
+      expect(totals.goldGst, totals.totalGst);
+      item.dispose();
+    });
+
     test('deducts old gold only in retail cash-adjust mode', () {
       final saleItem = _saleItem(huid: 'HUID-001', grossWeight: 10, rate: 1000);
       final oldItem = _tradeInItem(grossWeight: 2, purity: 90, rate: 500);
@@ -712,6 +744,13 @@ PosTotalsInput _totalsInput({
   double cardInput = 0,
   double advanceInput = 0,
   double goldBhawInput = 0,
+  Map<MetalType, double> metalGstRates = const {
+    MetalType.gold: 0.03,
+    MetalType.silver: 0.03,
+    MetalType.platinum: 0.03,
+    MetalType.diamond: 0.03,
+  },
+  double makingGstRate = 0.05,
   DiscountType discountType = DiscountType.percentage,
   double discountInput = 0,
 }) {
@@ -732,14 +771,9 @@ PosTotalsInput _totalsInput({
     silverBhawInput: 0,
     platinumBhawInput: 0,
     diamondBhawInput: 0,
-    metalGstRates: const {
-      MetalType.gold: 0.03,
-      MetalType.silver: 0.03,
-      MetalType.platinum: 0.03,
-      MetalType.diamond: 0.03,
-    },
+    metalGstRates: metalGstRates,
     defaultJewelleryGstRate: 0.03,
-    makingGstRate: 0.05,
+    makingGstRate: makingGstRate,
     roundOffGstAmount: true,
   );
 }

@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../domain/services/pos_payment_labels.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
@@ -1287,7 +1288,7 @@ class PosLotusClassicInvoicePdfLayout {
       case PaymentMode.cash:
         return 'Cash';
       case PaymentMode.upi:
-        return 'UPI / Bank Transfer';
+        return PosPaymentLabels.upi;
       case PaymentMode.card:
         return 'Card';
       case PaymentMode.advance:

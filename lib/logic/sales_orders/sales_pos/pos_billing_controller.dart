@@ -14,6 +14,7 @@ import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter
 import '../../../features/sales_pos/domain/services/pos_metal_payment_allocator.dart';
 import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
+import '../../../features/sales_pos/domain/use_cases/pos_metal_tax_breakdown.dart';
 import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import '../../../core/tax/gst_jurisdiction.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
@@ -305,6 +306,9 @@ class PosBillingController extends ChangeNotifier {
   }
 
   String get makingGstRateLabel => _formatRateLabel(_makingGstRate);
+
+  String metalGstRateLabel(MetalType metal) =>
+      _formatRateLabel(_metalGstRates[metal] ?? _defaultJewelleryGstRate);
 
   String _formatRateLabel(double decimalRate) {
     final percent = decimalRate * 100;
@@ -1602,6 +1606,8 @@ class PosBillingController extends ChangeNotifier {
   double get silverGst => _totals.silverGst;
   double get platinumGst => _totals.platinumGst;
   double get diamondGst => _totals.diamondGst;
+  PosMetalTaxBreakdown metalTaxBreakdown(MetalType metal) =>
+      _totals.metalTaxBreakdowns[metal] ?? PosMetalTaxBreakdown.zero;
   double get totalGst => _totals.totalGst;
   double get cgst => _totals.cgst;
   double get sgst => _totals.sgst;

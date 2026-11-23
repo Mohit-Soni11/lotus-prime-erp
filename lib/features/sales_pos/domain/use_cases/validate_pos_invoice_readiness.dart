@@ -1,5 +1,6 @@
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
+import '../services/pos_payment_labels.dart';
 
 class PosInvoiceReadinessInput {
   const PosInvoiceReadinessInput({
@@ -125,7 +126,7 @@ class PosInvoiceReadinessValidator {
   String? _validatePaymentInputs(PosInvoiceReadinessInput input) {
     final payments = <String, double>{
       'Cash received': input.cashInput,
-      'UPI / Bank transfer': input.upiInput,
+      PosPaymentLabels.upi: input.upiInput,
       'Card payment': input.cardInput,
       'Customer advance': input.advanceInput,
     };

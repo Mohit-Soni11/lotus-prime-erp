@@ -1,5 +1,6 @@
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../domain/services/pos_payment_labels.dart';
 
 const double posInvoiceMoneyEpsilon = 0.005;
 const double posInvoiceDueEpsilon = 0.5;
@@ -89,7 +90,7 @@ class PosInvoiceFinancialBreakdown {
         PosInvoicePaymentEntry(label: 'Cash', amount: invoice.cashPaid),
       if (invoice.upiPaid > posInvoiceMoneyEpsilon)
         PosInvoicePaymentEntry(
-          label: 'UPI / Bank Transfer',
+          label: PosPaymentLabels.upi,
           amount: invoice.upiPaid,
         ),
       if (invoice.cardPaid > posInvoiceMoneyEpsilon)

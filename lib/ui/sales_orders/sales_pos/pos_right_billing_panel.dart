@@ -1,23 +1,13 @@
-// ==========================================
-// FILE: pos_right_billing_panel.dart
-// TYPE: Smart UI Component (UPGRADED)
-// AUTHOR: Senior System Architect
-// DESCRIPTION: Payment Hub & Invoice Summary connected to Master Theme.
-//               HOLD System Wired-Up with Smart Badge.
-//               INVOICE PREVIEW Wired-Up.
-// ==========================================
-
 import 'package:flutter/material.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
-import 'pos_hold_list_dialog.dart';
+import 'pos_billing_action_bar.dart';
 import 'gst_summary/pos_gst_classification_card.dart';
-import 'payment_summary/pos_payment_summary_cards.dart';
+import 'pos_payment_settlement_section.dart';
 import 'advance_stock/pos_advance_stock_resolution_dialog.dart';
 import 'advance_stock/pos_advance_quick_stock_dialog.dart';
 
-//  Invoice preview dependency
 import 'pos_invoice_preview_screen.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -33,101 +23,83 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   bool _makingExpanded = false;
   bool _gstExpanded = false;
   bool _tradeInExpanded = false;
-  //  Promise date is owned by PosBillingController.
-
-  double _lastPayableAmount = 0.0;
-  double _lastTotalPaid = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _lastPayableAmount = widget.ctrl.finalPayableAmount;
-    _lastTotalPaid = widget.ctrl.totalPaid;
-    widget.ctrl.addListener(_onCtrlChanged);
-  }
-
-  void _onCtrlChanged() {
-    bool shouldReset = false;
-
-    if (_lastPayableAmount != widget.ctrl.finalPayableAmount) {
-      _lastPayableAmount = widget.ctrl.finalPayableAmount;
-      shouldReset = true;
-    }
-    if (_lastTotalPaid != widget.ctrl.totalPaid) {
-      _lastTotalPaid = widget.ctrl.totalPaid;
-      shouldReset = true;
-    }
-    if (shouldReset) {
-      setState(() {});
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.ctrl.removeListener(_onCtrlChanged);
-    super.dispose();
-  }
+  bool _openingInvoicePreview = false;
 
   Future<void> _handleGenerateInvoicePressed() async {
-    await widget.ctrl.resolvePendingHuidStockSelections();
-    if (!mounted) {
-      return;
-    }
+    if (_openingInvoicePreview) return;
+    setState(() => _openingInvoicePreview = true);
+    try {
+      await widget.ctrl.resolvePendingHuidStockSelections();
+      if (!mounted) {
+        return;
+      }
 
-    final stockIssue = await widget.ctrl.validateStockLinkReadiness();
-    if (!mounted) {
-      return;
-    }
-    if (stockIssue != null) {
-      widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
-      final action = await PosAdvanceStockResolutionDialog.show(
-        context: context,
-        controller: widget.ctrl,
-        issue: stockIssue,
-      );
-      if (!mounted || action == null) {
+      var stockIssue = await widget.ctrl.validateStockLinkReadiness();
+      if (!mounted) {
         return;
       }
-      if (action == PosAdvanceStockResolutionAction.selectExistingStock) {
+      while (stockIssue != null) {
         widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
-        return;
-      }
-      if (action == PosAdvanceStockResolutionAction.quickAddStock) {
-        final linked = await PosAdvanceQuickStockDialog.show(
+        final action = await PosAdvanceStockResolutionDialog.show(
           context: context,
           controller: widget.ctrl,
-          rowIndex: stockIssue.rowIndex,
+          issue: stockIssue,
         );
-        if (!mounted) {
+        if (!mounted || action == null) {
           return;
         }
-        if (linked) {
-          AppFeedback.show(
-            context,
-            type: AppFeedbackType.success,
-            message: 'Stock added and linked with the sale row.',
-          );
-          await _handleGenerateInvoicePressed();
+        if (action == PosAdvanceStockResolutionAction.selectExistingStock) {
+          widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
+          return;
         }
+        if (action == PosAdvanceStockResolutionAction.quickAddStock) {
+          final linked = await PosAdvanceQuickStockDialog.show(
+            context: context,
+            controller: widget.ctrl,
+            rowIndex: stockIssue.rowIndex,
+          );
+          if (!mounted) {
+            return;
+          }
+          if (linked) {
+            AppFeedback.show(
+              context,
+              type: AppFeedbackType.success,
+              message: 'Stock added and linked with the sale row.',
+            );
+            stockIssue = await widget.ctrl.validateStockLinkReadiness();
+            if (!mounted) return;
+            continue;
+          }
+          return;
+        }
+      }
+
+      final validationMessage = widget.ctrl.validateInvoiceReadiness();
+      if (validationMessage != null) {
+        widget.ctrl.focusFirstInvoiceIssue();
+        AppFeedback.show(
+          context,
+          type: AppFeedbackType.error,
+          message: validationMessage,
+        );
         return;
       }
-    }
 
-    final validationMessage = widget.ctrl.validateInvoiceReadiness();
-    if (validationMessage != null) {
-      widget.ctrl.focusFirstInvoiceIssue();
-      AppFeedback.show(
+      await PosInvoicePreviewScreen.push(
         context,
-        type: AppFeedbackType.error,
-        message: validationMessage,
+        billingCtrl: widget.ctrl,
       );
-      return;
+    } catch (error) {
+      if (mounted) {
+        AppFeedback.error(
+          context,
+          message: 'Invoice preview could not be opened. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _openingInvoicePreview = false);
     }
-
-    PosInvoicePreviewScreen.push(
-      context,
-      billingCtrl: widget.ctrl,
-    );
   }
 
   Future<void> _pickPromiseDate(BuildContext context) async {
@@ -188,13 +160,26 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             ? _buildWholesaleSummaryBoard()
                             : _buildRetailSummaryBoard(),
                         _buildPanelDivider(),
-                        _buildPaymentHub(),
+                        PosPaymentSettlementSection(
+                          ctrl: widget.ctrl,
+                          header: _buildSectionHead(
+                            icon: SalesPosIcons.paymentHubWallet,
+                            title: 'PAYMENT SETTLEMENT',
+                            subtitle: 'Record received payment amounts',
+                          ),
+                          onPickPromiseDate: () => _pickPromiseDate(context),
+                        ),
                       ],
                     ),
                   ),
                 ),
                 _buildPanelDivider(),
-                _buildActionButtons(),
+                PosBillingActionBar(
+                  ctrl: widget.ctrl,
+                  isOpeningInvoicePreview: _openingInvoicePreview,
+                  onGenerateInvoicePressed: _handleGenerateInvoicePressed,
+                  onParkBillPressed: _handleParkBillPressed,
+                ),
               ],
             ),
           ),
@@ -959,20 +944,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     );
   }
 
-  Widget _buildWholesaleMetalGstBlock(String metalName, double bhawAmt,
-      double makingCharge, double controllerTotalGst, Color brandColor) {
-    double ratio(double amt) =>
-        widget.ctrl.grossAmount == 0 ? 0 : (amt / widget.ctrl.grossAmount);
-
-    double mTaxable = bhawAmt > 0
-        ? bhawAmt - (widget.ctrl.discountAmount * ratio(bhawAmt))
-        : 0.0;
-    double lTaxable = makingCharge > 0
-        ? makingCharge - (widget.ctrl.discountAmount * ratio(makingCharge))
-        : 0.0;
-
-    double mGst = mTaxable > 0 ? mTaxable * 0.03 : 0.0;
-    double lGst = lTaxable > 0 ? lTaxable * 0.05 : 0.0;
+  Widget _buildWholesaleMetalGstBlock(
+      String metalName, MetalType metal, double totalGst, Color brandColor) {
+    final tax = widget.ctrl.metalTaxBreakdown(metal);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -993,17 +967,17 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   color: brandColor)),
           const SizedBox(height: 8),
           _buildSubtleRow(
-              mTaxable > 0
-                  ? "Tax on Metal (${widget.ctrl.jewelleryGstRateLabel} on Rs ${mTaxable.toStringAsFixed(2)})"
+              tax.metalTaxable > 0
+                  ? "Tax on Metal (${widget.ctrl.metalGstRateLabel(metal)} on Rs ${tax.metalTaxable.toStringAsFixed(2)})"
                   : "Tax on Metal (0.00)",
               0,
-              customVal: "Rs ${mGst.toStringAsFixed(2)}"),
+              customVal: "Rs ${tax.metalTax.toStringAsFixed(2)}"),
           _buildSubtleRow(
-              lTaxable > 0
-                  ? "Tax on Labour (${widget.ctrl.makingGstRateLabel} on Rs ${lTaxable.toStringAsFixed(2)})"
+              tax.labourTaxable > 0
+                  ? "Tax on Labour (${widget.ctrl.makingGstRateLabel} on Rs ${tax.labourTaxable.toStringAsFixed(2)})"
                   : "Tax on Labour (0.00)",
               0,
-              customVal: "Rs ${lGst.toStringAsFixed(2)}"),
+              customVal: "Rs ${tax.labourTax.toStringAsFixed(2)}"),
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Divider(
@@ -1016,7 +990,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
-              Text("Rs ${controllerTotalGst.toStringAsFixed(2)}",
+              Text("Rs ${totalGst.toStringAsFixed(2)}",
                   style: TextStyle(
                       fontSize: SalesPosStyles.fontBody,
                       fontWeight: FontWeight.w900,
@@ -1122,36 +1096,23 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   if (isWholesale) ...[
                     if (widget.ctrl.goldNetFine != 0 ||
                         widget.ctrl.goldMakingCharge > 0)
-                      _buildWholesaleMetalGstBlock(
-                          "GOLD",
-                          widget.ctrl.goldBhawAmt,
-                          widget.ctrl.goldMakingCharge,
-                          widget.ctrl.goldGst,
-                          SalesPosColors.brandGold),
+                      _buildWholesaleMetalGstBlock("GOLD", MetalType.gold,
+                          widget.ctrl.goldGst, SalesPosColors.brandGold),
                     if (widget.ctrl.silverNetFine != 0 ||
                         widget.ctrl.silverMakingCharge > 0)
-                      _buildWholesaleMetalGstBlock(
-                          "SILVER",
-                          widget.ctrl.silverBhawAmt,
-                          widget.ctrl.silverMakingCharge,
-                          widget.ctrl.silverGst,
-                          SalesPosColors.brandSilver),
+                      _buildWholesaleMetalGstBlock("SILVER", MetalType.silver,
+                          widget.ctrl.silverGst, SalesPosColors.brandSilver),
                     if (widget.ctrl.platNetFine != 0 ||
                         widget.ctrl.platinumMakingCharge > 0)
                       _buildWholesaleMetalGstBlock(
                           "PLATINUM",
-                          widget.ctrl.platBhawAmt,
-                          widget.ctrl.platinumMakingCharge,
+                          MetalType.platinum,
                           widget.ctrl.platinumGst,
                           SalesPosColors.brandPlatinum),
                     if (widget.ctrl.diaNetFine != 0 ||
                         widget.ctrl.diamondMakingCharge > 0)
-                      _buildWholesaleMetalGstBlock(
-                          "DIAMOND",
-                          widget.ctrl.diaBhawAmt,
-                          widget.ctrl.diamondMakingCharge,
-                          widget.ctrl.diamondGst,
-                          SalesPosColors.brandDiamond),
+                      _buildWholesaleMetalGstBlock("DIAMOND", MetalType.diamond,
+                          widget.ctrl.diamondGst, SalesPosColors.brandDiamond),
                   ] else ...[
                     if (widget.ctrl.totalGoldWt > 0 ||
                         widget.ctrl.goldNetFine != 0)
@@ -1198,483 +1159,6 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 fontWeight: FontWeight.w900,
                 color: SalesPosColors.bodyTextMain,
                 letterSpacing: 0)),
-      ),
-    );
-  }
-
-  Widget _buildPaymentHub() {
-    final isEmptyCart =
-        widget.ctrl.saleItems.isEmpty && widget.ctrl.tradeInItems.isEmpty;
-    final hasIncompleteDraft =
-        !isEmptyCart && widget.ctrl.validateInvoiceReadiness() != null;
-    final isReturn = widget.ctrl.balanceDue < -0.005;
-    final returnMethod = widget.ctrl.changeReturnMethod;
-    final isDue = widget.ctrl.balanceDue > 0.005;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHead(
-              icon: SalesPosIcons.paymentHubWallet,
-              title: "PAYMENT SETTLEMENT",
-              subtitle: "Record received payment amounts"),
-          _buildPaymentInput(
-              "Cash Received", widget.ctrl.cashCtrl, SalesPosIcons.cashFilled),
-          const SizedBox(height: 12),
-          _buildPaymentInput("UPI / Bank Transfer", widget.ctrl.upiCtrl,
-              SalesPosIcons.bankUpi),
-          const SizedBox(height: 12),
-          _buildPaymentInput(
-              "Card Payment", widget.ctrl.cardCtrl, SalesPosIcons.card),
-          const SizedBox(height: 12),
-          _buildPaymentInput("Customer Advance", widget.ctrl.advCtrl,
-              SalesPosIcons.advancePayment),
-          if (!isEmptyCart) ...[
-            const SizedBox(height: 18),
-            if (widget.ctrl.shouldShowMetalPaymentAllocation) ...[
-              PosMetalPaymentAllocationCard(
-                allocations: widget.ctrl.metalPaymentAllocations,
-                settleFirstMetals: widget.ctrl.settleFirstMetals,
-                onToggle: widget.ctrl.toggleSettleFirstMetal,
-                metalDiscounts: widget.ctrl.metalDiscounts,
-                onDiscountChanged: widget.ctrl.setMetalDiscount,
-                billId: widget.ctrl.editingBillId,
-                manualMode: widget.ctrl.isManualMetalSettlement,
-                onManualModeChanged: widget.ctrl.setManualMetalSettlement,
-                manualPaidByMetal: widget.ctrl.manualPaidByMetal,
-                onManualPaidChanged: widget.ctrl.setManualMetalPaid,
-                allocationError: widget.ctrl.metalSettlementError,
-              ),
-              const SizedBox(height: 12),
-            ],
-            PosPaymentBreakdownCard(
-              amountPayable: widget.ctrl.finalPayableAmount,
-              amountReceived: widget.ctrl.totalPaid,
-              balanceDue: widget.ctrl.balanceDue,
-              hasIncompleteDraft: hasIncompleteDraft,
-            ),
-            const SizedBox(height: 12),
-            PosPaymentStatusCard(
-              isEmptyCart: isEmptyCart,
-              hasIncompleteDraft: hasIncompleteDraft,
-              balanceDue: widget.ctrl.balanceDue,
-              returnMethod: returnMethod,
-            ),
-          ],
-          if (!isEmptyCart) ...[
-            if (isReturn && returnMethod == null) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: widget.ctrl.canReturnChangeWith(
-                        RefundMethod.cash,
-                      )
-                          ? () => widget.ctrl.setChangeReturnMethod(
-                                RefundMethod.cash,
-                              )
-                          : null,
-                      icon: const Icon(SalesPosIcons.cashFilled,
-                          size: 18, color: Colors.white),
-                      label: const Text("RETURN CASH",
-                          style: TextStyle(
-                              fontSize: SalesPosStyles.fontLabel,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: SalesPosColors.success,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: widget.ctrl.canReturnChangeWith(
-                        RefundMethod.upi,
-                      )
-                          ? () => widget.ctrl.setChangeReturnMethod(
-                                RefundMethod.upi,
-                              )
-                          : null,
-                      icon: const Icon(SalesPosIcons.bankUpi,
-                          size: 18, color: Colors.white),
-                      label: const Text("RETURN UPI",
-                          style: TextStyle(
-                              fontSize: SalesPosStyles.fontLabel,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: SalesPosColors.upiButtonBg,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: widget.ctrl.canReturnChangeWith(
-                    RefundMethod.refundPayable,
-                  )
-                      ? () => widget.ctrl.setChangeReturnMethod(
-                            RefundMethod.refundPayable,
-                          )
-                      : null,
-                  icon: const Icon(SalesPosIcons.advancePayment,
-                      size: 18, color: Colors.white),
-                  label: const Text("MARK REFUND PAYABLE",
-                      style: TextStyle(
-                          fontSize: SalesPosStyles.fontLabel,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 0)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: SalesPosColors.brandGold,
-                    disabledBackgroundColor:
-                        SalesPosColors.bodyTextMuted.withValues(alpha: 0.20),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-              if (widget.ctrl.selectedCustomer == null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  "Select a customer to record a refund payable.",
-                  style: TextStyle(
-                    color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.85),
-                    fontSize: SalesPosStyles.fontCaption,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ],
-          ],
-          if (isDue && !isEmptyCart) ...[
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () => _pickPromiseDate(context),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: SalesPosColors.bodyBg,
-                  border: Border.all(
-                      color: SalesPosColors.danger.withValues(alpha: 0.50),
-                      width: 1.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(children: [
-                      const Icon(SalesPosIcons.promiseDate,
-                          color: SalesPosColors.danger, size: 18),
-                      const SizedBox(width: 10),
-                      Text("Promise Date",
-                          style: TextStyle(
-                              fontSize: SalesPosStyles.fontLabel,
-                              fontWeight: FontWeight.w900,
-                              color: SalesPosColors.danger
-                                  .withValues(alpha: 0.95))),
-                    ]),
-                    widget.ctrl.promiseDate != null
-                        ? Text(
-                            "${widget.ctrl.promiseDate!.day.toString().padLeft(2, '0')}/${widget.ctrl.promiseDate!.month.toString().padLeft(2, '0')}/${widget.ctrl.promiseDate!.year}",
-                            style: const TextStyle(
-                                color: SalesPosColors.danger,
-                                fontWeight: FontWeight.w900,
-                                fontSize: SalesPosStyles.fontBody))
-                        : const Text("Select Date",
-                            style: TextStyle(
-                                color: SalesPosColors.danger,
-                                fontWeight: FontWeight.w900,
-                                fontSize: SalesPosStyles.fontCaption)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentInput(
-      String label, TextEditingController tCtrl, IconData icon) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 5,
-          child: Row(
-            children: [
-              Icon(icon, color: SalesPosColors.bodyTextMain, size: 18),
-              const SizedBox(width: 10),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: SalesPosStyles.fontLabel,
-                      fontWeight: FontWeight.w900,
-                      color: SalesPosColors.bodyTextMain)),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 5,
-          child: SizedBox(
-            height: 40,
-            child: TextField(
-              controller: tCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true, signed: true),
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                  color: SalesPosColors.bodyTextMain,
-                  fontSize: SalesPosStyles.fontInput,
-                  fontWeight: FontWeight.w900),
-              decoration: InputDecoration(
-                hintText: "0.00",
-                hintStyle: const TextStyle(
-                    color: SalesPosColors.bodyTextMuted,
-                    fontSize: SalesPosStyles.fontBody),
-                filled: true,
-                fillColor: SalesPosColors.bodyBg,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-                enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                        color: SalesPosColors.bodyBorder, width: 1.5),
-                    borderRadius: BorderRadius.circular(8)),
-                focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                        color: SalesPosColors.brandGold, width: 2.0),
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ==========================================
-  // FINAL ACTION BUTTONS & HOLD LOGIC
-  // ==========================================
-  Widget _buildActionButtons() {
-    final payableAmount = widget.ctrl.finalPayableAmount;
-    final hasItems =
-        widget.ctrl.saleItems.isNotEmpty || widget.ctrl.tradeInItems.isNotEmpty;
-    final validationMessage =
-        hasItems ? widget.ctrl.validateInvoiceReadiness() : null;
-    final actionNeedsReview = validationMessage != null;
-    final actionLabel = !hasItems
-        ? 'ADD ITEMS FIRST'
-        : widget.ctrl.isEditingExistingBill
-            ? 'UPDATE INVOICE'
-            : actionNeedsReview
-                ? 'REVIEW INVOICE'
-                : 'GENERATE INVOICE';
-    final actionColor = !hasItems
-        ? SalesPosColors.bodyTextMuted
-        : actionNeedsReview
-            ? SalesPosColors.warning
-            : SalesPosColors.success;
-    final actionIcon = !hasItems
-        ? SalesPosIcons.addItemToCart
-        : actionNeedsReview
-            ? SalesPosIcons.dueWarning
-            : SalesPosIcons.printReceipt;
-
-    return Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        children: [
-          PosAmountPayableCard(amount: payableAmount),
-
-          // --- SMART PARKED BILLS BADGE (Visible only if bills are on hold) ---
-          if (widget.ctrl.heldBills.isNotEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: TextButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) =>
-                          PosHoldListDialog(ctrl: widget.ctrl),
-                    );
-                  },
-                  icon: const Icon(SalesPosIcons.holdFilled,
-                      size: 16, color: SalesPosColors.warning),
-                  label: Text(
-                      "VIEW PARKED BILLS (${widget.ctrl.heldBills.length})",
-                      style: const TextStyle(
-                          color: SalesPosColors.warning,
-                          fontWeight: FontWeight.w900,
-                          fontSize: SalesPosStyles.fontCaption,
-                          letterSpacing: 0)),
-                  style: TextButton.styleFrom(
-                    backgroundColor:
-                        SalesPosColors.warning.withValues(alpha: 0.1),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-              ),
-            ),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: _buildParkBillAction(),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                flex: 2,
-                child: SizedBox(
-                  height: 54,
-                  child: ElevatedButton.icon(
-                    //  Generate invoice action
-                    onPressed: _handleGenerateInvoicePressed,
-
-                    icon: Icon(actionIcon, color: Colors.white, size: 20),
-                    label: Text(
-                      actionLabel,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: SalesPosStyles.fontBody,
-                          letterSpacing: 0),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: actionColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildParkBillAction() {
-    final canPark = widget.ctrl.canHoldCurrentBill;
-    final hasItems =
-        widget.ctrl.saleItems.isNotEmpty || widget.ctrl.tradeInItems.isNotEmpty;
-    final isFinalized = widget.ctrl.isCurrentSaleCommitted;
-    final subtitle = canPark
-        ? 'Save draft'
-        : isFinalized
-            ? 'Finalized'
-            : hasItems
-                ? 'Not available'
-                : 'Add items';
-    final accent =
-        canPark ? SalesPosColors.warning : SalesPosColors.bodyTextMuted;
-
-    return SizedBox(
-      height: 54,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: canPark ? _handleParkBillPressed : null,
-          borderRadius: BorderRadius.circular(10),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: canPark
-                  ? SalesPosColors.warning.withValues(alpha: 0.10)
-                  : SalesPosColors.bodyBg.withValues(alpha: 0.86),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: canPark
-                    ? SalesPosColors.warning.withValues(alpha: 0.82)
-                    : SalesPosColors.bodyBorder,
-                width: canPark ? 1.8 : 1.4,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: canPark ? 0.18 : 0.10),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: accent.withValues(alpha: 0.22)),
-                  ),
-                  child: Icon(
-                    SalesPosIcons.holdFilled,
-                    size: 17,
-                    color: accent,
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Park Bill',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: canPark
-                              ? SalesPosColors.warning
-                              : SalesPosColors.bodyTextMain
-                                  .withValues(alpha: 0.60),
-                          fontSize: SalesPosStyles.fontCaption,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color:
-                              accent.withValues(alpha: canPark ? 0.88 : 0.70),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

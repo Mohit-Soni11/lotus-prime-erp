@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../../core/pdf/lotus_pdf_theme.dart';
 import '../../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
+import '../../../../features/sales_pos/domain/services/pos_payment_labels.dart';
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
@@ -1076,7 +1077,7 @@ class _PosInvoicePdfDocumentBuilder {
     final payments = <Map<String, dynamic>>[
       if (invoice.cashPaid > 0) {'label': 'Cash', 'amount': invoice.cashPaid},
       if (invoice.upiPaid > 0)
-        {'label': 'UPI / Bank Transfer', 'amount': invoice.upiPaid},
+        {'label': PosPaymentLabels.upi, 'amount': invoice.upiPaid},
       if (invoice.cardPaid > 0) {'label': 'Card', 'amount': invoice.cardPaid},
       if (invoice.advancePaid > 0)
         {'label': 'Advance', 'amount': invoice.advancePaid},
@@ -1349,7 +1350,7 @@ class _PosInvoicePdfDocumentBuilder {
       case PaymentMode.cash:
         return 'Cash';
       case PaymentMode.upi:
-        return 'UPI / Bank Transfer';
+        return PosPaymentLabels.upi;
       case PaymentMode.card:
         return 'Card';
       case PaymentMode.advance:
@@ -2027,7 +2028,7 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue('Cash', _thermalMoney(invoice.cashPaid), fontSize),
         if (invoice.upiPaid > 0.5)
           _thermalKeyValue(
-              'UPI / Bank', _thermalMoney(invoice.upiPaid), fontSize),
+              PosPaymentLabels.upi, _thermalMoney(invoice.upiPaid), fontSize),
         if (invoice.cardPaid > 0.5)
           _thermalKeyValue('Card', _thermalMoney(invoice.cardPaid), fontSize),
         if (invoice.advancePaid > 0.5)

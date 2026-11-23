@@ -864,10 +864,13 @@ class PosInvoiceController extends ChangeNotifier {
       final existingBill = await (_db.select(_db.bills)
             ..where((tbl) => tbl.billNo.equals(inv.invoiceNumber)))
           .getSingleOrNull();
-      savedBillDbId = existingBill?.id;
-      if (savedBillDbId != null) {
-        await _syncPrintableInvoiceLinesFromDatabase();
+      if (existingBill == null) {
+        throw StateError(
+          'The finalized invoice ${inv.invoiceNumber} is missing from the database. Verify the sale before printing or exporting.',
+        );
       }
+      savedBillDbId = existingBill.id;
+      await _syncPrintableInvoiceLinesFromDatabase();
       isSavedToDb = true;
       return;
     }

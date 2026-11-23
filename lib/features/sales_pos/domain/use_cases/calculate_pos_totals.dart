@@ -2,6 +2,7 @@ import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_money_math.dart';
 import '../services/pos_weight_math.dart';
+import 'pos_metal_tax_breakdown.dart';
 
 class PosTotalsInput {
   const PosTotalsInput({
@@ -97,6 +98,7 @@ class PosTotals {
     required this.silverGst,
     required this.platinumGst,
     required this.diamondGst,
+    required this.metalTaxBreakdowns,
     required this.totalGst,
     required this.cgst,
     required this.sgst,
@@ -157,6 +159,7 @@ class PosTotals {
   final double silverGst;
   final double platinumGst;
   final double diamondGst;
+  final Map<MetalType, PosMetalTaxBreakdown> metalTaxBreakdowns;
   final double totalGst;
   final double cgst;
   final double sgst;
@@ -340,62 +343,59 @@ class CalculatePosTotals {
         : metalDiscounts.values.fold(0.0, (sum, value) => sum + value));
     final saleAmountAfterDiscount = _roundMoney(grossAmount - discountAmount);
 
-    final goldGst = _metalGst(
+    final goldTax = _metalTaxBreakdown(
       input: input,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
-      wholesaleTotalMetalAmount: wholesaleTotalMetalAmount,
       metalAmount: goldBhawAmount,
       makingCharge: goldMakingCharge,
       retailAmount: totalGoldAmount,
-      totalMakingCharge: totalMakingCharge,
       metal: MetalType.gold,
       scopedDiscount:
           input.metalDiscounts.isEmpty ? null : metalDiscounts[MetalType.gold],
     );
-    final silverGst = _metalGst(
+    final silverTax = _metalTaxBreakdown(
       input: input,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
-      wholesaleTotalMetalAmount: wholesaleTotalMetalAmount,
       metalAmount: silverBhawAmount,
       makingCharge: silverMakingCharge,
       retailAmount: totalSilverAmount,
-      totalMakingCharge: totalMakingCharge,
       metal: MetalType.silver,
       scopedDiscount: input.metalDiscounts.isEmpty
           ? null
           : metalDiscounts[MetalType.silver],
     );
-    final platinumGst = _metalGst(
+    final platinumTax = _metalTaxBreakdown(
       input: input,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
-      wholesaleTotalMetalAmount: wholesaleTotalMetalAmount,
       metalAmount: platinumBhawAmount,
       makingCharge: platinumMakingCharge,
       retailAmount: totalPlatinumAmount,
-      totalMakingCharge: totalMakingCharge,
       metal: MetalType.platinum,
       scopedDiscount: input.metalDiscounts.isEmpty
           ? null
           : metalDiscounts[MetalType.platinum],
     );
-    final diamondGst = _metalGst(
+    final diamondTax = _metalTaxBreakdown(
       input: input,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
-      wholesaleTotalMetalAmount: wholesaleTotalMetalAmount,
       metalAmount: diamondBhawAmount,
       makingCharge: diamondMakingCharge,
       retailAmount: totalDiamondAmount,
-      totalMakingCharge: totalMakingCharge,
       metal: MetalType.diamond,
       scopedDiscount: input.metalDiscounts.isEmpty
           ? null
           : metalDiscounts[MetalType.diamond],
     );
 
+    final goldGst = _roundMoney(goldTax.metalTax + goldTax.labourTax);
+    final silverGst = _roundMoney(silverTax.metalTax + silverTax.labourTax);
+    final platinumGst =
+        _roundMoney(platinumTax.metalTax + platinumTax.labourTax);
+    final diamondGst = _roundMoney(diamondTax.metalTax + diamondTax.labourTax);
     final totalGst =
         _roundMoney(goldGst + silverGst + platinumGst + diamondGst);
     final cgst = _roundMoney(totalGst / 2);
@@ -481,6 +481,12 @@ class CalculatePosTotals {
       silverGst: silverGst,
       platinumGst: platinumGst,
       diamondGst: diamondGst,
+      metalTaxBreakdowns: Map.unmodifiable({
+        MetalType.gold: goldTax,
+        MetalType.silver: silverTax,
+        MetalType.platinum: platinumTax,
+        MetalType.diamond: diamondTax,
+      }),
       totalGst: totalGst,
       cgst: cgst,
       sgst: sgst,
@@ -512,20 +518,18 @@ class CalculatePosTotals {
     return input.discountInput.clamp(0.0, grossAmount).toDouble();
   }
 
-  double _metalGst({
+  PosMetalTaxBreakdown _metalTaxBreakdown({
     required PosTotalsInput input,
     required double grossAmount,
     required double discountAmount,
-    required double wholesaleTotalMetalAmount,
     required double metalAmount,
     required double makingCharge,
     required double retailAmount,
-    required double totalMakingCharge,
     required MetalType metal,
     double? scopedDiscount,
   }) {
     if (input.billType != BillType.gst) {
-      return 0;
+      return PosMetalTaxBreakdown.zero;
     }
 
     double ratio(double amount) => grossAmount == 0 ? 0 : amount / grossAmount;
@@ -544,20 +548,29 @@ class CalculatePosTotals {
               : sectionGross == 0
                   ? 0
                   : scopedDiscount * makingCharge / sectionGross);
-      return _taxAmount(
-            input,
-            metalTaxable,
-            input.metalGstRates[metal] ?? input.defaultJewelleryGstRate,
-          ) +
-          _taxAmount(input, labourTaxable, input.makingGstRate);
+      return PosMetalTaxBreakdown(
+        metalTaxable: metalTaxable,
+        labourTaxable: labourTaxable,
+        metalTax: _taxAmount(
+          input,
+          metalTaxable,
+          input.metalGstRates[metal] ?? input.defaultJewelleryGstRate,
+        ),
+        labourTax: _taxAmount(input, labourTaxable, input.makingGstRate),
+      );
     }
 
     final retailTaxable =
         retailAmount - (scopedDiscount ?? discountAmount * ratio(retailAmount));
-    return _taxAmount(
-      input,
-      retailTaxable,
-      input.metalGstRates[metal] ?? input.defaultJewelleryGstRate,
+    return PosMetalTaxBreakdown(
+      metalTaxable: retailTaxable,
+      labourTaxable: 0,
+      metalTax: _taxAmount(
+        input,
+        retailTaxable,
+        input.metalGstRates[metal] ?? input.defaultJewelleryGstRate,
+      ),
+      labourTax: 0,
     );
   }
 
