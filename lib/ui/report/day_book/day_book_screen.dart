@@ -71,7 +71,13 @@ class _DayBookScreenState extends State<DayBookScreen> {
     if (!mounted) return;
     if (draft == null) return;
     await context.push(RoutePaths.financeExpense, extra: draft);
-    if (mounted) await _ctrl.loadData(silent: true);
+    if (!mounted) return;
+    await _ctrl.loadData(silent: true);
+    if (!mounted || _ctrl.summary?.isDayLocked == true) return;
+
+    // A shortage Expense Entry is a step inside the same close-of-day task.
+    // Keep the Day Closing workspace and its typed count available on return.
+    await _showDayClosing();
   }
 
   bool get _isRequestedDay {

@@ -99,9 +99,7 @@ void main() {
     expect(find.textContaining('Expense draft:'), findsOneWidget);
     await tester.tap(find.text('Back to closing'));
     await tester.pumpAndSettle();
-    expect(find.byType(DayBookScreen), findsOneWidget);
-    await tester.tap(find.text('Day Closing'));
-    await tester.pumpAndSettle();
+    expect(find.byType(DayBookEodDialog), findsOneWidget);
     expect(find.text('Cash Shortage'), findsOneWidget);
     expect(controller.closingBankCtrl.text, '0');
     expect(tester.takeException(), isNull);
@@ -155,23 +153,18 @@ Future<void> _open(WidgetTester tester, _WorkflowController controller,
         exitAfterClose: exit,
       ),
     ),
-    ShellRoute(
-      builder: (context, state, child) => child,
-      routes: [
-        GoRoute(
-          path: RoutePaths.financeExpense,
-          builder: (context, state) => Scaffold(
-            body: Column(children: [
-              Text('Expense draft: ${state.extra}'),
-              Text('Expense date: ${state.uri.queryParameters['date']}'),
-              TextButton(
-                onPressed: () => AppBackNavigation.backOr(context, '/'),
-                child: const Text('Back to closing'),
-              ),
-            ]),
+    GoRoute(
+      path: RoutePaths.financeExpense,
+      builder: (context, state) => Scaffold(
+        body: Column(children: [
+          Text('Expense draft: ${state.extra}'),
+          Text('Expense date: ${state.uri.queryParameters['date']}'),
+          TextButton(
+            onPressed: () => AppBackNavigation.backOr(context, '/'),
+            child: const Text('Back to closing'),
           ),
-        ),
-      ],
+        ]),
+      ),
     ),
   ]);
   addTearDown(router.dispose);

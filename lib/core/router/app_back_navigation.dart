@@ -5,6 +5,11 @@ import '../../constants/app_routes.dart';
 abstract final class AppBackNavigation {
   static void backOr(BuildContext context, String fallbackPath) {
     final router = GoRouter.of(context);
+    final rootNavigator = router.routerDelegate.navigatorKey.currentState;
+    if (rootNavigator?.canPop() == true) {
+      rootNavigator!.pop();
+      return;
+    }
     if (router.canPop()) {
       router.pop();
     } else {
