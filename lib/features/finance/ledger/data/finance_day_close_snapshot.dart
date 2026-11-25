@@ -19,8 +19,8 @@ class FinanceDayCloseSnapshot {
   final String sourceHash;
 }
 
-/// Builds the immutable close evidence from the same database transaction as
-/// the finance-day lock. A failed source query aborts the close.
+/// Builds immutable close evidence from the same database transaction as the
+/// closure record. A failed source query aborts the close.
 class FinanceDayCloseSnapshotBuilder {
   const FinanceDayCloseSnapshotBuilder(this.db);
 

@@ -8,6 +8,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/business_day/application/business_day_exit_service.dart';
 import 'package:lotus_erp/features/business_day/data/business_day_repository.dart';
 import 'package:lotus_erp/features/notifications/data/business_day_alert_repository.dart';
+import 'package:lotus_erp/ui/auth/services/auth_session_controller.dart';
 
 abstract final class ApplicationExitFlow {
   static Future<void> run(BuildContext context) async {
@@ -17,7 +18,7 @@ abstract final class ApplicationExitFlow {
         now: DateTime.now(),
         openClosing: (day) async {
           if (!context.mounted) return;
-          await context.push(BusinessDayAlertRepository.dayBookLocation(
+          await context.push<bool>(BusinessDayAlertRepository.dayBookLocation(
             day,
             'close',
             exitAfterClose: true,
@@ -25,6 +26,8 @@ abstract final class ApplicationExitFlow {
         },
         exitApplication: () async {
           if (!context.mounted) return;
+          // An explicit business exit always requires credentials next time.
+          await AuthSessionController.instance.signOut();
           await db.close();
           if (Platform.isAndroid || Platform.isIOS) {
             await SystemNavigator.pop();

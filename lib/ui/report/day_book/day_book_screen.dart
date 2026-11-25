@@ -63,21 +63,25 @@ class _DayBookScreenState extends State<DayBookScreen> {
     super.dispose();
   }
 
-  Future<void> _showDayClosing() async {
+  Future<bool> _showDayClosing() async {
     final draft = await DayBookFormNavigation.closeDay(
       context,
       _ctrl,
     );
-    if (!mounted) return;
-    if (draft == null) return;
+    if (!mounted) return false;
+    if (draft == null) {
+      return _ctrl.lastCloseSucceeded || _ctrl.summary?.isDayLocked == true;
+    }
     await context.push(RoutePaths.financeExpense, extra: draft);
-    if (!mounted) return;
+    if (!mounted) return false;
     await _ctrl.loadData(silent: true);
-    if (!mounted || _ctrl.summary?.isDayLocked == true) return;
+    if (!mounted || _ctrl.summary?.isDayLocked == true) {
+      return _ctrl.lastCloseSucceeded || _ctrl.summary?.isDayLocked == true;
+    }
 
     // A shortage Expense Entry is a step inside the same close-of-day task.
     // Keep the Day Closing workspace and its typed count available on return.
-    await _showDayClosing();
+    return _showDayClosing();
   }
 
   bool get _isRequestedDay {
@@ -107,7 +111,11 @@ class _DayBookScreenState extends State<DayBookScreen> {
       if (widget.initialAction == 'verify') {
         await _setBalance();
       } else if (widget.initialAction == 'close') {
-        await _showDayClosing();
+        final closed = await _showDayClosing();
+        if (mounted && _isRequestedDay && widget.exitAfterClose) {
+          _finishExitRequest(closed);
+        }
+        return;
       }
       if (mounted && _isRequestedDay && widget.exitAfterClose) {
         _finishExitRequest(_ctrl.summary?.isDayLocked == true);

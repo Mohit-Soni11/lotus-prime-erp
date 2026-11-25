@@ -13,10 +13,12 @@ class BusinessDayExitService {
   }) async {
     final days = await repository.pendingDays(now);
     for (final day in days) {
+      final closingVersion = await repository.closingVersion(day);
       await repository.requestClosing(day);
       await openClosing(day);
-      // Trust the persisted finance lock, never the UI/dialog return value.
-      if (!await repository.isClosed(day)) return false;
+      // Trust newly persisted close evidence, never the UI/dialog return.
+      if (await repository.closingVersion(day) <= closingVersion) return false;
+      await repository.completeClosingRequest(day);
     }
     await exitApplication();
     return true;

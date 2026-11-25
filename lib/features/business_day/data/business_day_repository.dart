@@ -4,12 +4,14 @@ import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_repository.dart';
+import 'package:lotus_erp/features/finance/ledger/data/finance_session_closure_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'business_day_activity_repository.dart';
 
-/// Records days actually opened by this installation. Finance-day closures
-/// remain the authoritative lock; opening the app never reopens a closed day.
+/// Records business dates opened by this installation. A counter-session close
+/// ends one signed-in session; only legacy/finalised finance-day closures lock
+/// a historical date permanently.
 class BusinessDayRepository {
   final AppDatabase db;
   const BusinessDayRepository(this.db);
@@ -49,10 +51,14 @@ class BusinessDayRepository {
     ''').get();
     final today = date(now);
     final activity = BusinessDayActivityRepository(db);
+    final sessionClosures = FinanceSessionClosureRepository(db);
     final pending = <DateTime>[];
     for (final row in rows) {
       final day = DateTime.parse(row.read<String>('day_date'));
-      if (!day.isBefore(today) || await activity.hasActivity(day)) {
+      final needsHistoricalClose = day.isBefore(today) &&
+          await activity.hasActivity(day) &&
+          !await sessionClosures.hasSessionClose(day);
+      if (!day.isBefore(today) || needsHistoricalClose) {
         pending.add(day);
       }
     }
@@ -61,6 +67,18 @@ class BusinessDayRepository {
 
   Future<bool> isClosed(DateTime day) =>
       FinanceDayClosureRepository(db).isClosed(day);
+
+  /// A version lets the exit flow prove that the close action which it opened
+  /// produced new evidence, rather than trusting a previously saved snapshot.
+  Future<int> closingVersion(DateTime day) async {
+    final legacyClosed = await isClosed(day);
+    final sessions =
+        await FinanceSessionClosureRepository(db).sessionCount(day);
+    return sessions + (legacyClosed ? 1 : 0);
+  }
+
+  Future<bool> hasSessionClose(DateTime day) =>
+      FinanceSessionClosureRepository(db).hasSessionClose(day);
 
   Future<bool> openingVerified(DateTime day) async =>
       await DayBookBalanceVerificationRepository(db).fetch(day) != null;
@@ -87,6 +105,18 @@ class BusinessDayRepository {
           variables: [Variable.withString(key(day))],
         ).getSingleOrNull() !=
         null;
+  }
+
+  Future<void> completeClosingRequest(DateTime day) async {
+    final table = await db
+        .customSelect(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'business_day_exit_requests'")
+        .getSingleOrNull();
+    if (table == null) return;
+    await db.customStatement(
+      'DELETE FROM business_day_exit_requests WHERE day_key = ?',
+      [key(day)],
+    );
   }
 
   Future<List<String>> pendingRateMetals(DateTime day) async {

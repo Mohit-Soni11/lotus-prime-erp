@@ -12,6 +12,7 @@ import '../../../repositories/reports/day_book_metal_verification_repository.dar
 import '../../../models/reports/day_book/day_book_metal_count.dart';
 import '../../../database/db/app_database.dart';
 import '../../../features/finance/ledger/data/finance_day_closure_repository.dart';
+import '../../../features/finance/ledger/data/finance_session_closure_repository.dart';
 import '../../../core/logging/app_logger.dart';
 import 'day_book_close_authorization.dart';
 
@@ -31,11 +32,15 @@ class DayBookController extends ChangeNotifier {
       DayBookBalanceVerificationRepository(AppDatabase());
   final FinanceDayClosureRepository _closures =
       FinanceDayClosureRepository(AppDatabase());
+  final FinanceSessionClosureRepository _sessionClosures =
+      FinanceSessionClosureRepository(AppDatabase());
   final DayBookMetalVerificationRepository _metalVerifications =
       DayBookMetalVerificationRepository(AppDatabase());
   final DayBookCloseAuthorization _closeAuthorization =
       DayBookCloseAuthorization();
   String? closeError;
+  bool _lastCloseSucceeded = false;
+  bool get lastCloseSucceeded => _lastCloseSucceeded;
 
   // ── Date ──────────────────────────────────────────────────────────────────
   DateTime _selectedDate = DateTime.now();
@@ -113,6 +118,7 @@ class DayBookController extends ChangeNotifier {
   }
 
   void resetClosingDraft() {
+    _lastCloseSucceeded = false;
     _resettingClosingDraft = true;
     try {
       for (final controller in [
@@ -208,7 +214,12 @@ class DayBookController extends ChangeNotifier {
       final data = await _repo.fetchDayBook(requestedDate);
       if (_disposed || generation != _loadGeneration) return;
 
-      final locked = await _closures.isClosed(requestedDate);
+      // A counter-session close is deliberately not a daily source lock. Only
+      // legacy/finalised dates before today stay read-only.
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
+      final locked = requestedDate.isBefore(todayStart) &&
+          await _closures.isClosed(requestedDate);
       if (_disposed || generation != _loadGeneration) return;
 
       final balanceVerification =
@@ -364,10 +375,11 @@ class DayBookController extends ChangeNotifier {
       _summary?.custodyPosition?.closingVerified == true;
 
   // ==========================================================================
-  // CLOSE DAY & LOCK LEDGER
-  // Persists the close in the finance ledger database.
+  // CLOSE COUNTER SESSION
+  // Persists immutable evidence without locking same-date source activity.
   // ==========================================================================
   Future<bool> closeDay({required double physicalBank}) async {
+    _lastCloseSucceeded = false;
     closeError = null;
     final money = _summary?.moneyFlow;
     if (money == null) {
@@ -398,12 +410,10 @@ class DayBookController extends ChangeNotifier {
     }
     try {
       final actorId = await _closeAuthorization.authorizedActorId();
-      final closed = await _closures.closeDay(
+      final closed = await _sessionClosures.closeSession(
         _selectedDate,
         closingCash: physicalCashAmount,
         physicalBank: physicalBank,
-        requireVerifiedInvoiceIssues: true,
-        requireConsistentMetal: true,
         closedBy: actorId,
         denominationCount: {
           '500': denomination.note500,
@@ -420,6 +430,7 @@ class DayBookController extends ChangeNotifier {
             'Cash or bank changed after the count. Refresh and recount before closing.';
         return false;
       }
+      _lastCloseSucceeded = true;
       await loadData(silent: true);
       return true;
     } catch (e) {

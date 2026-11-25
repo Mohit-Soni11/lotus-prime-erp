@@ -220,6 +220,9 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
   @override
   DateTime get selectedDate => DateTime(2026, 11, 20);
   bool _locked = false;
+  bool _lastCloseSucceeded = false;
+  @override
+  bool get lastCloseSucceeded => _lastCloseSucceeded;
   DayBookBalanceVerification? _verification;
   final _counts = List.generate(7, (_) => TextEditingController(text: '0'));
 
@@ -295,6 +298,7 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
   @override
   Future<bool> closeDay({required double physicalBank}) async {
     _locked = physicalBank == 0;
+    _lastCloseSucceeded = _locked;
     notifyListeners();
     return _locked;
   }
