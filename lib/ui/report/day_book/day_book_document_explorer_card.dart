@@ -8,7 +8,7 @@ import '../../../models/reports/day_book/day_book_document_item.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_document_destination.dart';
-import 'day_book_metal_sales_panel.dart';
+import 'day_book_metal_weight.dart';
 import 'day_book_smart_format.dart';
 
 class DayBookDocumentExplorerCard extends StatelessWidget {

@@ -24,8 +24,9 @@ List<RouteBase> financeRoutes() => [
         path: RoutePaths.financeBankBook,
         builder: (_, __) => const BankBookScreen(),
       ),
-      GoRoute(
+      workspaceRoute(
         path: RoutePaths.financeExpense,
+        rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => ExpenseScreen(
           onBack: () => _goBackOr(context, RoutePaths.dashboard),
           initialDate:

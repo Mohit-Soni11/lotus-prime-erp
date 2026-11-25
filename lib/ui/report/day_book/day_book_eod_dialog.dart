@@ -7,80 +7,48 @@ import '../../../models/finance/expense/expense_draft.dart';
 import '../../../models/reports/day_book/day_book_closing_mismatch.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_eod_sections.dart';
+import 'day_book_closing_reconciliation_card.dart';
 import 'day_book_form_visuals.dart';
 import 'day_book_form_frame.dart';
-import 'day_book_metal_count_dialog.dart';
+import 'day_book_recorded_metal_closing_card.dart';
+import 'day_book_closing_footer.dart';
 
 class DayBookEodDialog extends StatefulWidget {
   const DayBookEodDialog(
-      {super.key,
-      required this.ctrl,
-      this.fullScreen = false,
-      this.onVerifyOpening});
+      {super.key, required this.ctrl, this.fullScreen = false});
   final DayBookController ctrl;
   final bool fullScreen;
-  final Future<void> Function()? onVerifyOpening;
 
   @override
   State<DayBookEodDialog> createState() => _DayBookEodDialogState();
 }
 
 class _DayBookEodDialogState extends State<DayBookEodDialog> {
-  final _bank = TextEditingController();
-  bool _cashCountEntered = false;
   bool _closing = false;
-  bool _verifyingOpening = false;
 
   @override
   void initState() {
     super.initState();
-    _cashCountEntered = widget.ctrl.physicalCashAmount > 0;
-    _bank.addListener(_refresh);
+    widget.ctrl.closingBankCtrl.addListener(_refresh);
   }
 
   void _refresh() => setState(() {});
 
   @override
   void dispose() {
-    _bank.removeListener(_refresh);
-    _bank.dispose();
+    widget.ctrl.closingBankCtrl.removeListener(_refresh);
     super.dispose();
   }
 
   double? get _actualBank {
-    final text = _bank.text.trim().replaceAll(',', '');
+    final text = widget.ctrl.closingBankCtrl.text.trim().replaceAll(',', '');
     if (text.isEmpty) return null;
     final value = double.tryParse(text);
     return value != null && value.isFinite ? value : null;
   }
 
-  void _reset() {
-    widget.ctrl.resetDenomination();
-    _bank.clear();
-    setState(() => _cashCountEntered = false);
-  }
-
   void _openExpenseDraft(ExpenseDraft draft) {
     Navigator.of(context).pop(draft);
-  }
-
-  Future<void> _openMetalCount() async {
-    await showDialog<bool>(
-      context: context,
-      barrierColor: DayBookColors.overlay,
-      builder: (_) => DayBookMetalCountDialog(controller: widget.ctrl),
-    );
-  }
-
-  Future<void> _verifyOpening() async {
-    final action = widget.onVerifyOpening;
-    if (action == null || _verifyingOpening || _closing) return;
-    setState(() => _verifyingOpening = true);
-    try {
-      await action();
-    } finally {
-      if (mounted) setState(() => _verifyingOpening = false);
-    }
   }
 
   Future<void> _closeDay() async {
@@ -104,7 +72,8 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
   Widget build(BuildContext context) => DayBookFormVisuals.themed(
         child: DayBookFormFrame(
           fullScreen: widget.fullScreen,
-          title: 'Day Closing',
+          title:
+              'Day Closing · ${DateFormat('d MMM yyyy').format(widget.ctrl.selectedDate)}',
           dialogWidth: 690,
           onBack: _closing ? null : () => Navigator.of(context).pop(),
           child: SizedBox(
@@ -113,10 +82,13 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
               builder: (context, _) {
                 final flow = widget.ctrl.summary?.moneyFlow;
                 final actualBank = _actualBank;
-                final countedCash = _cashCountEntered ||
-                        (flow != null && flow.closingCash.abs() < 0.01)
+                final countedCash = widget.ctrl.closingCashCountEntered ||
+                        widget.ctrl.closingZeroCashConfirmed
                     ? widget.ctrl.physicalCashAmount
                     : null;
+                final needsZeroCashConfirmation = flow != null &&
+                    flow.closingCash.abs() < 0.01 &&
+                    widget.ctrl.physicalCashAmount.abs() < 0.01;
                 final mismatch = flow == null
                     ? null
                     : DayBookClosingMismatch(
@@ -136,10 +108,14 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                 final expenseTotal = widget.ctrl.summary?.expenseRecords
                         .fold<double>(0, (total, row) => total + row.amount) ??
                     0.0;
-                final prerequisites = widget.ctrl.balanceVerification != null &&
-                    widget.ctrl.isMetalPositionVerified &&
-                    widget.ctrl.isCustodyPositionVerified;
-                final ready = cashMatched && bankMatched && prerequisites;
+                final prerequisites =
+                    widget.ctrl.isRecordedMetalPositionConsistent &&
+                        widget.ctrl.isCustodyPositionVerified;
+                final ready = cashMatched &&
+                    bankMatched &&
+                    prerequisites &&
+                    (!needsZeroCashConfirmation ||
+                        widget.ctrl.closingZeroCashConfirmed);
                 return Column(mainAxisSize: MainAxisSize.min, children: [
                   if (!widget.fullScreen) _header(context),
                   Flexible(
@@ -153,78 +129,85 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                                 text:
                                     'Day Book balances are unavailable. Refresh before reconciling.')
                           else ...[
-                            EodSystemClosing(
+                            EodRecordedClosingBalances(
                               date: widget.ctrl.selectedDate,
                               flow: flow,
                               expenseTotal: expenseTotal,
                             ),
                             const SizedBox(height: 10),
-                            EodCashCount(
+                            EodPhysicalCashCount(
                               ctrl: widget.ctrl,
-                              onCountChanged: () =>
-                                  setState(() => _cashCountEntered = true),
+                              onCountChanged: () {
+                                widget.ctrl.markClosingCashCountEntered();
+                                setState(() {});
+                              },
+                            ),
+                            if (needsZeroCashConfirmation) ...[
+                              const SizedBox(height: 8),
+                              CheckboxListTile(
+                                value: widget.ctrl.closingZeroCashConfirmed,
+                                onChanged: _closing
+                                    ? null
+                                    : (value) => widget.ctrl
+                                        .setClosingZeroCashConfirmed(
+                                            value ?? false),
+                                title: const Text(
+                                    'I counted the cash drawer and confirm a zero cash balance.'),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            EodActualBankBalanceEntry(
+                                controller: widget.ctrl.closingBankCtrl,
+                                expected: flow.closingBank),
+                            const SizedBox(height: 10),
+                            DayBookRecordedMetalClosingCard(
+                              position: widget.ctrl.summary?.ownedStockPosition,
                             ),
                             const SizedBox(height: 10),
-                            EodBankCount(
-                                controller: _bank, expected: flow.closingBank),
-                            const SizedBox(height: 10),
-                            EodVerificationSummary(
+                            EodClosingReconciliation(
                               expectedCash: flow.closingCash,
                               countedCash: countedCash,
                               expectedBank: flow.closingBank,
                               countedBank: actualBank,
-                              expenseTotal: expenseTotal,
                             ),
                             if (mismatch != null &&
-                                countedCash != null &&
-                                actualBank != null &&
-                                (!cashMatched || !bankMatched)) ...[
+                                mismatch.hasMismatch &&
+                                (mismatch.hasOppositeMovements ||
+                                    expenseDrafts.isEmpty)) ...[
                               const SizedBox(height: 10),
                               EodNotice(
                                   text: mismatch.hasOppositeMovements
                                       ? 'Cash and bank differ in opposite directions. Record the transfer or correct the payment mode before closing.'
-                                      : expenseDrafts.isNotEmpty
-                                          ? 'Record the shortage in Expense Entry, then return to recount and close the day.'
-                                          : 'Review any excess or missing receipt before closing the day.'),
+                                      : 'Review any excess or missing receipt before closing the day.'),
                             ],
                             if (!prerequisites) ...[
                               const SizedBox(height: 10),
                               EodNotice(
                                   text: [
-                                if (widget.ctrl.balanceVerification == null)
-                                  'Verify opening cash and bank for this business day.',
-                                if (!widget.ctrl.isMetalPositionVerified)
-                                  'Owned metal stock is unverified.',
+                                if (!widget
+                                    .ctrl.isRecordedMetalPositionConsistent)
+                                  'Recorded gold or silver closing needs review.',
                                 if (!widget.ctrl.isCustodyPositionVerified)
                                   'Girvi custody handover dates are incomplete.',
                               ].join(' ')),
-                            ],
-                            if (widget.ctrl.balanceVerification == null &&
-                                widget.onVerifyOpening != null) ...[
-                              const SizedBox(height: 8),
-                              OutlinedButton.icon(
-                                onPressed: _verifyingOpening || _closing
-                                    ? null
-                                    : _verifyOpening,
-                                icon:
-                                    const Icon(Icons.account_balance_outlined),
-                                label: const Text('Verify Opening Balance'),
-                              ),
-                            ],
-                            if (!widget.ctrl.isMetalPositionVerified) ...[
-                              const SizedBox(height: 8),
-                              OutlinedButton.icon(
-                                onPressed: _openMetalCount,
-                                icon: const Icon(Icons.inventory_2_outlined),
-                                label: const Text('Count Owned Metal Stock'),
-                              ),
                             ],
                           ],
                         ],
                       ),
                     ),
                   ),
-                  _footer(context, ready, expenseDrafts),
+                  DayBookClosingFooter(
+                    ready: ready,
+                    closing: _closing,
+                    expenseDrafts: expenseDrafts,
+                    onExpenseDraft: _openExpenseDraft,
+                    onReset: widget.ctrl.resetClosingDraft,
+                    onVerify: _closeDay,
+                  ),
                 ]);
               },
             ),
@@ -251,12 +234,12 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Daily Closing Reconciliation',
+              Text('Day Closing',
                   style: DayBookStyles.pageTitle
                       .copyWith(fontSize: 22, color: DayBookColors.goldMetal)),
               const SizedBox(height: 2),
               Text(
-                'Count cash and verify bank before locking ${DateFormat('d MMM yyyy').format(widget.ctrl.selectedDate)}.',
+                DateFormat('d MMM yyyy').format(widget.ctrl.selectedDate),
                 style: DayBookStyles.labelStrong.copyWith(fontSize: 13),
               ),
             ],
@@ -271,52 +254,5 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
             ),
           ),
         ]),
-      );
-
-  Widget _footer(
-          BuildContext context, bool ready, List<ExpenseDraft> expenseDrafts) =>
-      Container(
-        padding: const EdgeInsets.fromLTRB(18, 11, 18, 14),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: DayBookColors.bodyBorder)),
-        ),
-        child: Wrap(
-          alignment: WrapAlignment.end,
-          spacing: 9,
-          runSpacing: 8,
-          children: [
-            for (final draft in expenseDrafts)
-              OutlinedButton.icon(
-                onPressed: _closing ? null : () => _openExpenseDraft(draft),
-                icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                label: Text(draft.paymentMode.dbValue == 'CASH'
-                    ? 'Cash Shortage → Expense'
-                    : 'Bank Shortage → Expense'),
-              ),
-            OutlinedButton.icon(
-              onPressed: _closing ? null : _reset,
-              icon: const Icon(Icons.restart_alt_rounded, size: 18),
-              label: const Text('Reset count'),
-            ),
-            OutlinedButton(
-              onPressed: _closing ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton.icon(
-              onPressed: ready && !_closing ? _closeDay : null,
-              icon: _closing
-                  ? const SizedBox(
-                      width: 17,
-                      height: 17,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.verified_outlined, size: 19),
-              label: Text(_closing ? 'Closing day...' : 'Verify & Close Day'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                textStyle: DayBookStyles.button.copyWith(fontSize: 14),
-              ),
-            ),
-          ],
-        ),
       );
 }

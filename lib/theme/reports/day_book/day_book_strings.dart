@@ -122,7 +122,8 @@ class DayBookStrings {
   static const String reset = 'Reset';
   static const String cancel = 'Cancel';
   static const String closeAndLock = 'Close and Lock Day';
-  static const String closeSuccess = 'The day book has been closed.';
+  static const String closeSuccess =
+      'Day closing verified and locked.';
 
   static const String noDataTitle = 'No daily statement available';
   static const String noDataSubtitle =

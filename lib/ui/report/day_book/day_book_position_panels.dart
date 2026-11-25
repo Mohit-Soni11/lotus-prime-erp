@@ -5,6 +5,7 @@ import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_metal_sales_panel.dart';
 import 'day_book_metal_visual.dart';
+import 'day_book_metal_weight.dart';
 
 class DayBookPositionPanels extends StatelessWidget {
   const DayBookPositionPanels({

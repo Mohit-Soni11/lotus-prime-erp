@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/report/day_book/day_book_controller.dart';
 import 'package:lotus_erp/models/finance/expense/expense_draft.dart';
+import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_balance_verification.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_money_flow.dart';
-import 'package:lotus_erp/models/reports/day_book/day_book_metal_count.dart';
+import 'package:lotus_erp/models/reports/day_book/day_book_owned_stock_position.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_balance_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_eod_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_income_dialog.dart';
-import 'package:lotus_erp/ui/report/day_book/day_book_metal_count_dialog.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_form_frame.dart';
 
 void main() {
@@ -52,13 +52,16 @@ void main() {
       final workspace = find.descendant(
           of: find.byType(DayBookFormFrame), matching: find.byType(Scaffold));
       expect(tester.getSize(workspace), const Size(1280, 800));
+      if (!balance) {
+        expect(find.text('Day Closing · 11 Nov 2026'), findsOneWidget);
+      }
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(find.text('Open full form'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
-  testWidgets('closing opens item-wise physical metal count at narrow width',
+  testWidgets('closing shows recorded metal weights at narrow width',
       (tester) async {
     final controller = _MetalClosingController();
     addTearDown(controller.dispose);
@@ -79,15 +82,92 @@ void main() {
     ));
     await tester.tap(find.text('Open closing'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Count Owned Metal Stock'));
-    await tester.tap(find.text('Count Owned Metal Stock'));
-    await tester.pumpAndSettle();
-    expect(find.byType(DayBookMetalCountDialog), findsOneWidget);
-    expect(find.text('Gold · Ring · 22K'), findsOneWidget);
-    expect(find.textContaining('System: 1 pieces'), findsOneWidget);
+    await tester.ensureVisible(find.text('Recorded Metal Closing'));
+    expect(find.text('Closing Gold'), findsOneWidget);
+    expect(find.text('1.000123 kg'), findsOneWidget);
+    expect(find.text('Closing Silver'), findsOneWidget);
+    expect(find.text('825.750 g'), findsOneWidget);
+    expect(find.text('Count Owned Metal Stock'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('Daily Closing shows balances and missing opening verification',
+  testWidgets('cash and bank shortages open the matching expense draft',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final controller = _ShortageClosingController();
+    addTearDown(controller.dispose);
+    ExpenseDraft? selected;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () async {
+              selected = await Navigator.of(context).push<ExpenseDraft>(
+                MaterialPageRoute(
+                  builder: (_) => DayBookEodDialog(
+                    ctrl: controller,
+                    fullScreen: true,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Open closing'),
+          ),
+        ),
+      ),
+    ));
+
+    for (final mode in [PaymentMode.bank, PaymentMode.cash]) {
+      await tester.tap(find.text('Open closing'));
+      await tester.pumpAndSettle();
+      if (mode == PaymentMode.bank) {
+        expect(find.text('Cash Shortage'), findsOneWidget);
+        expect(find.text('Bank Shortage'), findsNothing);
+        await tester
+            .ensureVisible(find.byKey(const ValueKey('day-closing-bank')));
+        await tester.enterText(
+            find.byKey(const ValueKey('day-closing-bank')), '170');
+        await tester.pump();
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Open closing'));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const ValueKey('day-closing-bank')))
+              .controller!
+              .text,
+          '170',
+        );
+        await tester.enterText(find.byType(TextField).at(2), '3');
+        await tester.pump();
+        expect(controller.closingBankCtrl.text, '170');
+        await tester.enterText(find.byType(TextField).at(2), '4');
+        await tester.pump();
+      }
+      await tester.pump();
+      expect(find.text('Cash Shortage'), findsOneWidget);
+      expect(find.text('Bank Shortage'), findsOneWidget);
+      await tester.tap(find
+          .text(mode == PaymentMode.bank ? 'Bank Shortage' : 'Cash Shortage'));
+      await tester.pumpAndSettle();
+      expect(selected?.paymentMode, mode);
+      expect(selected?.amount, mode == PaymentMode.bank ? 30 : 20);
+      expect(selected?.date, controller.selectedDate);
+      expect(tester.takeException(), isNull);
+    }
+
+    await tester.tap(find.text('Open closing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cash Shortage'), findsOneWidget);
+    await tester.tap(find.text('Reset Entries'));
+    await tester.pump();
+    expect(controller.closingBankCtrl.text, isEmpty);
+    expect(controller.physicalCashAmount, 0);
+    expect(controller.closingCashCountEntered, isFalse);
+    expect(find.text('Cash Shortage'), findsNothing);
+  });
+  testWidgets('Daily Closing shows balances without an opening gate',
       (tester) async {
     final controller = _UnverifiedClosingController();
     addTearDown(controller.dispose);
@@ -106,14 +186,16 @@ void main() {
 
     await tester.tap(find.text('Open closing'));
     await tester.pumpAndSettle();
-    expect(find.text('System Closing · 11 Nov 2026'), findsOneWidget);
-    expect(find.text('Cash Balance'), findsOneWidget);
-    expect(find.text('Bank Balance'), findsOneWidget);
-    expect(find.textContaining('Verify opening cash and bank'), findsOneWidget);
+    expect(
+        find.text('Recorded Closing Balances · 11 Nov 2026'), findsOneWidget);
+    expect(find.text('Recorded Cash'), findsOneWidget);
+    expect(find.text('Recorded Bank'), findsOneWidget);
+    expect(find.textContaining('Verify opening cash and bank'), findsNothing);
+    expect(find.text('Verify Opening Balance'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Daily Closing cancel and close dismiss the typed dialog',
+  testWidgets('Daily Closing Back and close dismiss the typed dialog',
       (tester) async {
     final controller = _EmptyClosingController();
     addTearDown(controller.dispose);
@@ -135,7 +217,8 @@ void main() {
 
     await tester.tap(find.text('Open closing'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancel'));
+    expect(find.text('Cancel'), findsNothing);
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.byType(DayBookEodDialog), findsNothing);
@@ -250,6 +333,33 @@ void main() {
 class _EmptyClosingController extends ChangeNotifier
     implements DayBookController {
   @override
+  final TextEditingController closingBankCtrl = TextEditingController();
+  @override
+  bool closingCashCountEntered = false;
+  @override
+  bool closingZeroCashConfirmed = false;
+
+  @override
+  void markClosingCashCountEntered() {
+    closingCashCountEntered = true;
+    notifyListeners();
+  }
+
+  @override
+  void setClosingZeroCashConfirmed(bool value) {
+    closingZeroCashConfirmed = value;
+    notifyListeners();
+  }
+
+  @override
+  void resetClosingDraft() {
+    closingCashCountEntered = false;
+    closingZeroCashConfirmed = false;
+    closingBankCtrl.clear();
+    notifyListeners();
+  }
+
+  @override
   DateTime get selectedDate => DateTime(2026, 11, 11);
 
   @override
@@ -268,7 +378,16 @@ class _EmptyClosingController extends ChangeNotifier
   bool get isMetalPositionVerified => false;
 
   @override
+  bool get isRecordedMetalPositionConsistent => false;
+
+  @override
   bool get isCustodyPositionVerified => false;
+
+  @override
+  void dispose() {
+    closingBankCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -316,16 +435,76 @@ class _UnverifiedClosingController extends _EmptyClosingController {
 
 class _MetalClosingController extends _UnverifiedClosingController {
   @override
-  Future<List<DayBookMetalCountLine>> loadMetalCountLines() async => const [
-        DayBookMetalCountLine(
-          key: 'unit:1:91.6:Ring',
-          metal: 'Gold',
-          item: 'Ring',
-          purity: '22K',
-          pieces: 1,
-          grossGrams: 11,
-          netGrams: 10,
-          fineGrams: 9.16,
+  DayBookSummary get summary => DayBookSummary(
+        date: selectedDate,
+        moneyFlow: DayBookMoneyFlow(
+          openingCash: 500,
+          openingBank: 200,
+          entries: const [],
         ),
-      ];
+        ownedStockPosition: const DayBookOwnedStockPosition(
+          gold: DayBookOwnedMetalPosition(
+            openingGrams: 1000.123,
+            inwardGrams: 0,
+            soldGrams: 0,
+            otherOutGrams: 0,
+            closingGrams: 1000.123,
+            isConsistent: true,
+          ),
+          silver: DayBookOwnedMetalPosition(
+            openingGrams: 825.75,
+            inwardGrams: 0,
+            soldGrams: 0,
+            otherOutGrams: 0,
+            closingGrams: 825.75,
+            isConsistent: true,
+          ),
+        ),
+      );
+
+  @override
+  bool get isRecordedMetalPositionConsistent => true;
+}
+
+class _ShortageClosingController extends _UnverifiedClosingController {
+  _ShortageClosingController() {
+    denom100Ctrl.text = '4';
+    denom20Ctrl.text = '4';
+    closingCashCountEntered = true;
+  }
+
+  @override
+  DayBookSummary get summary => DayBookSummary(
+        date: selectedDate,
+        moneyFlow: DayBookMoneyFlow(
+          openingCash: 500,
+          openingBank: 200,
+          entries: const [],
+        ),
+      );
+
+  @override
+  DenominationCount get denomination => DenominationCount(
+        note100: int.tryParse(denom100Ctrl.text) ?? 0,
+        note20: int.tryParse(denom20Ctrl.text) ?? 0,
+      );
+
+  @override
+  double get physicalCashAmount => denomination.physicalTotal;
+
+  @override
+  void resetClosingDraft() {
+    for (final controller in [
+      denom500Ctrl,
+      denom200Ctrl,
+      denom100Ctrl,
+      denom50Ctrl,
+      denom20Ctrl,
+      denom10Ctrl,
+      denomCoinsCtrl,
+    ]) {
+      controller.text = '0';
+    }
+    super.resetClosingDraft();
+  }
 }

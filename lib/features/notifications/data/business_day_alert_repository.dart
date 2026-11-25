@@ -22,7 +22,7 @@ class BusinessDayAlertRepository {
         priority: 0,
         title: 'Previous business day is still open',
         description:
-            '$label · Complete opening verification and reconcile cash and bank balances before closing the day.',
+            '$label · Reconcile cash and bank balances, then verify day closing.',
         routeId: AppRoutes.dayBookRoute,
         location: dayBookLocation(day, 'close'),
       ));
@@ -33,7 +33,7 @@ class BusinessDayAlertRepository {
         priority: 0,
         title: 'Day closing required',
         description:
-            '$label · Reconcile cash and bank balances, then select Verify & Close Day.',
+            '$label · Reconcile cash and bank balances, then select Verify Day Closing.',
         routeId: AppRoutes.dayBookRoute,
         location: dayBookLocation(day, 'close'),
       ));

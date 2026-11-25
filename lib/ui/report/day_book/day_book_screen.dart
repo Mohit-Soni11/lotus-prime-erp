@@ -67,7 +67,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
     final draft = await DayBookFormNavigation.closeDay(
       context,
       _ctrl,
-      onVerifyOpening: _setBalance,
     );
     if (!mounted) return;
     if (draft == null) return;
@@ -96,7 +95,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       if (_ctrl.summary!.isDayLocked) {
-        if (widget.exitAfterClose) context.pop(true);
+        if (widget.exitAfterClose) _finishExitRequest(true);
         return;
       }
       if (widget.initialAction == 'verify') {
@@ -104,12 +103,19 @@ class _DayBookScreenState extends State<DayBookScreen> {
       } else if (widget.initialAction == 'close') {
         await _showDayClosing();
       }
-      if (mounted && _isRequestedDay) {
-        // Returning from a cancelled form must also finish the exit request.
-        // The exit service independently checks the persisted day lock.
-        context.pop(_ctrl.summary?.isDayLocked == true);
+      if (mounted && _isRequestedDay && widget.exitAfterClose) {
+        _finishExitRequest(_ctrl.summary?.isDayLocked == true);
       }
     });
+  }
+
+  void _finishExitRequest(bool closed) {
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop(closed);
+    } else {
+      router.go(RoutePaths.dashboard);
+    }
   }
 
   Future<void> _addIncome() async {

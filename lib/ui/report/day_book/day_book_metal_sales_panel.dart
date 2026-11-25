@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../models/reports/day_book/day_book_owned_stock_position.dart';
 import '../../../models/reports/day_book/day_book_customer_metal_sales.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_metal_visual.dart';
+import 'day_book_metal_weight.dart';
 
 class DayBookMetalSalesPanel extends StatelessWidget {
   const DayBookMetalSalesPanel({
@@ -123,10 +123,4 @@ class _SoldMetalCard extends StatelessWidget {
       ]),
     );
   }
-}
-
-String dayBookMetalWeight(double grams) {
-  final amount = grams.abs() >= 1000 ? grams / 1000 : grams;
-  final unit = grams.abs() >= 1000 ? 'kg' : 'g';
-  return '${NumberFormat.decimalPatternDigits(locale: 'en_IN', decimalDigits: 3).format(amount)} $unit';
 }

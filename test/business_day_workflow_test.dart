@@ -22,21 +22,21 @@ void main() {
   });
   tearDown(() => db.close());
 
-  Future<void> verify(DateTime day) async {
+  Future<void> verify(DateTime day, {double openingCash = 0}) async {
     await DayBookBalanceVerificationRepository(db).verify(
       date: day,
-      expectedCash: 0,
-      actualCash: 0,
+      expectedCash: openingCash,
+      actualCash: openingCash,
       expectedBank: 0,
       actualBank: 0,
       verifiedBy: 'test-owner',
     );
   }
 
-  Future<void> close(DateTime day) async {
+  Future<void> close(DateTime day, {double closingCash = 0}) async {
     expect(
         await FinanceDayClosureRepository(db).closeDay(day,
-            closingCash: 0,
+            closingCash: closingCash,
             physicalBank: 0,
             closedBy: 'test-owner',
             requireVerifiedOpening: true),
@@ -94,15 +94,68 @@ void main() {
   test('temporary close and next-day startup retain unfinished business day',
       () async {
     await repo.activeDay(today);
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'OPEN-DAY-RECEIPT',
+            txnDate: today,
+            type: 'INCOME',
+            category: 'GOLD_REPAIR_INCOME',
+            amount: const drift.Value(100),
+            paymentMode: const drift.Value('CASH'),
+          ),
+        );
     final tomorrow = DateTime(2026, 11, 21, 8);
     expect(await BusinessDayRepository(db).activeDay(tomorrow),
         DateTime(2026, 11, 20));
     final alerts = await BusinessDayAlertRepository(db).load(tomorrow);
     expect(alerts.any((a) => a.key == 'business:unfinished:20261120'), isTrue);
     await verify(today);
-    await close(today);
+    await close(today, closingCash: 100);
     expect(await repo.activeDay(tomorrow), DateTime(2026, 11, 21));
     expect(await repo.openingVerified(tomorrow), isFalse);
+  });
+
+  test('empty historical app sessions do not block exit after today closes',
+      () async {
+    for (final day in [21, 22, 23, 24]) {
+      await repo.activeDay(DateTime(2026, 11, day, 9));
+    }
+    final closingDay = DateTime(2026, 11, 24, 18);
+    expect(await repo.pendingDays(closingDay), [DateTime(2026, 11, 24)]);
+    await verify(closingDay);
+    await close(closingDay);
+
+    var exited = false;
+    final result = await BusinessDayExitService(repo).requestExit(
+      now: closingDay,
+      openClosing: (_) async => fail('No closing should reopen'),
+      exitApplication: () async => exited = true,
+    );
+    expect(result, isTrue);
+    expect(exited, isTrue);
+    expect(await repo.pendingDays(closingDay), isEmpty);
+  });
+
+  test('backdated business activity restores a historical closing requirement',
+      () async {
+    final oldDay = DateTime(2026, 11, 21, 9);
+    final today = DateTime(2026, 11, 24, 18);
+    await repo.activeDay(oldDay);
+    await repo.activeDay(today);
+    expect(await repo.pendingDays(today), [DateTime(2026, 11, 24)]);
+
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'LATE-POSTED-RECEIPT',
+            txnDate: oldDay,
+            type: 'INCOME',
+            category: 'GOLD_REPAIR_INCOME',
+            amount: const drift.Value(100),
+            paymentMode: const drift.Value('CASH'),
+          ),
+        );
+    expect(await repo.pendingDays(today),
+        [DateTime(2026, 11, 21), DateTime(2026, 11, 24)]);
   });
 
   test('day closed at 3pm remains closed when app reopens the same date',
@@ -141,6 +194,16 @@ void main() {
   test('exit after midnight closes all opened days before terminating',
       () async {
     await repo.activeDay(today);
+    await db.into(db.cashTransactions).insert(
+          CashTransactionsCompanion.insert(
+            txnId: 'PREVIOUS-DAY-RECEIPT',
+            txnDate: today,
+            type: 'INCOME',
+            category: 'GOLD_REPAIR_INCOME',
+            amount: const drift.Value(100),
+            paymentMode: const drift.Value('CASH'),
+          ),
+        );
     final nextDay = DateTime(2026, 11, 21, 1);
     final closedDays = <DateTime>[];
     var exited = false;
@@ -148,8 +211,9 @@ void main() {
       now: nextDay,
       openClosing: (day) async {
         closedDays.add(day);
-        await verify(day);
-        await close(day);
+        await verify(day,
+            openingCash: day.day == nextDay.day ? 100 : 0);
+        await close(day, closingCash: 100);
       },
       exitApplication: () async {
         exited = true;

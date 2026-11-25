@@ -18,13 +18,6 @@ import '../../models/finance/expense/expense_model.dart';
 import '../../models/finance/expense/expense_summary_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
-class ExpenseBankAccountOption {
-  const ExpenseBankAccountOption(this.id, this.name);
-
-  final int id;
-  final String name;
-}
-
 class ExpenseRepository {
   final AppDatabase _db;
   ExpenseRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
@@ -36,23 +29,6 @@ class ExpenseRepository {
     decimalDigits: 2,
   );
   static String _f(double v) => _fmt.format(v);
-
-  Future<List<ExpenseBankAccountOption>> listActiveBankAccounts() async {
-    final accounts = await (_db.select(_db.bankAccounts)
-          ..where((account) => account.isActive.equals(true)))
-        .get();
-    accounts.sort((a, b) => b.isPrimary == a.isPrimary
-        ? a.accountName.compareTo(b.accountName)
-        : b.isPrimary
-            ? 1
-            : -1);
-    return accounts
-        .map((account) => ExpenseBankAccountOption(
-              account.id,
-              '${account.accountName} • ${account.bankName}',
-            ))
-        .toList(growable: false);
-  }
 
   // ==========================================================================
   // 1. WATCH EXPENSES — Live stream for a date range
@@ -236,15 +212,15 @@ class ExpenseRepository {
     }
     try {
       await _db.transaction(() async {
-        final account = paymentMode == PaymentMode.cash
+        final account = bankAccountId == null
             ? null
             : await (_db.select(_db.bankAccounts)
                   ..where((row) =>
-                      row.id.equals(bankAccountId ?? -1) &
+                      row.id.equals(bankAccountId) &
                       row.isActive.equals(true)))
                 .getSingleOrNull();
-        if (paymentMode != PaymentMode.cash && account == null) {
-          throw StateError('Select an active bank account for this expense.');
+        if (bankAccountId != null && account == null) {
+          throw StateError('The selected bank account is no longer active.');
         }
         final expenseId = await _generateExpenseId();
         await _db.into(_db.cashTransactions).insert(
@@ -267,13 +243,13 @@ class ExpenseRepository {
                 isVoided: const Value(false),
               ),
             );
-        if (account != null) {
+        if (paymentMode != PaymentMode.cash) {
           final bankId =
               await FinanceTransactionNumbering(_db).nextBankTransactionId();
           await _db.into(_db.bankTransactions).insert(
                 BankTransactionsCompanion.insert(
                   txnId: bankId,
-                  accountId: Value(account.id),
+                  accountId: Value(account?.id),
                   txnDate: expenseDate,
                   type: bank.BankTransactionType.debit.dbValue,
                   category: _bankCategory(category).dbValue,

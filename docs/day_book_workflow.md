@@ -36,7 +36,20 @@
 
 ## Daily verification and close
 
-1. Daily Balance Verification shows the dated previous-day closing and asks
+Day Closing first shows recorded closing cash and bank balances calculated
+from carried opening balances and all posted Day Book money movements,
+including invoice payments. The operator counts notes and coins to enter
+physical cash, then enters the actual combined bank balance. Cash and bank
+must each reconcile with their recorded closing before the day is locked.
+When recorded cash is zero, the operator must explicitly confirm a zero
+physical count.
+Closing entries remain in the selected day's draft when the operator leaves
+and returns to the form. Reset Entries or changing the selected date clears
+the draft. Daily Balance Verification is a separate opening workflow and is
+not required to verify Day Closing. The close transaction still rechecks
+posted cash, bank, denomination count, and invoice issue evidence.
+
+1. The separate Daily Balance Verification shows the dated previous-day closing and asks
    for today's counted cash and bank balance. It compares cash and bank
    separately; an equal combined total alone cannot verify the opening.
    A confirmed cash shortage posts one linked Expense Entry adjustment, with
@@ -45,18 +58,22 @@
    Opposite cash and bank variances require a recorded transfer or corrected
    payment mode before verification, so a transfer cannot become an expense.
 2. End of day counts physical cash by denomination and checks it against the
-   posted cash balance. Owned gold/silver and Girvi custody are separate checks.
+   posted cash balance. Recorded gold and silver closing weights are shown
+   automatically from stock movements, with gram or kilogram units as
+   appropriate. No metal weight entry is required in Day Closing. These
+   recorded weights are not represented as a physical inventory count.
 3. After authorization and successful checks, the database transaction saves
    the close lock and immutable evidence: physical count, cash/bank positions,
-   account balances, owned metal, custody, and source hash. Closed-day source
+   account balances, recorded owned metal, custody, and source hash. Closed-day source
    and ledger guards prevent silent changes. The following day's opening is
    recalculated from the prior posted closing, not manually copied.
 
 ## Certification still required
 
 The user has not yet performed a physical item-wise metal count. Calculated
-gold/silver weights remain **unverified**, and the UI blocks certified day
-closing. Historical invoice issue values without an issue snapshot, unknown
+gold/silver weights remain **unverified as physical stock**, even when the
+recorded closing position is consistent and the day is closed. Historical
+invoice issue values without an issue snapshot, unknown
 purity on legacy stock movements, partial Girvi custody handovers, refund
 payout records, and a complete all-source audit register still need source
 verification or further implementation. No historical amount is backfilled as

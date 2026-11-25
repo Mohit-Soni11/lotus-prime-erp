@@ -32,16 +32,14 @@ abstract final class DayBookFormNavigation {
 
   static Future<ExpenseDraft?> closeDay(
     BuildContext context,
-    DayBookController controller, {
-    required Future<void> Function() onVerifyOpening,
-  }) =>
+    DayBookController controller,
+  ) =>
       Navigator.of(context, rootNavigator: true)
           .push<ExpenseDraft>(MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => DayBookEodDialog(
           ctrl: controller,
           fullScreen: true,
-          onVerifyOpening: onVerifyOpening,
         ),
       ));
 }

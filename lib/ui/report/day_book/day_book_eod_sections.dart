@@ -42,8 +42,8 @@ class EodPanel extends StatelessWidget {
       );
 }
 
-class EodSystemClosing extends StatelessWidget {
-  const EodSystemClosing(
+class EodRecordedClosingBalances extends StatelessWidget {
+  const EodRecordedClosingBalances(
       {super.key,
       required this.date,
       required this.flow,
@@ -54,7 +54,8 @@ class EodSystemClosing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EodPanel(
-        title: 'System Closing · ${DateFormat('d MMM yyyy').format(date)}',
+        title:
+            'Recorded Closing Balances · ${DateFormat('d MMM yyyy').format(date)}',
         icon: Icons.history_rounded,
         child: Column(children: [
           LayoutBuilder(builder: (context, constraints) {
@@ -63,12 +64,12 @@ class EodSystemClosing extends StatelessWidget {
             final width = (constraints.maxWidth - (columns - 1) * 8) / columns;
             return Wrap(spacing: 8, runSpacing: 8, children: [
               _ClosingMetric(
-                  label: 'Cash Balance',
+                  label: 'Recorded Cash',
                   amount: flow.closingCash,
                   icon: Icons.payments_outlined,
                   width: width),
               _ClosingMetric(
-                  label: 'Bank Balance',
+                  label: 'Recorded Bank',
                   amount: flow.closingBank,
                   icon: Icons.account_balance_outlined,
                   width: width),
@@ -94,7 +95,7 @@ class EodSystemClosing extends StatelessWidget {
                   color: DayBookColors.goldMetal, size: 21),
               const SizedBox(width: 9),
               Expanded(
-                  child: Text('Total Expected Closing',
+                  child: Text('Recorded Total',
                       style: DayBookStyles.labelStrong.copyWith(fontSize: 14))),
               Text(_money(flow.closingTotal),
                   style: DayBookStyles.value.copyWith(fontSize: 18)),
@@ -154,8 +155,8 @@ class _ClosingMetric extends StatelessWidget {
       ));
 }
 
-class EodCashCount extends StatelessWidget {
-  const EodCashCount(
+class EodPhysicalCashCount extends StatelessWidget {
+  const EodPhysicalCashCount(
       {super.key, required this.ctrl, required this.onCountChanged});
   final DayBookController ctrl;
   final VoidCallback onCountChanged;
@@ -175,9 +176,6 @@ class EodCashCount extends StatelessWidget {
       title: 'Physical Cash Count',
       icon: Icons.payments_outlined,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Enter note quantities and the total coin value.',
-            style: DayBookStyles.labelStrong.copyWith(fontSize: 13)),
-        const SizedBox(height: 9),
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final row in rows)
             _DenominationInput(
@@ -192,7 +190,7 @@ class EodCashCount extends StatelessWidget {
         const SizedBox(height: 10),
         Row(children: [
           Expanded(
-              child: Text('Counted cash',
+              child: Text('Physical Cash Total',
                   style: DayBookStyles.labelStrong.copyWith(fontSize: 14))),
           Text(_money(ctrl.physicalCashAmount),
               style: DayBookStyles.value.copyWith(fontSize: 18)),
@@ -249,8 +247,8 @@ class _DenominationInput extends StatelessWidget {
       );
 }
 
-class EodBankCount extends StatelessWidget {
-  const EodBankCount(
+class EodActualBankBalanceEntry extends StatelessWidget {
+  const EodActualBankBalanceEntry(
       {super.key, required this.controller, required this.expected});
   final TextEditingController controller;
   final double expected;
@@ -259,195 +257,46 @@ class EodBankCount extends StatelessWidget {
   Widget build(BuildContext context) => EodPanel(
         title: 'Actual Bank Balance',
         icon: Icons.account_balance_outlined,
-        child: LayoutBuilder(builder: (context, constraints) {
-          final expectedLabel = Text('Expected ${_money(expected)}',
-              style: DayBookStyles.labelStrong.copyWith(fontSize: 14));
-          final input = TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(
-                decimal: true, signed: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d{0,2}'))
-            ],
-            style: DayBookStyles.value.copyWith(fontSize: 15),
-            decoration: const InputDecoration(
-              labelText: 'Counted bank balance',
-              prefixText: '₹ ',
-              isDense: true,
-            ),
-          );
-          if (constraints.maxWidth < 420) {
-            return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [expectedLabel, const SizedBox(height: 9), input]);
-          }
-          return Row(children: [
-            Expanded(child: expectedLabel),
-            const SizedBox(width: 12),
-            SizedBox(width: 220, child: input),
-          ]);
-        }),
-      );
-}
-
-class EodVerificationSummary extends StatelessWidget {
-  const EodVerificationSummary(
-      {super.key,
-      required this.expectedCash,
-      required this.countedCash,
-      required this.expectedBank,
-      required this.countedBank,
-      this.expenseTotal = 0});
-  final double expectedCash;
-  final double? countedCash;
-  final double expectedBank;
-  final double? countedBank;
-  final double expenseTotal;
-
-  @override
-  Widget build(BuildContext context) {
-    final cashDiff = countedCash == null ? null : countedCash! - expectedCash;
-    final bankDiff = countedBank == null ? null : countedBank! - expectedBank;
-    final expectedTotal = expectedCash + expectedBank;
-    final countedTotal = countedCash == null || countedBank == null
-        ? null
-        : countedCash! + countedBank!;
-    final matched = cashDiff != null &&
-        bankDiff != null &&
-        cashDiff.abs() < 0.01 &&
-        bankDiff.abs() < 0.01;
-    return EodPanel(
-      title: 'Verification Summary',
-      icon: Icons.fact_check_outlined,
-      child: Column(children: [
-        _DiffLine(
-            label: 'Cash',
-            expected: expectedCash,
-            actual: countedCash,
-            difference: cashDiff),
-        const SizedBox(height: 7),
-        _DiffLine(
-            label: 'Bank',
-            expected: expectedBank,
-            actual: countedBank,
-            difference: bankDiff),
-        if (expenseTotal > 0.005) ...[
-          const SizedBox(height: 7),
-          Row(children: [
-            Text('Expenses Paid',
-                style: DayBookStyles.labelStrong.copyWith(fontSize: 14)),
-            const Spacer(),
-            Text(_money(expenseTotal),
-                style: DayBookStyles.value
-                    .copyWith(fontSize: 15, color: DayBookColors.negative)),
-          ]),
-        ],
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-          decoration: BoxDecoration(
-            color: DayBookColors.brandGoldSoft,
-            border: Border.all(color: DayBookColors.brandGoldBorder),
-            borderRadius: BorderRadius.circular(9),
-          ),
-          child: _DiffLine(
-            label: 'Total',
-            expected: expectedTotal,
-            actual: countedTotal,
-            difference:
-                countedTotal == null ? null : countedTotal - expectedTotal,
-          ),
-        ),
-        const SizedBox(height: 9),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: matched
-                ? DayBookColors.positiveSoft
-                : DayBookColors.warningSoft,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-                color: matched
-                    ? DayBookColors.positiveBorder
-                    : DayBookColors.warningBorder),
-          ),
-          child: Row(children: [
-            Icon(matched ? Icons.verified_outlined : Icons.info_outline_rounded,
-                color:
-                    matched ? DayBookColors.positive : DayBookColors.warning),
-            const SizedBox(width: 8),
-            Expanded(
-                child: Text(
-                    matched
-                        ? 'Cash and bank both match the system closing.'
-                        : 'Complete both counts and resolve each difference.',
-                    style: DayBookStyles.labelStrong.copyWith(fontSize: 14))),
-            if (cashDiff != null && bankDiff != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: matched
-                      ? DayBookColors.positiveSoft
-                      : DayBookColors.negativeSoft,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: matched
-                        ? DayBookColors.positiveBorder
-                        : DayBookColors.negativeBorder,
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            LayoutBuilder(builder: (context, constraints) {
+              final expectedLabel = Text(
+                  'Recorded bank balance ${_money(expected)}',
+                  style: DayBookStyles.labelStrong.copyWith(fontSize: 14));
+              final input = TextField(
+                key: const ValueKey('day-closing-bank'),
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true, signed: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d{0,2}'))
+                ],
+                style: DayBookStyles.value.copyWith(fontSize: 15),
+                decoration: const InputDecoration(
+                  labelText: 'Actual bank balance',
+                  prefixText: '₹ ',
+                  isDense: true,
                 ),
-                child: Text(matched ? 'Verified' : 'Mismatch',
-                    style: DayBookStyles.labelStrong.copyWith(
-                      fontSize: 13,
-                      color: matched
-                          ? DayBookColors.positive
-                          : DayBookColors.negative,
-                    )),
-              ),
-          ]),
+              );
+              if (constraints.maxWidth < 420) {
+                return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      expectedLabel,
+                      const SizedBox(height: 9),
+                      input
+                    ]);
+              }
+              return Row(children: [
+                Expanded(child: expectedLabel),
+                const SizedBox(width: 12),
+                SizedBox(width: 220, child: input),
+              ]);
+            }),
+          ],
         ),
-      ]),
-    );
-  }
-}
-
-class _DiffLine extends StatelessWidget {
-  const _DiffLine(
-      {required this.label,
-      required this.expected,
-      required this.actual,
-      required this.difference});
-  final String label;
-  final double expected;
-  final double? actual;
-  final double? difference;
-
-  @override
-  Widget build(BuildContext context) => Row(children: [
-        SizedBox(
-            width: 45,
-            child: Text(label,
-                style: DayBookStyles.labelStrong.copyWith(fontSize: 14))),
-        Expanded(
-            child: Text('System ${_money(expected)}',
-                style: DayBookStyles.labelStrong.copyWith(fontSize: 13))),
-        Expanded(
-            child: Text('Counted ${actual == null ? '—' : _money(actual!)}',
-                style: DayBookStyles.labelStrong.copyWith(fontSize: 13))),
-        Text(
-            difference == null
-                ? 'Pending'
-                : difference!.abs() < 0.01
-                    ? 'Matched'
-                    : _money(difference!),
-            style: DayBookStyles.labelStrong.copyWith(
-                fontSize: 13,
-                color: difference == null
-                    ? DayBookColors.warning
-                    : difference!.abs() < 0.01
-                        ? DayBookColors.positive
-                        : DayBookColors.negative)),
-      ]);
+      );
 }
 
 class EodNotice extends StatelessWidget {

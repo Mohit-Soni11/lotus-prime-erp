@@ -71,20 +71,22 @@ remaining reconciliation flows prevent certified metal and day-close figures.
 ### Latest integrity and UI pass
 
 - Schema v77 adds append-only, actor-attributed physical owned-metal counts.
-  The closing dialog requires item/purity-wise pieces and gross/net/fine
-  weights, rejects unknown purity and mismatches, and marks a count stale when
-  underlying inventory changes. Closing rechecks the count against the owned
-  stock ledger inside the database transaction and saves its evidence in the
-  day-close snapshot and export. No physical result is assumed for the shop.
+  The separate physical count flow accepts item/purity-wise pieces and
+  gross/net/fine weights, rejects unknown purity and mismatches, and marks a
+  count stale when underlying inventory changes. Day Closing displays the
+  recorded stock position automatically. When a physical count exists, its
+  evidence is saved separately in the day-close snapshot and export. No
+  physical result is assumed for the shop.
 - Day Book now refreshes the selected date when registered source tables change,
   including an open historical date. Source read and watcher failures show an
   error instead of leaving a fabricated zero balance on screen.
 - Schema v76 rebuilds the day-lock triggers on upgrade. Once any later day has
   closed, cash, bank, invoice issue snapshots, stock movements, and the other
   guarded source records cannot be backdated into an earlier day.
-- The Day Book closing action requires a saved daily opening verification and
-  rechecks that opening against posted cash and bank activity in its closing
-  transaction. Owned metal remains unverified without a physical count.
+- The Day Book closing action rechecks posted cash and bank activity, physical
+  denomination totals, and invoice issue evidence inside its transaction.
+  Daily opening verification remains a separate workflow, not a prerequisite
+  for Day Closing. Owned metal remains unverified without a physical count.
 - Issue-time due is shown only when an invoice issue snapshot exists. Legacy
   invoices with an unknown issue-time due show an unavailable value. Personal
   owner drawings appear in the Expense Entry list; cancelled purchase vouchers
@@ -124,8 +126,11 @@ remaining reconciliation flows prevent certified metal and day-close figures.
 - Cash close rechecks the current posted balance inside its database transaction,
   records the actor, and requires an active owner or manager profile. Historical
   preference locks migrate using calculated cash closing, never a literal zero.
-- The Day Book close action is disabled until owned metal opening/closing can be
-  verified; the lower-level existing finance lock remains cash/bank only.
+- The Day Book close action checks that recorded owned gold and silver closing
+  positions are available and internally consistent. It displays those
+  positions without requiring manual metal entry. A separately recorded
+  physical stock count remains distinct evidence and is never inferred from
+  the calculated closing weight.
 - App database upgrades now create an SQLite online backup before migration,
   verify integrity and schema version, and retain a restorable file. A WAL
   database and corrupt-source failure are covered by tests.

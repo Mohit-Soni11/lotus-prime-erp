@@ -59,8 +59,6 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
       widget.ctrl.setEntryMode(draft.paymentMode);
       widget.ctrl.setEntryDate(draft.date);
     }
-    widget.ctrl.refreshBankAccounts();
-
     _slideCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 320),
@@ -198,29 +196,6 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
               setState(() => _modeConfirmed = true);
             },
           ),
-          if (_modeConfirmed && ctrl.entryMode != PaymentMode.cash) ...[
-            const SizedBox(height: 12),
-            if (ctrl.bankAccounts.isEmpty)
-              const Text(
-                'Add an active bank account in Bank Book before recording this payment.',
-                style: TextStyle(color: ExpenseColors.textSecondary),
-              )
-            else
-              DropdownButtonFormField<int>(
-                key: ValueKey(ctrl.selectedBankAccountId),
-                initialValue: ctrl.selectedBankAccountId,
-                decoration: const InputDecoration(labelText: 'Bank account'),
-                items: [
-                  for (final account in ctrl.bankAccounts)
-                    DropdownMenuItem(
-                      value: account.id,
-                      child: Text(account.name),
-                    ),
-                ],
-                onChanged: ctrl.setBankAccount,
-              ),
-          ],
-
           const SizedBox(height: 16),
 
           // â”€â”€ Date â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -573,9 +548,7 @@ class _SaveButton extends StatelessWidget {
   Widget build(BuildContext ctx) {
     final isDisabled = !selectionsConfirmed ||
         (ctrl.entryNeedsCustomLabel &&
-            ctrl.customLabelCtrl.text.trim().isEmpty) ||
-        (ctrl.entryMode != PaymentMode.cash &&
-            ctrl.selectedBankAccountId == null);
+            ctrl.customLabelCtrl.text.trim().isEmpty);
 
     return GestureDetector(
       onTap: (ctrl.isSaving || isDisabled)

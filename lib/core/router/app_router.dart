@@ -75,6 +75,7 @@ import '../../ui/girvi/interest_calc/interest_calc_screen.dart';
 import '../../ui/girvi/contact_recovery/contact_recovery_screen.dart';
 
 import '../../ui/report/day_book/day_book_screen.dart';
+import 'app_back_navigation.dart';
 import '../../ui/report/sales_report/sales_report_screen.dart';
 import '../../features/reports/gst_report/presentation/screens/gst_report_hub_screen.dart';
 
@@ -96,13 +97,7 @@ part 'routes/report_routes.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void _goBackOr(BuildContext context, String fallbackPath) {
-  if (context.canPop()) {
-    context.pop();
-    return;
-  }
-
-  final currentPath = GoRouterState.of(context).uri.toString();
-  context.go(currentPath == fallbackPath ? RoutePaths.dashboard : fallbackPath);
+  AppBackNavigation.backOr(context, fallbackPath);
 }
 
 void initAuthRouting() {

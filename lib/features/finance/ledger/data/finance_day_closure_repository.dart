@@ -24,6 +24,8 @@ class FinanceDayClosureRepository {
       {required double closingCash,
       double? physicalBank,
       bool requireVerifiedOpening = false,
+      bool requireVerifiedInvoiceIssues = false,
+      bool requireConsistentMetal = false,
       bool requireVerifiedMetal = false,
       required String closedBy,
       Map<String, num>? denominationCount}) async {
@@ -43,6 +45,8 @@ class FinanceDayClosureRepository {
         physicalCash: closingCash,
         physicalBank: physicalBank,
         requireVerifiedOpening: requireVerifiedOpening,
+        requireVerifiedInvoiceIssues: requireVerifiedInvoiceIssues,
+        requireConsistentMetal: requireConsistentMetal,
         requireVerifiedMetal: requireVerifiedMetal,
         denominationCount: denominationCount,
       );

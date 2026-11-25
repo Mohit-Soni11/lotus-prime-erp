@@ -420,6 +420,27 @@ void main() {
     expect(opening['closingBank'], 0);
   });
 
+  test('day closing verifies posted balances without opening verification',
+      () async {
+    final date = DateTime(2026, 7, 1, 12);
+    final closure = FinanceDayClosureRepository(db);
+    expect(
+      await closure.closeDay(
+        date,
+        closingCash: 0,
+        physicalBank: 0,
+        closedBy: 'owner-1',
+        requireVerifiedInvoiceIssues: true,
+        denominationCount: const {'coins': 0},
+      ),
+      isTrue,
+    );
+    final snapshot = jsonDecode((await closure.fetchSnapshot(date))!.json)
+        as Map<String, dynamic>;
+    expect(snapshot.containsKey('verifiedOpening'), isFalse);
+    expect(snapshot['physicalBank'], 0);
+  });
+
   test('day closing rejects a stale or incorrect physical cash amount',
       () async {
     final date = DateTime(2026, 6, 26, 12);

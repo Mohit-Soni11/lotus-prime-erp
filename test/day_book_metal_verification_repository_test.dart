@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
@@ -13,6 +14,41 @@ import 'package:lotus_erp/repositories/reports/day_book_repository.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
+  test('recorded metal closing does not invent a physical count', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final today = DateTime.now();
+    await db.into(db.stockItems).insert(StockItemsCompanion.insert(
+          sku: 'RECORDED-GOLD-1',
+          itemName: 'Gold Stock',
+          category: 'Gold',
+          subCategory: 'Stock',
+          metalType: const drift.Value('Gold'),
+          purity: const drift.Value('22K'),
+          quantity: const drift.Value(1),
+          netWeight: const drift.Value(1000.123),
+          grossWeight: const drift.Value(1000.123),
+        ));
+
+    final closure = FinanceDayClosureRepository(db);
+    expect(
+      await closure.closeDay(
+        today,
+        closingCash: 0,
+        physicalBank: 0,
+        requireConsistentMetal: true,
+        closedBy: 'owner-1',
+      ),
+      isTrue,
+    );
+    final snapshot = jsonDecode((await closure.fetchSnapshot(today))!.json)
+        as Map<String, dynamic>;
+    final owned = snapshot['ownedMetal'] as Map<String, dynamic>;
+    expect((owned['gold'] as Map<String, dynamic>)['closingGrams'], 1000.123);
+    expect(owned.containsKey('physicalVerification'), isFalse);
+    expect(await DayBookMetalVerificationRepository(db).latest(today), isNull);
+  });
+
   test('physical item count is append-only and goes stale after stock changes',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());

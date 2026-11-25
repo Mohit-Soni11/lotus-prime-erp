@@ -39,6 +39,27 @@ void main() {
     expect(controller.entryDate, date);
     expect(controller.descriptionCtrl.text, isEmpty);
     expect(find.text('Select a category'), findsOneWidget);
+    expect(find.textContaining('Add an active bank account'), findsNothing);
+  });
+
+  test('a non-cash mismatch expense saves without a bank account', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final controller = ExpenseController(repository: ExpenseRepository(db: db));
+    addTearDown(controller.dispose);
+
+    controller.amountCtrl.text = '615.94';
+    controller.setEntryCategory(ExpenseCategory.purchasePayment);
+    controller.setEntryMode(PaymentMode.bank);
+    controller.setEntryDate(DateTime(2026, 11, 25));
+
+    expect(await controller.saveExpense(), isTrue);
+    final expense = (await db.select(db.cashTransactions).get()).single;
+    final bankEntry = (await db.select(db.bankTransactions).get()).single;
+    expect(expense.paymentMode, PaymentMode.bank.dbValue);
+    expect(bankEntry.accountId, isNull);
+    expect(bankEntry.paymentMode, 'NEFT');
+    expect(bankEntry.referenceId, expense.txnId);
   });
 
   testWidgets('mismatch expense draft fills only the amount', (tester) async {

@@ -1,16 +1,3 @@
-// =============================================================================
-// FILE        : day_book_controller.dart
-// MODULE      : Reports & Analytics → Day Book
-// LAYER       : Logic / Controller
-// DESCRIPTION : PRODUCTION GRADE ChangeNotifier controller.
-//               Exact same pattern as CashBookController.
-//               • Date navigation with stream-based live updates
-//               • Section expand/collapse state
-//               • EOD denomination calculator
-//               • Day lock via SharedPreferences
-//               • Auto-refresh when CashTransactions table changes
-// =============================================================================
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -108,6 +95,46 @@ class DayBookController extends ChangeNotifier {
   final TextEditingController denom20Ctrl = TextEditingController(text: '0');
   final TextEditingController denom10Ctrl = TextEditingController(text: '0');
   final TextEditingController denomCoinsCtrl = TextEditingController(text: '0');
+  final TextEditingController closingBankCtrl = TextEditingController();
+  bool closingCashCountEntered = false;
+  bool closingZeroCashConfirmed = false;
+  bool _resettingClosingDraft = false;
+
+  void markClosingCashCountEntered() {
+    if (closingCashCountEntered) return;
+    closingCashCountEntered = true;
+    notifyListeners();
+  }
+
+  void setClosingZeroCashConfirmed(bool value) {
+    if (closingZeroCashConfirmed == value) return;
+    closingZeroCashConfirmed = value;
+    notifyListeners();
+  }
+
+  void resetClosingDraft() {
+    _resettingClosingDraft = true;
+    try {
+      for (final controller in [
+        denom500Ctrl,
+        denom200Ctrl,
+        denom100Ctrl,
+        denom50Ctrl,
+        denom20Ctrl,
+        denom10Ctrl,
+        denomCoinsCtrl,
+      ]) {
+        controller.text = '0';
+      }
+      denomination = DenominationCount();
+      closingCashCountEntered = false;
+      closingZeroCashConfirmed = false;
+      closingBankCtrl.clear();
+    } finally {
+      _resettingClosingDraft = false;
+    }
+    notifyListeners();
+  }
 
   // ── Stream subscription for live updates ──────────────────────────────────
   StreamSubscription<void>? _watchSub;
@@ -123,6 +150,7 @@ class DayBookController extends ChangeNotifier {
 
   void _setupDenomListeners() {
     void update() {
+      if (_resettingClosingDraft) return;
       denomination = DenominationCount(
         note500: int.tryParse(denom500Ctrl.text) ?? 0,
         note200: int.tryParse(denom200Ctrl.text) ?? 0,
@@ -266,7 +294,7 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   void goToPreviousDay() {
     _selectedDate = _selectedDate.subtract(const Duration(days: 1));
-    resetDenomination();
+    resetClosingDraft();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
@@ -275,15 +303,17 @@ class DayBookController extends ChangeNotifier {
   void goToNextDay() {
     if (!canGoNext) return;
     _selectedDate = _selectedDate.add(const Duration(days: 1));
-    resetDenomination();
+    resetClosingDraft();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
   }
 
   void goToToday() {
-    _selectedDate = DateTime.now();
-    resetDenomination();
+    final today = DateTime.now();
+    if (DateUtils.isSameDay(_selectedDate, today)) return;
+    _selectedDate = DateTime(today.year, today.month, today.day);
+    resetClosingDraft();
     _watchSub?.cancel();
     _startWatcher();
     loadData();
@@ -305,9 +335,9 @@ class DayBookController extends ChangeNotifier {
         child: child!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && !DateUtils.isSameDay(picked, _selectedDate)) {
       _selectedDate = picked;
-      resetDenomination();
+      resetClosingDraft();
       _watchSub?.cancel();
       _startWatcher();
       loadData();
@@ -323,24 +353,15 @@ class DayBookController extends ChangeNotifier {
   bool get isCashMatched =>
       _summary?.moneyFlow != null && cashDifference.abs() < 0.01;
   bool get isMetalPositionVerified => _summary?.metalPositionVerified == true;
+  bool get isRecordedMetalPositionConsistent {
+    final position = _summary?.ownedStockPosition;
+    return position != null &&
+        position.gold.isConsistent &&
+        position.silver.isConsistent;
+  }
+
   bool get isCustodyPositionVerified =>
       _summary?.custodyPosition?.closingVerified == true;
-
-  void resetDenomination() {
-    for (final c in [
-      denom500Ctrl,
-      denom200Ctrl,
-      denom100Ctrl,
-      denom50Ctrl,
-      denom20Ctrl,
-      denom10Ctrl,
-      denomCoinsCtrl,
-    ]) {
-      c.text = '0';
-    }
-    denomination = DenominationCount();
-    notifyListeners();
-  }
 
   // ==========================================================================
   // CLOSE DAY & LOCK LEDGER
@@ -360,14 +381,9 @@ class DayBookController extends ChangeNotifier {
           'The bank balance does not match the recorded closing balance.';
       return false;
     }
-    if (_balanceVerification == null) {
+    if (!isRecordedMetalPositionConsistent) {
       closeError =
-          'Verify today’s opening cash and bank before closing the day.';
-      return false;
-    }
-    if (!isMetalPositionVerified) {
-      closeError =
-          'Owned metal opening and closing are not verified. Day closing is unavailable until stock reconciliation is complete.';
+          'Recorded gold or silver closing is unavailable or inconsistent. Review stock records before closing.';
       return false;
     }
     if (!isCustodyPositionVerified) {
@@ -386,8 +402,8 @@ class DayBookController extends ChangeNotifier {
         _selectedDate,
         closingCash: physicalCashAmount,
         physicalBank: physicalBank,
-        requireVerifiedOpening: true,
-        requireVerifiedMetal: true,
+        requireVerifiedInvoiceIssues: true,
+        requireConsistentMetal: true,
         closedBy: actorId,
         denominationCount: {
           '500': denomination.note500,
@@ -428,6 +444,7 @@ class DayBookController extends ChangeNotifier {
     denom20Ctrl.dispose();
     denom10Ctrl.dispose();
     denomCoinsCtrl.dispose();
+    closingBankCtrl.dispose();
     super.dispose();
   }
 }

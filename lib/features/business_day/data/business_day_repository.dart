@@ -6,6 +6,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_repository.dart';
 import 'package:lotus_erp/repositories/reports/day_book_balance_verification_repository.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
+import 'business_day_activity_repository.dart';
 
 /// Records days actually opened by this installation. Finance-day closures
 /// remain the authoritative lock; opening the app never reopens a closed day.
@@ -18,41 +19,44 @@ class BusinessDayRepository {
       DateTime(value.year, value.month, value.day);
 
   Future<DateTime> activeDay(DateTime now) async {
+    final pending = await pendingDays(now);
+    return pending.isEmpty ? date(now) : pending.first;
+  }
+
+  Future<void> _recordToday(DateTime now) async {
     await db
         .customStatement('''CREATE TABLE IF NOT EXISTS business_day_sessions (
       day_key TEXT PRIMARY KEY,
       day_date TEXT NOT NULL,
       opened_at INTEGER NOT NULL
     )''');
-    return db.transaction(() async {
+    await db.transaction(() async {
       final today = date(now);
       if (!await isClosed(today)) {
         await db.customStatement('''INSERT OR IGNORE INTO business_day_sessions
           (day_key, day_date, opened_at) VALUES (?, ?, ?)''',
             [key(today), today.toIso8601String(), now.millisecondsSinceEpoch]);
       }
-      final pending = await db.customSelect('''
-        SELECT s.day_date FROM business_day_sessions s
-        LEFT JOIN finance_day_closures c ON c.day_key = s.day_key
-        WHERE c.day_key IS NULL ORDER BY s.day_key LIMIT 1
-      ''').getSingleOrNull();
-      if (pending != null) {
-        return DateTime.parse(pending.read<String>('day_date'));
-      }
-      return today;
     });
   }
 
   Future<List<DateTime>> pendingDays(DateTime now) async {
-    await activeDay(now);
+    await _recordToday(now);
     final rows = await db.customSelect('''
       SELECT s.day_date FROM business_day_sessions s
       LEFT JOIN finance_day_closures c ON c.day_key = s.day_key
       WHERE c.day_key IS NULL ORDER BY s.day_key
     ''').get();
-    return rows
-        .map((row) => DateTime.parse(row.read<String>('day_date')))
-        .toList();
+    final today = date(now);
+    final activity = BusinessDayActivityRepository(db);
+    final pending = <DateTime>[];
+    for (final row in rows) {
+      final day = DateTime.parse(row.read<String>('day_date'));
+      if (!day.isBefore(today) || await activity.hasActivity(day)) {
+        pending.add(day);
+      }
+    }
+    return pending;
   }
 
   Future<bool> isClosed(DateTime day) =>

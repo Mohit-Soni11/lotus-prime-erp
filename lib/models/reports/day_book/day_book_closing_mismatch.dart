@@ -27,20 +27,25 @@ class DayBookClosingMismatch {
         ((cash < -0.005 && bank > 0.005) || (cash > 0.005 && bank < -0.005));
   }
 
+  bool get hasCashShortage => (cashVariance ?? 0) < -0.005;
+  bool get hasBankShortage => (bankVariance ?? 0) < -0.005;
+
+  bool get hasMismatch =>
+      (cashVariance?.abs() ?? 0) >= 0.005 ||
+      (bankVariance?.abs() ?? 0) >= 0.005;
+
   List<ExpenseDraft> expenseDrafts(DateTime date) {
-    final cash = cashVariance;
-    final bank = bankVariance;
-    if (cash == null || bank == null || hasOppositeMovements) return const [];
+    if (hasOppositeMovements) return const [];
     return [
-      if (cash < -0.005)
+      if (hasCashShortage)
         ExpenseDraft(
-          amount: _round(-cash),
+          amount: _round(-cashVariance!),
           date: date,
           paymentMode: PaymentMode.cash,
         ),
-      if (bank < -0.005)
+      if (hasBankShortage)
         ExpenseDraft(
-          amount: _round(-bank),
+          amount: _round(-bankVariance!),
           date: date,
           paymentMode: PaymentMode.bank,
         ),

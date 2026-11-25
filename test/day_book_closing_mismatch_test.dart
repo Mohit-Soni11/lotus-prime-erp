@@ -49,4 +49,24 @@ void main() {
     expect(excess.expenseDrafts(date), isEmpty);
     expect(pending.expenseDrafts(date), isEmpty);
   });
+
+  test('a completed cash or bank count exposes its own shortage action', () {
+    const cashOnly = DayBookClosingMismatch(
+      expectedCash: 1000,
+      countedCash: 900,
+      expectedBank: 500,
+      countedBank: null,
+    );
+    const bankOnly = DayBookClosingMismatch(
+      expectedCash: 1000,
+      countedCash: null,
+      expectedBank: 500,
+      countedBank: 470,
+    );
+
+    expect(cashOnly.expenseDrafts(date), hasLength(1));
+    expect(cashOnly.expenseDrafts(date).single.paymentMode, PaymentMode.cash);
+    expect(bankOnly.expenseDrafts(date), hasLength(1));
+    expect(bankOnly.expenseDrafts(date).single.paymentMode, PaymentMode.bank);
+  });
 }

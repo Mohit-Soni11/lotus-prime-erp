@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lotus_erp/constants/app_routes.dart';
+import 'package:lotus_erp/core/router/app_back_navigation.dart';
 import 'package:lotus_erp/logic/report/day_book/day_book_controller.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_balance_verification.dart';
@@ -14,7 +15,7 @@ import 'package:lotus_erp/ui/report/day_book/day_book_screen.dart';
 void main() {
   for (final exit in [false, true]) {
     testWidgets(
-        '${exit ? 'Exit' : 'Report'} opens closing first and uses the shared opening form',
+        '${exit ? 'Exit' : 'Report'} verifies closing without opening verification',
         (tester) async {
       final controller = _WorkflowController();
       await _open(tester, controller, exit: exit);
@@ -29,43 +30,18 @@ void main() {
       expect(_closeButton(tester).onPressed, isNull);
 
       await tester.enterText(
-          find.widgetWithText(TextField, 'Counted bank balance'), '0');
+          find.widgetWithText(TextField, 'Actual bank balance'), '0');
       await tester.pump();
       expect(_closeButton(tester).onPressed, isNull);
-
-      await tester.ensureVisible(find.text('Verify Opening Balance'));
-      await tester.tap(find.text('Verify Opening Balance'));
-      await tester.pumpAndSettle();
-      final form = tester
-          .widget<DayBookBalanceDialog>(find.byType(DayBookBalanceDialog));
-      expect(form.fullScreen, isTrue);
-      expect(form.date, controller.selectedDate);
-      expect(form.expectedCash, 0);
-      expect(form.expectedBank, 0);
-
-      // Cancelling verification returns to closing without authorizing exit.
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
-      expect(find.byType(DayBookEodDialog), findsOneWidget);
-      expect(controller.balanceVerification, isNull);
-      expect(_closeButton(tester).onPressed, isNull);
-
-      await tester.ensureVisible(find.text('Verify Opening Balance'));
-      await tester.tap(find.text('Verify Opening Balance'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const ValueKey('actual-cash')), '0');
-      await tester.enterText(find.byKey(const ValueKey('actual-bank')), '0');
-      await tester.tap(find.text('Save & Verify'));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
-      expect(controller.balanceVerification, isNotNull);
-      expect(find.byType(DayBookEodDialog), findsOneWidget);
       expect(find.text('Verify Opening Balance'), findsNothing);
-
-      // Opening verification preserves the closing count already entered.
+      expect(_closeButton(tester).onPressed, isNull);
+      await tester.ensureVisible(find
+          .text('I counted the cash drawer and confirm a zero cash balance.'));
+      await tester.tap(find
+          .text('I counted the cash drawer and confirm a zero cash balance.'));
+      await tester.pump();
       expect(_closeButton(tester).onPressed, isNotNull);
-      await tester.tap(find.text('Verify & Close Day'));
+      await tester.tap(find.text('Verify Day Closing'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
@@ -76,11 +52,12 @@ void main() {
     });
   }
 
-  testWidgets('cancelling exit closing returns directly to the caller',
+  testWidgets('Back from exit closing returns directly to the caller',
       (tester) async {
     final controller = _WorkflowController();
     await _open(tester, controller, exit: true);
-    await tester.tap(find.text('Cancel'));
+    expect(find.text('Cancel'), findsNothing);
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
     expect(find.byType(DayBookScreen), findsNothing);
     expect(find.text('Open workflow'), findsOneWidget);
@@ -88,33 +65,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('opening shortage expense returns to the active closing form',
+  testWidgets('one-time closing keeps Day Book usable after verification',
+      (tester) async {
+    final controller = _WorkflowController();
+    await _open(tester, controller, action: 'close');
+    await tester.enterText(find.byKey(const ValueKey('day-closing-bank')), '0');
+    await tester.ensureVisible(find
+        .text('I counted the cash drawer and confirm a zero cash balance.'));
+    await tester.tap(find
+        .text('I counted the cash drawer and confirm a zero cash balance.'));
+    await tester.pump();
+    await tester.tap(find.text('Verify Day Closing'));
+    await tester.pumpAndSettle();
+
+    expect(controller.summary.isDayLocked, isTrue);
+    expect(find.byType(DayBookScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('Open workflow'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('expense Back returns to the pending Day Closing draft',
       (tester) async {
     final controller = _WorkflowController(openingCash: 100);
-    await _open(tester, controller, exit: true);
-    await tester.ensureVisible(find.text('Verify Opening Balance'));
-    await tester.tap(find.text('Verify Opening Balance'));
+    await _open(tester, controller);
+    await tester.enterText(find.byKey(const ValueKey('day-closing-bank')), '0');
+    await tester.pump();
+    await tester.tap(find.text('Cash Shortage'));
     await tester.pumpAndSettle();
-    expect(
-        tester
-            .widget<DayBookBalanceDialog>(find.byType(DayBookBalanceDialog))
-            .expectedCash,
-        100);
-    await tester.enterText(find.byKey(const ValueKey('actual-cash')), '0');
-    await tester.enterText(find.byKey(const ValueKey('actual-bank')), '0');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Mismatch Transfer'));
-    await tester.pumpAndSettle();
-    expect(find.text('Expense draft: 100.0'), findsOneWidget);
-    expect(find.text('Expense date: 2026-11-20T00:00:00.000'), findsOneWidget);
+
+    expect(find.textContaining('Expense draft:'), findsOneWidget);
     await tester.tap(find.text('Back to closing'));
     await tester.pumpAndSettle();
-    expect(find.byType(DayBookEodDialog), findsOneWidget);
-    expect(controller.summary.isDayLocked, isFalse);
-    expect(controller.balanceVerification, isNull);
-    await tester.tap(find.text('Cancel'));
+    expect(find.byType(DayBookScreen), findsOneWidget);
+    await tester.tap(find.text('Day Closing'));
     await tester.pumpAndSettle();
-    expect(find.byType(DayBookScreen), findsNothing);
+    expect(find.text('Cash Shortage'), findsOneWidget);
+    expect(controller.closingBankCtrl.text, '0');
     expect(tester.takeException(), isNull);
   });
 
@@ -131,6 +120,9 @@ void main() {
         isTrue);
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
+    expect(find.byType(DayBookScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
     expect(find.byType(DayBookScreen), findsNothing);
     expect(controller.balanceVerification, isNull);
     expect(tester.takeException(), isNull);
@@ -138,7 +130,7 @@ void main() {
 }
 
 FilledButton _closeButton(WidgetTester tester) => tester.widget<FilledButton>(
-    find.widgetWithText(FilledButton, 'Verify & Close Day'));
+    find.widgetWithText(FilledButton, 'Verify Day Closing'));
 
 Future<void> _open(WidgetTester tester, _WorkflowController controller,
     {bool exit = false, String? action}) async {
@@ -163,18 +155,23 @@ Future<void> _open(WidgetTester tester, _WorkflowController controller,
         exitAfterClose: exit,
       ),
     ),
-    GoRoute(
-      path: RoutePaths.financeExpense,
-      builder: (context, state) => Scaffold(
-        body: Column(children: [
-          Text('Expense draft: ${state.extra}'),
-          Text('Expense date: ${state.uri.queryParameters['date']}'),
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Back to closing'),
+    ShellRoute(
+      builder: (context, state, child) => child,
+      routes: [
+        GoRoute(
+          path: RoutePaths.financeExpense,
+          builder: (context, state) => Scaffold(
+            body: Column(children: [
+              Text('Expense draft: ${state.extra}'),
+              Text('Expense date: ${state.uri.queryParameters['date']}'),
+              TextButton(
+                onPressed: () => AppBackNavigation.backOr(context, '/'),
+                child: const Text('Back to closing'),
+              ),
+            ]),
           ),
-        ]),
-      ),
+        ),
+      ],
     ),
   ]);
   addTearDown(router.dispose);
@@ -194,8 +191,39 @@ Future<void> _open(WidgetTester tester, _WorkflowController controller,
 }
 
 class _WorkflowController extends ChangeNotifier implements DayBookController {
-  _WorkflowController({this.openingCash = 0});
+  _WorkflowController({this.openingCash = 0}) {
+    closingCashCountEntered = openingCash > 0;
+  }
+
   final double openingCash;
+
+  @override
+  final TextEditingController closingBankCtrl = TextEditingController();
+  @override
+  bool closingCashCountEntered = false;
+  @override
+  bool closingZeroCashConfirmed = false;
+
+  @override
+  void markClosingCashCountEntered() {
+    closingCashCountEntered = true;
+    notifyListeners();
+  }
+
+  @override
+  void setClosingZeroCashConfirmed(bool value) {
+    closingZeroCashConfirmed = value;
+    notifyListeners();
+  }
+
+  @override
+  void resetClosingDraft() {
+    closingBankCtrl.clear();
+    closingCashCountEntered = false;
+    closingZeroCashConfirmed = false;
+    notifyListeners();
+  }
+
   @override
   DateTime get selectedDate => DateTime(2026, 11, 20);
   bool _locked = false;
@@ -207,7 +235,10 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
         date: selectedDate,
         isDayLocked: _locked,
         moneyFlow: DayBookMoneyFlow(
-            openingCash: openingCash, openingBank: 0, entries: const []),
+          openingCash: openingCash,
+          openingBank: 0,
+          entries: const [],
+        ),
       );
   @override
   DayBookBalanceVerification? get balanceVerification => _verification;
@@ -223,6 +254,8 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
   bool get isCashMatched => true;
   @override
   bool get isMetalPositionVerified => true;
+  @override
+  bool get isRecordedMetalPositionConsistent => true;
   @override
   bool get isCustodyPositionVerified => true;
   @override
@@ -268,7 +301,7 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
 
   @override
   Future<bool> closeDay({required double physicalBank}) async {
-    _locked = _verification != null && physicalBank == 0;
+    _locked = physicalBank == 0;
     notifyListeners();
     return _locked;
   }
@@ -278,6 +311,7 @@ class _WorkflowController extends ChangeNotifier implements DayBookController {
 
   @override
   void dispose() {
+    closingBankCtrl.dispose();
     for (final count in _counts) {
       count.dispose();
     }

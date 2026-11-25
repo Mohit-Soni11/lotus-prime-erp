@@ -31,6 +31,8 @@ class FinanceDayCloseSnapshotBuilder {
     required double physicalCash,
     double? physicalBank,
     bool requireVerifiedOpening = false,
+    bool requireVerifiedInvoiceIssues = false,
+    bool requireConsistentMetal = false,
     bool requireVerifiedMetal = false,
     Map<String, num>? denominationCount,
   }) async {
@@ -62,9 +64,8 @@ class FinanceDayCloseSnapshotBuilder {
     final moneyRepo = DayBookMoneyRepository(db);
     final openingCash = await moneyRepo.fetchOpeningCash(start);
     final money = await moneyRepo.fetch(start, openingCash);
-    final openingVerification = requireVerifiedOpening
-        ? await DayBookBalanceVerificationRepository(db).fetch(start)
-        : null;
+    final openingVerification =
+        await DayBookBalanceVerificationRepository(db).fetch(start);
     final verifiedClosing = openingVerification == null
         ? null
         : DayBookVerifiedClosing(
@@ -91,6 +92,10 @@ class FinanceDayCloseSnapshotBuilder {
 
     final movements = await DayBookStockMovementRepository(db).fetch(start);
     final owned = await DayBookOwnedStockRepository(db).fetch(start, movements);
+    if (requireConsistentMetal &&
+        (!owned.gold.isConsistent || !owned.silver.isConsistent)) {
+      throw StateError('Recorded gold or silver closing is inconsistent.');
+    }
     final metalVerification =
         await DayBookMetalVerificationRepository(db).latest(start);
     if (requireVerifiedMetal &&
@@ -100,7 +105,7 @@ class FinanceDayCloseSnapshotBuilder {
     }
     final custody = await DayBookCustodyRepository(db).fetch(start);
     final documents = await DayBookDocumentRepository(db).fetch(start);
-    if (requireVerifiedOpening &&
+    if (requireVerifiedInvoiceIssues &&
         documents.any((document) => !document.issueSnapshotAvailable)) {
       throw StateError(
           'Invoice issue values are unverified. Reconcile original invoices before closing this day.');
