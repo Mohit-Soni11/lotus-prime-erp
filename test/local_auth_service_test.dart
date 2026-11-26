@@ -80,6 +80,12 @@ void main() {
     expect(
         (await auth.changePassword(
                 currentPassword: 'initialPassword123',
+                newPassword: 'lettersOnly'))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await auth.changePassword(
+                currentPassword: 'initialPassword123',
                 newPassword: 'newPassword123'))
             .isSuccess,
         isTrue);

@@ -15,6 +15,7 @@ import '../metal_rate/metal_rate_hub_screen.dart';
 
 import '../tax_gst/tax_gst_hub_screen.dart';
 import '../../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
+import '../../../features/settings/security_access/presentation/security_access_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final Function(String routeId) onNavigate;
@@ -24,6 +25,11 @@ class SettingsScreen extends StatelessWidget {
     switch (item.id) {
       case AppRoutes.backupRestoreRoute:
         context.push(RoutePaths.settingsBackupRestore);
+        break;
+      case AppRoutes.securityAccessRoute:
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(builder: (_) => const SecurityAccessScreen()),
+        );
         break;
       case 'shop_profile':
         Navigator.of(context, rootNavigator: true).push(

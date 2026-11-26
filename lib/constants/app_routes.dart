@@ -19,6 +19,7 @@ class AppRoutes {
   static const String printTemplatesRoute = '/settings/print-templates';
   static const String metalCostAnalyserRoute = '/settings/metal-cost-analyser';
   static const String backupRestoreRoute = '/settings/backup-restore';
+  static const String securityAccessRoute = '/settings/security-access';
 
   // Customer
   static const String customerListRoute = '/customer/list';

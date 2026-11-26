@@ -74,10 +74,10 @@ class SettingsData {
       accentColor: Color(0xFFD97706),
     ),
     SettingsModel(
-      id: 'security',
+      id: AppRoutes.securityAccessRoute,
       icon: SettingsIcons.security,
       title: 'Security & Access',
-      subtitle: 'Manage PIN lock, staff roles & module permissions',
+      subtitle: 'Verify your current password and set a new sign-in password',
       category: SettingsCategory.security,
       accentColor: Color(0xFFDC2626),
     ),

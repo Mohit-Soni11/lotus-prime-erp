@@ -12,7 +12,6 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'widgets/profile_avatar_widgets.dart';
 part 'widgets/profile_form_widgets.dart';
-part 'widgets/profile_password_widgets.dart';
 part 'widgets/profile_details_widgets.dart';
 part 'widgets/profile_photo_menu.dart';
 
@@ -40,14 +39,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
   late TextEditingController _nameCtrl;
   late TextEditingController _mobileCtrl;
   late TextEditingController _emailCtrl;
-
-  bool _showPasswordSection = false;
-  final _currPassCtrl = TextEditingController();
-  final _newPassCtrl = TextEditingController();
-  final _confirmPassCtrl = TextEditingController();
-  bool _obscureCurr = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
 
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
@@ -85,9 +76,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     _nameCtrl.dispose();
     _mobileCtrl.dispose();
     _emailCtrl.dispose();
-    _currPassCtrl.dispose();
-    _newPassCtrl.dispose();
-    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
@@ -207,40 +195,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     }
   }
 
-  Future<void> _changePassword() async {
-    if (_newPassCtrl.text != _confirmPassCtrl.text) {
-      _showFeedback(AccountProfileStrings.errorPassMismatch, isError: true);
-      return;
-    }
-    if (_newPassCtrl.text.length < 8) {
-      _showFeedback(AccountProfileStrings.errorPassLength, isError: true);
-      return;
-    }
-    setState(() => _isSaving = true);
-    try {
-      final result = await _authService.changePassword(
-          currentPassword: _currPassCtrl.text, newPassword: _newPassCtrl.text);
-      if (!result.isSuccess) {
-        if (mounted) _showFeedback(result.message, isError: true);
-        return;
-      }
-
-      if (mounted) {
-        _showFeedback(AccountProfileStrings.successPassword, isError: false);
-        _currPassCtrl.clear();
-        _newPassCtrl.clear();
-        _confirmPassCtrl.clear();
-        setState(() => _showPasswordSection = false);
-      }
-    } catch (_) {
-      if (mounted) {
-        _showFeedback('Password change failed. Try again.', isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
   void _showFeedback(String msg, {required bool isError}) {
     AppFeedback.show(
       context,
@@ -249,8 +203,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       duration: const Duration(seconds: 3),
     );
   }
-
-  void _updatePasswordUi(VoidCallback change) => setState(change);
 
   @override
   Widget build(BuildContext context) {
@@ -274,8 +226,6 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildTopRow(),
-                      const SizedBox(height: 20),
-                      _buildPasswordCard(),
                       const SizedBox(height: 20),
                       if (_isOwner) ...[
                         _buildAccountDetailsCard(),

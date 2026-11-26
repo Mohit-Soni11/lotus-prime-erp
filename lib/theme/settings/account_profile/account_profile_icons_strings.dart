@@ -43,7 +43,6 @@ class AccountProfileStrings {
 
   // ── SECTIONS ──────────────────────────────────────────────────────────────
   static const String sectionProfile = 'PROFILE INFORMATION';
-  static const String sectionPassword = 'CHANGE PASSWORD';
   static const String sectionAccount = 'ACCOUNT DETAILS';
 
   // ── FIELDS ────────────────────────────────────────────────────────────────
@@ -51,13 +50,9 @@ class AccountProfileStrings {
   static const String labelMobile = 'Mobile Number';
   static const String labelEmail = 'Email Address';
   static const String labelEmailNote = 'Email cannot be changed here';
-  static const String labelCurrentPass = 'Current Password';
-  static const String labelNewPass = 'New Password';
-  static const String labelConfirmPass = 'Confirm New Password';
 
   // ── BUTTONS ───────────────────────────────────────────────────────────────
   static const String btnSave = 'Save Changes';
-  static const String btnUpdatePass = 'Update Password';
   static const String btnChangePhoto = 'Change Photo';
   static const String btnCrop = 'Crop';
 
@@ -67,10 +62,6 @@ class AccountProfileStrings {
 
   // ── SUCCESS / ERROR ───────────────────────────────────────────────────────
   static const String successProfile = 'Profile updated successfully!';
-  static const String successPassword = 'Password changed successfully!';
-  static const String errorPassMismatch = 'New passwords do not match';
-  static const String errorPassLength =
-      'Password must be at least 8 characters';
   static const String errorWrongPass = 'Current password is incorrect';
   static const String errorNameRequired = 'Full name is required';
 }

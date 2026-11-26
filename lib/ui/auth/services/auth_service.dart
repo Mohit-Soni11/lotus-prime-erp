@@ -6,6 +6,7 @@ import 'auth_result.dart';
 import 'auth_session_gateway.dart';
 import 'local_account_repository.dart';
 import 'local_password_hasher.dart';
+import 'password_policy.dart';
 import 'local_session_store.dart';
 
 class AuthService implements AuthSessionGateway {
@@ -109,10 +110,10 @@ class AuthService implements AuthSessionGateway {
           'This installation already has an owner account.');
     }
     if (!RegExp(r'^[A-Za-z0-9._-]{3,32}$').hasMatch(username.trim()) ||
-        password.length < 8 ||
+        PasswordPolicy.validate(password) != null ||
         ownerName.trim().isEmpty) {
       return const AuthResult(AuthResultCode.failure,
-          'Enter an owner name, a valid username and a password of at least 8 characters.');
+          'Enter an owner name, a valid username, and a password with at least 8 characters including a letter and number.');
     }
     try {
       final passwordSalt = _hasher.newSalt();
@@ -187,9 +188,13 @@ class AuthService implements AuthSessionGateway {
       return const AuthResult(
           AuthResultCode.failure, 'Current password is incorrect.');
     }
-    if (newPassword.length < 8) {
-      return const AuthResult(
-          AuthResultCode.failure, 'Use at least 8 characters.');
+    if (currentPassword == newPassword) {
+      return const AuthResult(AuthResultCode.failure,
+          'Choose a password different from the current password.');
+    }
+    final passwordError = PasswordPolicy.validate(newPassword);
+    if (passwordError != null) {
+      return AuthResult(AuthResultCode.failure, passwordError);
     }
     final salt = _hasher.newSalt();
     await _accounts.update({
@@ -202,9 +207,9 @@ class AuthService implements AuthSessionGateway {
 
   Future<AuthResult> resetPassword(
       {required String recoveryCode, required String newPassword}) async {
-    if (newPassword.length < 8) {
-      return const AuthResult(
-          AuthResultCode.failure, 'Use at least 8 characters.');
+    final passwordError = PasswordPolicy.validate(newPassword);
+    if (passwordError != null) {
+      return AuthResult(AuthResultCode.failure, passwordError);
     }
     final record = await _accounts.read();
     if (record == null ||
