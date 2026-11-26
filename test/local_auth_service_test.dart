@@ -89,6 +89,7 @@ void main() {
                 newPassword: 'newPassword123'))
             .isSuccess,
         isTrue);
+    expect((await auth.getUserDetails())?['lastPasswordChangedAt'], isNotNull);
     await auth.signOut();
     final afterLogout =
         AuthService.forTesting(accounts, sessionStore: sessions);

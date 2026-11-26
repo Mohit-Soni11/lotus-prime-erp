@@ -158,6 +158,7 @@ class AuthService implements AuthSessionGateway {
       'role': 'OWNER',
       'isActive': true,
       'createdAt': record['created_at'],
+      'lastPasswordChangedAt': record['last_password_changed_at'],
     };
   }
 
@@ -197,10 +198,12 @@ class AuthService implements AuthSessionGateway {
       return AuthResult(AuthResultCode.failure, passwordError);
     }
     final salt = _hasher.newSalt();
+    final passwordChangedAt = DateTime.now().toUtc().toIso8601String();
     await _accounts.update({
       'password_salt': salt,
       'password_hash': await _hasher.hash(newPassword, salt),
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': passwordChangedAt,
+      'last_password_changed_at': passwordChangedAt,
     });
     return const AuthResult(AuthResultCode.success, 'Password updated.');
   }
@@ -223,6 +226,7 @@ class AuthService implements AuthSessionGateway {
     final passwordSalt = _hasher.newSalt();
     final recoverySalt = _hasher.newSalt();
     final nextRecoveryCode = _hasher.newRecoveryCode();
+    final passwordChangedAt = DateTime.now().toUtc().toIso8601String();
     await _accounts.update({
       'password_salt': passwordSalt,
       'password_hash': await _hasher.hash(newPassword, passwordSalt),
@@ -230,7 +234,8 @@ class AuthService implements AuthSessionGateway {
       'recovery_hash': await _hasher.hash(nextRecoveryCode, recoverySalt),
       'failed_attempts': 0,
       'locked_until': null,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': passwordChangedAt,
+      'last_password_changed_at': passwordChangedAt,
     });
     await signOut();
     return AuthResult(AuthResultCode.success, 'Password reset.',

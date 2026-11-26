@@ -51,7 +51,7 @@ class SecurityAccessAppBar extends StatelessWidget
                     colors: [Color(0xFFE9C741), SecurityAccessTheme.gold],
                   ),
                 ),
-                child: const Icon(Icons.admin_panel_settings_outlined,
+                child: const Icon(Icons.shield_outlined,
                     color: Colors.white, size: 22),
               ),
               const SizedBox(width: 13),

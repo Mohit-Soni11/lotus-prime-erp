@@ -125,6 +125,47 @@ void main() {
     }
   });
 
+  test('v9 local accounts gain password-change audit metadata', () async {
+    final directory =
+        await Directory.systemTemp.createTemp('lotus_shop_password_upgrade_');
+    final path = join(directory.path, 'erp_master_db.db');
+    try {
+      final legacy = await openDatabase(
+        path,
+        version: 9,
+        onCreate: (database, _) async {
+          await database.execute('''
+            CREATE TABLE local_owner_account (
+              id INTEGER PRIMARY KEY CHECK (id = 1),
+              uid TEXT NOT NULL UNIQUE,
+              username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+              name TEXT NOT NULL,
+              mobile TEXT NOT NULL,
+              password_salt BLOB NOT NULL,
+              password_hash BLOB NOT NULL,
+              recovery_salt BLOB NOT NULL,
+              recovery_hash BLOB NOT NULL,
+              failed_attempts INTEGER NOT NULL DEFAULT 0,
+              locked_until TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL
+            )
+          ''');
+        },
+      );
+      await legacy.close();
+
+      final upgraded = await openShopDatabase(path);
+      final columns =
+          await upgraded.rawQuery('PRAGMA table_info(local_owner_account)');
+      expect(columns.map((column) => column['name']),
+          contains('last_password_changed_at'));
+      await upgraded.close();
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
+
   test('Shop Profile data survives a database restart', () async {
     final directory =
         await Directory.systemTemp.createTemp('lotus_shop_restart_');

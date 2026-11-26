@@ -35,8 +35,8 @@ class SecurityPasswordField extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                   color: SecurityAccessTheme.text,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700)),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800)),
           const SizedBox(height: 7),
           TextFormField(
             controller: controller,
@@ -73,9 +73,9 @@ class SecurityPasswordField extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               hintText: hintText,
               hintStyle: const TextStyle(
-                color: SecurityAccessTheme.muted,
+                color: SecurityAccessTheme.text,
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
               border: _border(SecurityAccessTheme.inputBorder),
               enabledBorder: _border(SecurityAccessTheme.inputBorder),

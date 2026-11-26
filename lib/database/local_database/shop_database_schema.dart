@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 9;
+  static const int currentVersion = 10;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -160,6 +160,14 @@ class ShopDatabaseSchema {
     if (oldVersion < 9) {
       await _createLocalOwnerAccount(db);
     }
+    if (oldVersion < 10) {
+      await _addColumnIfMissing(
+        db,
+        'local_owner_account',
+        'last_password_changed_at',
+        'TEXT',
+      );
+    }
   }
 
   static Future<void> _createLocalOwnerAccount(Database db) => db.execute('''
@@ -176,7 +184,8 @@ class ShopDatabaseSchema {
       failed_attempts INTEGER NOT NULL DEFAULT 0,
       locked_until TEXT,
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      last_password_changed_at TEXT
     )
   ''');
 
