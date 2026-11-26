@@ -15,8 +15,8 @@ class BankingStrings {
 
   // --- Buttons & Actions ---
   static const String btnAddAccount = "Add Another Bank Account";
-  static const String btnSave = "Save";
-  static const String btnSaving = "Saving...";
+  static const String btnSave = "Lock Details";
+  static const String btnSaving = "Locking...";
   static const String btnLocked = "Locked";
 
   // 🚀 UPGRADE: Extracted hardcoded copy labels

@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 10;
+  static const int currentVersion = 11;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -61,18 +61,22 @@ class ShopDatabaseSchema {
       )
     ''');
 
-    await db.execute('''
+    await _createShopBankAccounts(db);
+    await _createBankAccountIndexes(db);
+    await _createFinanceAccountLinks(db);
+    await _createLocalOwnerAccount(db);
+  }
+
+  static Future<void> _createShopBankAccounts(Database db) => db.execute('''
       CREATE TABLE shop_bank_accounts (
         id TEXT PRIMARY KEY,
-        tenant_id TEXT,
+        tenant_id TEXT NOT NULL,
         title TEXT, holder TEXT, bank TEXT, type TEXT,
         acc TEXT, ifsc TEXT, branch TEXT, upi TEXT, qr_image_path TEXT,
         is_active INTEGER DEFAULT 1,
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
       )
     ''');
-    await _createLocalOwnerAccount(db);
-  }
 
   static Future<void> upgrade(
     Database db,
@@ -168,7 +172,35 @@ class ShopDatabaseSchema {
         'TEXT',
       );
     }
+    if (oldVersion < 11) {
+      if (!await _tableExists(db, 'shop_bank_accounts')) {
+        await _createShopBankAccounts(db);
+      }
+      await _createBankAccountIndexes(db);
+      await _createFinanceAccountLinks(db);
+    }
   }
+
+  static Future<void> _createBankAccountIndexes(Database db) async {
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_shop_bank_accounts_tenant_active
+      ON shop_bank_accounts (tenant_id, is_active)
+    ''');
+  }
+
+  /// Records only the finance accounts created or adopted by Shop Profile.
+  /// This prevents profile edits from mutating manually-created Bank Book rows.
+  static Future<void> _createFinanceAccountLinks(Database db) => db.execute('''
+    CREATE TABLE IF NOT EXISTS shop_profile_finance_account_links (
+      tenant_id TEXT NOT NULL,
+      shop_bank_account_id TEXT NOT NULL,
+      finance_bank_account_id INTEGER NOT NULL,
+      PRIMARY KEY (tenant_id, shop_bank_account_id),
+      UNIQUE (finance_bank_account_id),
+      FOREIGN KEY (shop_bank_account_id)
+        REFERENCES shop_bank_accounts (id) ON DELETE CASCADE
+    )
+  ''');
 
   static Future<void> _createLocalOwnerAccount(Database db) => db.execute('''
     CREATE TABLE IF NOT EXISTS local_owner_account (

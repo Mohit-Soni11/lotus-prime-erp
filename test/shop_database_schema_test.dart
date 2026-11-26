@@ -269,4 +269,88 @@ void main() {
       await directory.delete(recursive: true);
     }
   });
+
+  test('v10 Shop Profile database gains safe banking link infrastructure',
+      () async {
+    final directory =
+        await Directory.systemTemp.createTemp('lotus_shop_links_upgrade_');
+    final path = join(directory.path, 'erp_master_db.db');
+
+    try {
+      final legacy = await openDatabase(
+        path,
+        version: 10,
+        onCreate: (database, _) async {
+          await database.execute(
+            'CREATE TABLE shop_profile (tenant_id TEXT PRIMARY KEY)',
+          );
+          await database.execute('''
+            CREATE TABLE shop_bank_accounts (
+              id TEXT PRIMARY KEY,
+              tenant_id TEXT,
+              is_active INTEGER DEFAULT 1
+            )
+          ''');
+        },
+      );
+      await legacy.close();
+
+      final upgraded = await openShopDatabase(path);
+      final linkTable = await upgraded.rawQuery('''
+        SELECT name FROM sqlite_master
+        WHERE type = 'table' AND name = 'shop_profile_finance_account_links'
+      ''');
+      final indexes = await upgraded.rawQuery(
+        'PRAGMA index_list(shop_bank_accounts)',
+      );
+
+      expect(linkTable, isNotEmpty);
+      expect(
+        indexes.map((index) => index['name']),
+        contains('idx_shop_bank_accounts_tenant_active'),
+      );
+      await upgraded.close();
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
+
+  test('finance account links are isolated per tenant', () async {
+    final directory =
+        await Directory.systemTemp.createTemp('lotus_shop_links_scope_');
+    final path = join(directory.path, 'erp_master_db.db');
+    try {
+      final database = await openShopDatabase(path);
+      final helper = ShopDatabaseHelper.forTesting(database);
+      await database.insert('shop_profile', {'tenant_id': 'SHOP-A'});
+      await database.insert('shop_profile', {'tenant_id': 'SHOP-B'});
+      await database.insert('shop_bank_accounts', {
+        'id': 'bank-a',
+        'tenant_id': 'SHOP-A',
+        'is_active': 1,
+      });
+      await database.insert('shop_bank_accounts', {
+        'id': 'bank-b',
+        'tenant_id': 'SHOP-B',
+        'is_active': 1,
+      });
+
+      await helper.replaceFinanceAccountLinks(
+        tenantId: 'SHOP-A',
+        links: const {'bank-a': 10},
+      );
+      await helper.replaceFinanceAccountLinks(
+        tenantId: 'SHOP-B',
+        links: const {'bank-b': 20},
+      );
+
+      expect(
+          await helper.financeAccountLinksForTenant('SHOP-A'), {'bank-a': 10});
+      expect(
+          await helper.financeAccountLinksForTenant('SHOP-B'), {'bank-b': 20});
+      await database.close();
+    } finally {
+      await directory.delete(recursive: true);
+    }
+  });
 }

@@ -151,7 +151,7 @@ class BankingTabState extends State<BankingTab> {
                           key: _cardKeyFor(accounts[index].id),
                           accountData: accounts[index],
                           isDesktop: isDesktop,
-                          showDelete: index != 0,
+                          showDelete: true,
                           logicCore: logic,
                           onDelete: () =>
                               logic.removeAccount(accounts[index].id),

@@ -46,6 +46,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   int _currentStep = 1;
   bool _isLoading = false;
   bool _isFetchingInitialData = true;
+  String? _loadError;
 
   ShopProfileModel _masterData = const ShopProfileModel();
 
@@ -112,33 +113,27 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       _fetchedMasterData = await _repository.fetchExistingSetup(permanentId);
 
       if (_fetchedMasterData != null) {
-        // 3. Map the basic info raw map to ShopProfileModel for BasicInfoTab
+        // The model owns the persistence mapping; do not duplicate fields here.
         final basicMap = _fetchedMasterData!['basic_info'] ?? {};
-
-        _masterData = ShopProfileModel(
-          legalName: basicMap['legal_name']?.toString() ?? "",
-          displayName: basicMap['display_name']?.toString() ?? "",
-          tagline: basicMap['tagline']?.toString() ?? "",
-          ownerName: basicMap['owner_name']?.toString() ?? "",
-          ownerPhone: basicMap['owner_phone']?.toString() ?? "",
-          brandDisplayName: basicMap['brand_display_name']?.toString() ?? "",
-          businessEmail: basicMap['business_email']?.toString() ?? "",
-          shopPhone: basicMap['shop_phone']?.toString() ?? "",
-          shopWhatsapp: basicMap['shop_whatsapp']?.toString() ?? "",
-          helpDeskNumber: basicMap['help_desk_number']?.toString() ?? "",
-          logoPath: basicMap['logo_path']?.toString(),
-          signaturePath: basicMap['signature_path']?.toString(),
-          logoShape: basicMap['logo_shape']?.toString() ?? "circle",
-          signatureShape: basicMap['signature_shape']?.toString() ?? "square",
+        _masterData = ShopProfileModel.fromJson(
+          Map<String, dynamic>.from(basicMap as Map),
         );
       }
 
       if (mounted) {
-        setState(() => _isFetchingInitialData = false);
+        setState(() {
+          _loadError = null;
+          _isFetchingInitialData = false;
+        });
       }
     } catch (e) {
       AppLogger.error("❌ Fetch Error: $e");
-      if (mounted) setState(() => _isFetchingInitialData = false);
+      if (mounted) {
+        setState(() {
+          _loadError = 'Shop Profile could not be loaded. Please try again.';
+          _isFetchingInitialData = false;
+        });
+      }
     }
   }
 
@@ -255,7 +250,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       }
 
       // 🎯 MASTER PAYLOAD SUBMISSION
-      bool isSuccess = await _repository.submitMasterPayload(
+      final result = await _repository.submitMasterPayload(
         basicInfo: basicInfo,
         addressData: addressData,
         taxGst: gstData,
@@ -266,8 +261,8 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (isSuccess) {
-        _finishSetup();
+      if (result.isPersisted) {
+        _finishSetup(syncWarnings: result.syncWarnings);
       } else {
         _showErrorFeedback("Failed to sync configuration with the database.");
       }
@@ -331,12 +326,20 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
     });
   }
 
-  void _finishSetup() {
+  void _finishSetup({List<String> syncWarnings = const <String>[]}) {
     AppFeedback.show(
       context,
       type: AppFeedbackType.success,
       message: "Setup Saved Securely!",
     );
+
+    if (syncWarnings.isNotEmpty) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.warning,
+        message: syncWarnings.first,
+      );
+    }
 
     Future.delayed(const Duration(milliseconds: 700), () {
       if (mounted && Navigator.of(context).canPop()) {
@@ -360,6 +363,39 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
     if (_isFetchingInitialData) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_loadError != null) {
+      return Scaffold(
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 40),
+                  const SizedBox(height: 12),
+                  Text(_loadError!, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isFetchingInitialData = true;
+                        _loadError = null;
+                      });
+                      _loadExistingConfiguration();
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 

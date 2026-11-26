@@ -9,6 +9,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 
 // --- IMPORTING UPGRADED FOUNDATION ---
 // NOTE: Adjust the import paths according to your actual folder structure.
@@ -18,26 +19,20 @@ import '../../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic
 import '../../../../../core/logging/app_logger.dart';
 
 class BankingLogic {
+  static const Uuid _uuid = Uuid();
   // 🚀 UPGRADE: Single shared instance of crop logic (Memory Safe)
   final DocumentCropLogic cropLogic = DocumentCropLogic();
 
   // 🚀 UPGRADE: Replaced ChangeNotifier with ValueNotifier for granular rebuilds
   final ValueNotifier<List<BankAccountModel>> accountsNotifier;
 
-  BankingLogic()
-      : accountsNotifier = ValueNotifier<List<BankAccountModel>>([
-          const BankAccountModel(
-            id: "primary_1",
-            title: "Primary Operating Account",
-            type: BankAccountType.current,
-          )
-        ]);
+  BankingLogic() : accountsNotifier = ValueNotifier<List<BankAccountModel>>([]);
 
   void addNewAccount() {
     final currentList = List<BankAccountModel>.from(accountsNotifier.value);
     currentList.add(BankAccountModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      title: "Additional Account ${currentList.length + 1}",
+      id: _uuid.v4(),
+      title: 'Bank Account ${currentList.length + 1}',
       type: BankAccountType.savings,
     ));
     // Overriding the reference triggers ValueNotifier listener

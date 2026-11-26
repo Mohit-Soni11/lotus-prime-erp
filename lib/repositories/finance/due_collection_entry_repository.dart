@@ -49,7 +49,6 @@ class DueCollectionEntryRepository {
 
   Future<List<DueCollectionBankAccountModel>> fetchBankAccounts() async {
     try {
-      await _syncShopProfileBankingToFinanceAccounts();
       final rows = await (_db.select(_db.bankAccounts)
             ..where((tbl) => tbl.isActive.equals(true))
             ..orderBy([
@@ -567,104 +566,9 @@ class DueCollectionEntryRepository {
     }
   }
 
-  Future<void> _syncShopProfileBankingToFinanceAccounts() async {
-    try {
-      final tenantId = await ShopSessionManager.getPermanentTenantId();
-      final shopDb = await _shopDbHelper.database;
-      final rows = await shopDb.query(
-        'shop_bank_accounts',
-        where: 'tenant_id = ? AND is_active = 1',
-        whereArgs: [tenantId],
-      );
-      if (rows.isEmpty) return;
-      final sortedRows = _sortShopBankRows(rows);
-
-      await (_db.update(_db.bankAccounts))
-          .write(const BankAccountsCompanion(isPrimary: Value(false)));
-
-      for (var index = 0; index < sortedRows.length; index++) {
-        final row = sortedRows[index];
-        final accountNumber = _shopAccountNumber(row);
-        if (accountNumber.isEmpty ||
-            accountNumber == _legacyAutoCollectionAccountNumber) {
-          continue;
-        }
-
-        final existing = await (_db.select(_db.bankAccounts)
-              ..where((tbl) => tbl.accountNumber.equals(accountNumber))
-              ..limit(1))
-            .getSingleOrNull();
-
-        final title = _rowText(row, 'title');
-        final bankName = _rowText(row, 'bank');
-        final companion = BankAccountsCompanion(
-          accountName: Value(title.isEmpty
-              ? (index == 0
-                  ? 'Primary Operating Account'
-                  : 'Additional Account ${index + 1}')
-              : title),
-          bankName: Value(bankName.isEmpty ? 'Bank' : bankName),
-          holderName: Value(_nullable(_rowText(row, 'holder'))),
-          accountNumber: Value(accountNumber),
-          ifscCode: Value(_nullable(_rowText(row, 'ifsc'))?.toUpperCase()),
-          branchName: Value(_nullable(_rowText(row, 'branch'))),
-          upiId: Value(_nullable(_rowText(row, 'upi'))),
-          accountType: Value(_financeAccountType(_rowText(row, 'type'))),
-          openingBalance: const Value(0),
-          isActive: const Value(true),
-          isPrimary: Value(index == 0),
-          colorHex: const Value('#D4AF37'),
-          activeSince: Value(DateTime.now()),
-        );
-
-        if (existing != null) {
-          await (_db.update(_db.bankAccounts)
-                ..where((tbl) => tbl.id.equals(existing.id)))
-              .write(companion);
-        } else {
-          await _db.into(_db.bankAccounts).insert(companion);
-        }
-      }
-    } catch (e) {
-      AppLogger.debug(
-          'DueCollectionEntryRepository._syncShopProfileBankingToFinanceAccounts error: $e');
-    }
-  }
-
   bool _isRealPaymentAccount(BankAccount account) {
     return account.accountNumber != _legacyAutoCollectionAccountNumber &&
         account.accountName.trim().toLowerCase() != 'counter collection';
-  }
-
-  String _shopAccountNumber(Map<String, Object?> row) {
-    final acc = _rowText(row, 'acc');
-    if (acc.isNotEmpty) return acc;
-    final upi = _rowText(row, 'upi');
-    if (upi.isNotEmpty) return 'UPI:$upi';
-    return '';
-  }
-
-  List<Map<String, Object?>> _sortShopBankRows(
-      List<Map<String, Object?>> rows) {
-    final sorted = List<Map<String, Object?>>.from(rows);
-    sorted.sort((a, b) {
-      final aPrimary = _rowText(a, 'id') == 'primary_1';
-      final bPrimary = _rowText(b, 'id') == 'primary_1';
-      if (aPrimary != bPrimary) return aPrimary ? -1 : 1;
-      return _rowText(a, 'title').compareTo(_rowText(b, 'title'));
-    });
-    return sorted;
-  }
-
-  String _rowText(Map<String, Object?> row, String key) {
-    return row[key]?.toString().trim() ?? '';
-  }
-
-  String _financeAccountType(String value) {
-    final normalized = value.trim().toLowerCase();
-    if (normalized.contains('saving')) return 'SAVINGS';
-    if (normalized.contains('od') || normalized.contains('cc')) return 'OD';
-    return 'CURRENT';
   }
 
   String _buildNarration(

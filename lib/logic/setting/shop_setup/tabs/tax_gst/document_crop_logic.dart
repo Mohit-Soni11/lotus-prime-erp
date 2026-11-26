@@ -14,6 +14,7 @@ import 'package:image_cropper/image_cropper.dart' as native_crop;
 import 'package:lotus_erp/core/storage/app_storage_paths.dart';
 import 'package:path/path.dart' as p;
 import '../../../../../core/logging/app_logger.dart';
+import '../../../../../core/storage/file_signature_validator.dart';
 import 'package:flutter/foundation.dart';
 
 class DocumentCropLogic {
@@ -51,6 +52,9 @@ class DocumentCropLogic {
       }
       if (!_allowedExtensions.contains(p.extension(file.path).toLowerCase())) {
         throw const FormatException("UNSUPPORTED_FILE");
+      }
+      if (!await FileSignatureValidator.matchesDeclaredExtension(file)) {
+        throw const FormatException("INVALID_FILE_CONTENT");
       }
 
       if (isPdfDocument(file)) {

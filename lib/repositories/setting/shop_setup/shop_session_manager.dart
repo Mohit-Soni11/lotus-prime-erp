@@ -9,6 +9,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../database/local_database/shop_database_helper.dart';
+
 class ShopSessionManager {
   // Storage key
   static const String _tenantKey = 'lotus_erp_permanent_tenant_id';
@@ -23,6 +25,15 @@ class ShopSessionManager {
 
     if (existingId != null && existingId.isNotEmpty) {
       return existingId; // Return the saved permanent ID
+    }
+
+    // A restored Shop Profile database remains authoritative even if Windows
+    // preferences were cleared during a repair/reinstall.
+    final restoredTenantId =
+        await ShopDatabaseHelper().firstPersistedTenantId();
+    if (restoredTenantId != null) {
+      await prefs.setString(_tenantKey, restoredTenantId);
+      return restoredTenantId;
     }
 
     // 2. First time setup: Generate and permanently save

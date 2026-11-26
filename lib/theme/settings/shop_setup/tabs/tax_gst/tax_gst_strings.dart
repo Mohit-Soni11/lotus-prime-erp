@@ -62,8 +62,8 @@ class TaxGstStrings {
   static const String optRemove = "Remove";
 
   // --- Buttons & States ---
-  static const String btnSave = "Save";
-  static const String btnSaving = "Saving...";
+  static const String btnSave = "Lock Details";
+  static const String btnSaving = "Locking...";
   static const String btnLocked = "Locked";
   static const String btnEdit = "Edit";
 
@@ -75,7 +75,8 @@ class TaxGstStrings {
   static const String dlgCropDoc = "Crop Document";
   static const String dlgSecureCrop = "Secure Document Crop";
   static const String dlgDocOptions = "Document Options";
-  static const String feedbackTaxSyncDone = "Tax Sync Done";
+  static const String feedbackTaxSyncDone =
+      "Section locked. Save the full profile to apply changes.";
 
   // --- Error & Validation Messages ---
   static const String errGstinEmpty = "GSTIN cannot be empty";

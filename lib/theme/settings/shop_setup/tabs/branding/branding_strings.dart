@@ -22,8 +22,8 @@ class BrandingStrings {
   static const String toggleChannels = "Brand Channels";
 
   // --- Button States ---
-  static const String btnSave = "Save";
-  static const String btnSaving = "Saving...";
+  static const String btnSave = "Lock Details";
+  static const String btnSaving = "Locking...";
   static const String btnLocked = "Locked";
 
   static const String lblWebsite = "Official Website";

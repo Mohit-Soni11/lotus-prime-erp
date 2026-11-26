@@ -14,6 +14,7 @@ import 'package:image_cropper/image_cropper.dart' as native_crop;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../../../../../core/logging/app_logger.dart';
+import '../../../../../core/storage/file_signature_validator.dart';
 import 'package:flutter/foundation.dart';
 
 class PhotoUploadLogic {
@@ -50,6 +51,13 @@ class PhotoUploadLogic {
           throw Exception(
               "Invalid format. Only JPG and PNG images are allowed.");
         }
+        final selectedFile = File(pickedFile.path);
+        if (!await FileSignatureValidator.matchesDeclaredExtension(
+            selectedFile)) {
+          throw Exception(
+              'Invalid image file. Please select a genuine JPG or PNG image.');
+        }
+        return selectedFile;
       }
 
       return File(pickedFile.path);

@@ -110,43 +110,93 @@ class ShopDatabaseHelper {
   /// Returns the complete saved Shop Profile, or null when setup has not run.
   Future<Map<String, dynamic>?> getMasterPayload(String tenantId) async {
     final db = await database;
+    return db.transaction((transaction) async {
+      final basicInfo = await transaction.query(
+        'shop_profile',
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+      if (basicInfo.isEmpty) return null;
 
-    final basicInfo = await db.query(
-      'shop_profile',
-      where: 'tenant_id = ?',
-      whereArgs: [tenantId],
-    );
-    if (basicInfo.isEmpty) return null;
+      final address = await transaction.query(
+        'shop_address',
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+      final tax = await transaction.query(
+        'shop_tax_gst',
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+      final branding = await transaction.query(
+        'shop_branding',
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+      final banks = await transaction.query(
+        'shop_bank_accounts',
+        where: 'tenant_id = ? AND is_active = 1',
+        whereArgs: [tenantId],
+      );
 
-    final address = await db.query(
-      'shop_address',
-      where: 'tenant_id = ?',
-      whereArgs: [tenantId],
-    );
-    final tax = await db.query(
-      'shop_tax_gst',
-      where: 'tenant_id = ?',
-      whereArgs: [tenantId],
-    );
-    final branding = await db.query(
-      'shop_branding',
-      where: 'tenant_id = ?',
-      whereArgs: [tenantId],
-    );
-    final banks = await db.query(
-      'shop_bank_accounts',
-      where: 'tenant_id = ? AND is_active = 1',
-      whereArgs: [tenantId],
-    );
+      return <String, dynamic>{
+        'tenant_id': tenantId,
+        'basic_info': basicInfo.first,
+        'address': address.isNotEmpty ? address.first : <String, dynamic>{},
+        'tax_compliance': tax.isNotEmpty ? tax.first : <String, dynamic>{},
+        'branding_social':
+            branding.isNotEmpty ? branding.first : <String, dynamic>{},
+        'banking_details': banks,
+      };
+    });
+  }
 
-    return <String, dynamic>{
-      'tenant_id': tenantId,
-      'basic_info': basicInfo.first,
-      'address': address.isNotEmpty ? address.first : <String, dynamic>{},
-      'tax_compliance': tax.isNotEmpty ? tax.first : <String, dynamic>{},
-      'branding_social':
-          branding.isNotEmpty ? branding.first : <String, dynamic>{},
-      'banking_details': banks,
+  Future<Map<String, int>> financeAccountLinksForTenant(String tenantId) async {
+    final db = await database;
+    final rows = await db.query(
+      'shop_profile_finance_account_links',
+      columns: const ['shop_bank_account_id', 'finance_bank_account_id'],
+      where: 'tenant_id = ?',
+      whereArgs: [tenantId],
+    );
+    return {
+      for (final row in rows)
+        row['shop_bank_account_id']!.toString():
+            row['finance_bank_account_id'] as int,
     };
+  }
+
+  /// Supports a restored database when platform preferences were reset.
+  Future<String?> firstPersistedTenantId() async {
+    final db = await database;
+    final rows = await db.query(
+      'shop_profile',
+      columns: const ['tenant_id'],
+      orderBy: 'tenant_id ASC',
+      limit: 1,
+    );
+    final tenantId = rows.isEmpty ? null : rows.first['tenant_id']?.toString();
+    return tenantId == null || tenantId.isEmpty ? null : tenantId;
+  }
+
+  Future<void> replaceFinanceAccountLinks({
+    required String tenantId,
+    required Map<String, int> links,
+  }) async {
+    final db = await database;
+    await db.transaction((transaction) async {
+      await transaction.delete(
+        'shop_profile_finance_account_links',
+        where: 'tenant_id = ?',
+        whereArgs: [tenantId],
+      );
+      for (final entry in links.entries) {
+        await transaction.insert('shop_profile_finance_account_links', {
+          'tenant_id': tenantId,
+          'shop_bank_account_id': entry.key,
+          'finance_bank_account_id': entry.value,
+        });
+      }
+    });
   }
 }
