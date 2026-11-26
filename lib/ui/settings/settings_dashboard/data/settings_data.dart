@@ -82,22 +82,6 @@ class SettingsData {
       accentColor: Color(0xFFDC2626),
     ),
     SettingsModel(
-      id: 'notifications',
-      icon: SettingsIcons.notifications,
-      title: 'Notifications',
-      subtitle: 'Configure alerts for EMI dues, girvi expiry & low stock',
-      category: SettingsCategory.system,
-      accentColor: Color(0xFF2563EB),
-    ),
-    SettingsModel(
-      id: 'app_preferences',
-      icon: SettingsIcons.appPrefs,
-      title: 'App Preferences',
-      subtitle: 'Set language, date format & regional display options',
-      category: SettingsCategory.system,
-      accentColor: Color(0xFF0891B2),
-    ),
-    SettingsModel(
       id: AppRoutes.backupRestoreRoute,
       icon: SettingsIcons.backup,
       title: 'Backup & Restore',

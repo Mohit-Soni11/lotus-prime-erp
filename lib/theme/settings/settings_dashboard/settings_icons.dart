@@ -13,9 +13,7 @@ class SettingsIcons {
   static const IconData security = Icons.admin_panel_settings_rounded;
   static const IconData backup = Icons.cloud_sync_rounded;
   static const IconData printTemplates = Icons.description_rounded;
-  static const IconData notifications = Icons.notifications_rounded;
   static const IconData goldRate = Icons.monetization_on_rounded;
-  static const IconData appPrefs = Icons.tune_rounded;
 
   // ── UI Elements ──
   static const IconData navArrow = Icons.east_rounded;
