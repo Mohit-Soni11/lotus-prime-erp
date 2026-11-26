@@ -72,7 +72,7 @@ void main() {
       final movements = await _stockMovementsFor(db, stockId);
       final pdfBytes = await _buildPdf(invoice);
 
-      expect(result.invoiceNumber, 'LJ-26-001');
+      expect(result.invoiceNumber, 'LJ-TI-26-001');
       expect(bill.billType, 'GST');
       expect(bill.gstAmount, 0);
       expect(bill.paymentStatus, 'PAID');
@@ -148,7 +148,7 @@ void main() {
       final profile = await customerProfileRepository.fetchProfile(customerId);
       final pdfBytes = await _buildPdf(invoice);
 
-      expect(result.invoiceNumber, 'LJ-26-001');
+      expect(result.invoiceNumber, 'LJ-TI-26-001');
       expect(bill.billType, 'GST');
       expect(bill.taxableAmount, saleItem.totalValue);
       expect(bill.cgstAmount, cgst);

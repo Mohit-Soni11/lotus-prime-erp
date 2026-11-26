@@ -810,9 +810,9 @@ class PosInvoiceController extends ChangeNotifier {
 
     try {
       final nextSequence = await _checkoutRepo.fetchNextInvoiceSequence(
-        invoicePrefix: billing.invoicePrefix,
         shopInitials: billing.shopInitials,
         financialYear: billing.currentFinancialYear,
+        billType: billing.billType,
       );
       billing.updateInvoiceSequencePreview(nextSequence);
     } catch (_) {

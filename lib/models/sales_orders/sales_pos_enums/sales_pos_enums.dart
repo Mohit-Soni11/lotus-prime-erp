@@ -101,6 +101,7 @@ extension GstPricingModeExtension on GstPricingMode {
 
 /// Keeps sale documents distinct from future non-sale quotations.
 enum SalesDocumentType {
+  salesInvoice,
   taxInvoice,
   quotation,
 }
@@ -108,6 +109,8 @@ enum SalesDocumentType {
 extension SalesDocumentTypeExtension on SalesDocumentType {
   String get storageValue {
     switch (this) {
+      case SalesDocumentType.salesInvoice:
+        return 'SALES_INVOICE';
       case SalesDocumentType.taxInvoice:
         return 'TAX_INVOICE';
       case SalesDocumentType.quotation:

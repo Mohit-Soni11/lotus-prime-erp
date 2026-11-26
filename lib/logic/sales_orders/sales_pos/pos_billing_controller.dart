@@ -1485,11 +1485,15 @@ class PosBillingController extends ChangeNotifier {
 
   String get shopInitials => PosInvoiceSeriesFormatter.businessCode(shopName);
 
-  String get invoicePrefix => '';
+  String get invoiceDocumentCode => billType == BillType.gst
+      ? PosInvoiceSeriesFormatter.taxInvoiceCode
+      : PosInvoiceSeriesFormatter.salesInvoiceCode;
+
   String get formattedInvoice =>
       _committedInvoiceNumber ??
       PosInvoiceSeriesFormatter.build(
         businessCode: shopInitials,
+        documentCode: invoiceDocumentCode,
         financialYearToken: currentFinancialYear,
         sequence: nextSequence,
       );
@@ -1500,9 +1504,9 @@ class PosBillingController extends ChangeNotifier {
 
     try {
       final sequence = await _checkoutRepo.fetchNextInvoiceSequence(
-        invoicePrefix: invoicePrefix,
         shopInitials: shopInitials,
         financialYear: currentFinancialYear,
+        billType: billType,
       );
       updateInvoiceSequencePreview(sequence);
     } catch (_) {
@@ -2248,6 +2252,7 @@ class PosBillingController extends ChangeNotifier {
     if (!changed) return;
     _clearChangeReturnMethod();
     notifyListeners();
+    unawaited(refreshInvoiceSequencePreview());
   }
 
   void toggleDiscountType(DiscountType type) {

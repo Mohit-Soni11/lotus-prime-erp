@@ -91,12 +91,43 @@ void main() {
         );
 
     final nextSequence = await repository.fetchNextInvoiceSequence(
-      invoicePrefix: '',
       shopInitials: 'AJ',
       financialYear: '27',
+      billType: pos.BillType.normal,
     );
 
     expect(nextSequence, 1);
+  });
+
+  test('regular and GST invoices keep independent sequences', () async {
+    await db.into(db.bills).insert(
+          BillsCompanion(
+            billNo: const drift.Value('AJ-SI-26-008'),
+            billType: const drift.Value('NORMAL'),
+            billDate: drift.Value(DateTime(2026, 9, 6)),
+          ),
+        );
+    await db.into(db.bills).insert(
+          BillsCompanion(
+            billNo: const drift.Value('AJ-TI-26-003'),
+            billType: const drift.Value('GST'),
+            billDate: drift.Value(DateTime(2026, 9, 6)),
+          ),
+        );
+
+    final regularNext = await repository.fetchNextInvoiceSequence(
+      shopInitials: 'AJ',
+      financialYear: '26',
+      billType: pos.BillType.normal,
+    );
+    final taxNext = await repository.fetchNextInvoiceSequence(
+      shopInitials: 'AJ',
+      financialYear: '26',
+      billType: pos.BillType.gst,
+    );
+
+    expect(regularNext, 9);
+    expect(taxNext, 4);
   });
 
   test('wholesale percentage making is calculated from metal value', () {
@@ -171,7 +202,7 @@ void main() {
       final stockMovements = await _stockMovementsFor(db, stockId);
       final cashRows = await db.select(db.cashTransactions).get();
 
-      expect(result.invoiceNumber, 'LJ-26-001');
+      expect(result.invoiceNumber, 'LJ-SI-26-001');
       expect(result.invoiceSequence, 1);
       expect(bill.finalAmount, 910);
       final issue = await db.customSelect(

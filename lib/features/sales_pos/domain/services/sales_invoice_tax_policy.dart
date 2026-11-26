@@ -30,7 +30,9 @@ class SalesInvoiceTaxPolicy {
   }
 
   static SalesDocumentType documentTypeFor(BillType billType) {
-    return SalesDocumentType.taxInvoice;
+    return appliesGst(billType)
+        ? SalesDocumentType.taxInvoice
+        : SalesDocumentType.salesInvoice;
   }
 
   static String title(BillType billType) {

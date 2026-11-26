@@ -405,6 +405,7 @@ class AppDatabase extends _$AppDatabase {
       _reservedSeries(
         reserved,
         parsed.businessCode,
+        parsed.documentCode!,
         parsed.financialYearToken,
       ).add(parsed.sequence);
     }
@@ -416,7 +417,16 @@ class AppDatabase extends _$AppDatabase {
 
       final fyToken =
           PosInvoiceSeriesFormatter.financialYearToken(bill.billDate);
-      final used = _reservedSeries(reserved, parsed.businessCode, fyToken);
+      final documentCode =
+          PosInvoiceSeriesFormatter.documentCodeForBillTypeName(
+        bill.billType,
+      );
+      final used = _reservedSeries(
+        reserved,
+        parsed.businessCode,
+        documentCode,
+        fyToken,
+      );
       var sequence = parsed.sequence < 1 ? 1 : parsed.sequence;
       while (used.contains(sequence)) {
         sequence++;
@@ -425,6 +435,7 @@ class AppDatabase extends _$AppDatabase {
 
       final nextBillNo = PosInvoiceSeriesFormatter.build(
         businessCode: parsed.businessCode,
+        documentCode: documentCode,
         financialYearToken: fyToken,
         sequence: sequence,
       );
@@ -493,7 +504,10 @@ class AppDatabase extends _$AppDatabase {
           SET
             "bill_no" = ?,
             "bill_type" = CASE WHEN ? = 1 THEN 'NORMAL' ELSE 'GST' END,
-            "document_type" = 'TAX_INVOICE',
+            "document_type" = CASE
+              WHEN ? = 1 THEN 'SALES_INVOICE'
+              ELSE 'TAX_INVOICE'
+            END,
             "gst_pricing_mode" = CASE
               WHEN ? = 1 THEN 'GST_EXCLUSIVE'
               ELSE COALESCE(NULLIF("gst_pricing_mode", ''), 'GST_EXCLUSIVE')
@@ -507,6 +521,7 @@ class AppDatabase extends _$AppDatabase {
           ''',
           variables: [
             Variable.withString(mapping.newBillNo),
+            Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
             Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
             Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
             Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
@@ -526,9 +541,10 @@ class AppDatabase extends _$AppDatabase {
   Set<int> _reservedSeries(
     Map<String, Set<int>> reserved,
     String businessCode,
+    String documentCode,
     String financialYearToken,
   ) {
-    final key = '$businessCode|$financialYearToken';
+    final key = '$businessCode|$documentCode|$financialYearToken';
     return reserved.putIfAbsent(key, () => <int>{});
   }
 

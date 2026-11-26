@@ -75,14 +75,14 @@ class PosCheckoutRepository {
   }
 
   Future<int> fetchNextInvoiceSequence({
-    required String invoicePrefix,
     required String shopInitials,
     required String financialYear,
+    required BillType billType,
   }) async {
     final resolved = await _resolveInvoiceNumber(
-      invoicePrefix: invoicePrefix,
       shopInitials: shopInitials,
       financialYear: financialYear,
+      billType: billType,
     );
     return resolved.sequence;
   }
@@ -97,12 +97,12 @@ class PosCheckoutRepository {
     await _metalSettlements.ensureSchema();
     return _db.transaction(() async {
       final resolved = await _resolveInvoiceNumber(
-        invoicePrefix: _invoicePrefixFromBillNo(invoice.invoiceNumber),
         shopInitials: _shopInitialsFromBillNo(invoice.invoiceNumber),
         financialYear: _financialYearFromBillNo(
           invoice.invoiceNumber,
           invoice.invoiceDate,
         ),
+        billType: invoice.billType,
         preferredInvoiceNumber: invoice.invoiceNumber,
       );
       final money = _moneySnapshot(invoice);
@@ -205,8 +205,7 @@ class PosCheckoutRepository {
                 ),
                 quantity: Value(item.pcs),
                 quantityUnitCode: Value(item.unitShortName),
-                quantityUnitDisplayName:
-                    Value(item.invoiceUnitLabelOverride),
+                quantityUnitDisplayName: Value(item.invoiceUnitLabelOverride),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -520,8 +519,7 @@ class PosCheckoutRepository {
                 ),
                 quantity: Value(item.pcs),
                 quantityUnitCode: Value(item.unitShortName),
-                quantityUnitDisplayName:
-                    Value(item.invoiceUnitLabelOverride),
+                quantityUnitDisplayName: Value(item.invoiceUnitLabelOverride),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -2402,15 +2400,16 @@ class PosCheckoutRepository {
   }
 
   Future<_ResolvedInvoiceNumber> _resolveInvoiceNumber({
-    required String invoicePrefix,
     required String shopInitials,
     required String financialYear,
+    required BillType billType,
     String? preferredInvoiceNumber,
   }) async {
     final normalizedCode =
         PosInvoiceSeriesFormatter.normalizeBusinessCode(shopInitials);
     final normalizedYear =
         PosInvoiceSeriesFormatter.normalizeFinancialYearToken(financialYear);
+    final documentCode = _invoiceDocumentCode(billType);
     final bills = await _db.select(_db.bills).get();
 
     if (preferredInvoiceNumber != null &&
@@ -2419,6 +2418,7 @@ class PosCheckoutRepository {
       if (parsed != null &&
           !parsed.isLegacy &&
           parsed.businessCode == normalizedCode &&
+          parsed.documentCode == documentCode &&
           parsed.financialYearToken == normalizedYear &&
           parsed.sequence > 0) {
         return _ResolvedInvoiceNumber(
@@ -2431,8 +2431,11 @@ class PosCheckoutRepository {
     var maxSequence = 0;
     for (final bill in bills) {
       final parsed = PosInvoiceSeriesFormatter.parse(bill.billNo);
-      if (parsed != null &&
+      if (_billTypeFromStorage(bill.billType) == billType &&
+          parsed != null &&
+          !parsed.isLegacy &&
           parsed.businessCode == normalizedCode &&
+          parsed.documentCode == documentCode &&
           parsed.financialYearToken == normalizedYear &&
           parsed.sequence > maxSequence) {
         maxSequence = parsed.sequence;
@@ -2442,8 +2445,8 @@ class PosCheckoutRepository {
     final nextSequence = maxSequence + 1;
     return _ResolvedInvoiceNumber(
       billNumber: _buildBillNumber(
-        invoicePrefix: invoicePrefix,
         shopInitials: normalizedCode,
+        documentCode: documentCode,
         financialYear: normalizedYear,
         sequence: nextSequence,
       ),
@@ -2456,20 +2459,27 @@ class PosCheckoutRepository {
   }
 
   String _buildBillNumber({
-    required String invoicePrefix,
     required String shopInitials,
+    required String documentCode,
     required String financialYear,
     required int sequence,
   }) {
     return PosInvoiceSeriesFormatter.build(
       businessCode: shopInitials,
+      documentCode: documentCode,
       financialYearToken: financialYear,
       sequence: sequence,
     );
   }
 
-  String _invoicePrefixFromBillNo(String billNumber) {
-    return '';
+  String _invoiceDocumentCode(BillType billType) {
+    return billType == BillType.gst
+        ? PosInvoiceSeriesFormatter.taxInvoiceCode
+        : PosInvoiceSeriesFormatter.salesInvoiceCode;
+  }
+
+  BillType _billTypeFromStorage(String value) {
+    return value.trim().toUpperCase() == 'GST' ? BillType.gst : BillType.normal;
   }
 
   String _shopInitialsFromBillNo(String billNumber) {

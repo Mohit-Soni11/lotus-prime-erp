@@ -1,8 +1,13 @@
 class PosInvoiceSeriesFormatter {
   const PosInvoiceSeriesFormatter._();
 
+  static const String salesInvoiceCode = 'SI';
+  static const String taxInvoiceCode = 'TI';
+
   static final RegExp _tokenCleanup = RegExp(r'[^A-Z0-9]');
-  static final RegExp _currentPattern =
+  static final RegExp _typedSeriesPattern =
+      RegExp(r'^([A-Z0-9]{2,6})-(SI|TI)-(\d{2})-(\d+)$');
+  static final RegExp _compactLegacyPattern =
       RegExp(r'^([A-Z0-9]{2,6})-(\d{2})-(\d+)$');
   static final RegExp _legacyPattern =
       RegExp(r'^(?:TAX|INV|EST)-([A-Z0-9]{1,8})-(\d{4})-(\d+)$');
@@ -36,12 +41,20 @@ class PosInvoiceSeriesFormatter {
 
   static String build({
     required String businessCode,
+    required String documentCode,
     required String financialYearToken,
     required int sequence,
   }) {
     return '${normalizeBusinessCode(businessCode)}-'
+        '${normalizeDocumentCode(documentCode)}-'
         '${normalizeFinancialYearToken(financialYearToken)}-'
         '${formatSequence(sequence)}';
+  }
+
+  static String documentCodeForBillTypeName(String billType) {
+    return billType.trim().toUpperCase() == 'GST'
+        ? taxInvoiceCode
+        : salesInvoiceCode;
   }
 
   static String formatSequence(int sequence) {
@@ -69,15 +82,40 @@ class PosInvoiceSeriesFormatter {
     return financialYearToken(DateTime.now());
   }
 
+  static String normalizeDocumentCode(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized == salesInvoiceCode || normalized == taxInvoiceCode) {
+      return normalized;
+    }
+    throw ArgumentError.value(
+      value,
+      'documentCode',
+      'Only $salesInvoiceCode or $taxInvoiceCode is supported.',
+    );
+  }
+
   static ParsedPosInvoiceSeries? parse(String billNumber) {
     final normalized = billNumber.trim().toUpperCase();
-    final current = _currentPattern.firstMatch(normalized);
-    if (current != null) {
+    final typed = _typedSeriesPattern.firstMatch(normalized);
+    if (typed != null) {
       return ParsedPosInvoiceSeries(
-        businessCode: normalizeBusinessCode(current.group(1) ?? ''),
-        financialYearToken: normalizeFinancialYearToken(current.group(2) ?? ''),
-        sequence: int.tryParse(current.group(3) ?? '') ?? 0,
+        businessCode: normalizeBusinessCode(typed.group(1) ?? ''),
+        documentCode: normalizeDocumentCode(typed.group(2) ?? ''),
+        financialYearToken: normalizeFinancialYearToken(typed.group(3) ?? ''),
+        sequence: int.tryParse(typed.group(4) ?? '') ?? 0,
         isLegacy: false,
+      );
+    }
+
+    final compactLegacy = _compactLegacyPattern.firstMatch(normalized);
+    if (compactLegacy != null) {
+      return ParsedPosInvoiceSeries(
+        businessCode: normalizeBusinessCode(compactLegacy.group(1) ?? ''),
+        documentCode: null,
+        financialYearToken:
+            normalizeFinancialYearToken(compactLegacy.group(2) ?? ''),
+        sequence: int.tryParse(compactLegacy.group(3) ?? '') ?? 0,
+        isLegacy: true,
       );
     }
 
@@ -85,6 +123,7 @@ class PosInvoiceSeriesFormatter {
     if (legacy != null) {
       return ParsedPosInvoiceSeries(
         businessCode: normalizeBusinessCode(legacy.group(1) ?? ''),
+        documentCode: null,
         financialYearToken: normalizeFinancialYearToken(legacy.group(2) ?? ''),
         sequence: int.tryParse(legacy.group(3) ?? '') ?? 0,
         isLegacy: true,
@@ -98,12 +137,14 @@ class PosInvoiceSeriesFormatter {
 class ParsedPosInvoiceSeries {
   const ParsedPosInvoiceSeries({
     required this.businessCode,
+    required this.documentCode,
     required this.financialYearToken,
     required this.sequence,
     required this.isLegacy,
   });
 
   final String businessCode;
+  final String? documentCode;
   final String financialYearToken;
   final int sequence;
   final bool isLegacy;
