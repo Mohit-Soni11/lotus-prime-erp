@@ -22,6 +22,7 @@ import 'package:drift/drift.dart';
 
 import 'shop_session_manager.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/events/shop_identity_updates.dart';
 
 class ShopSetupRepository {
   final ShopDatabaseHelper _dbHelper = ShopDatabaseHelper();
@@ -57,6 +58,10 @@ class ShopSetupRepository {
       // 1. Existing local DB mein save karo (unchanged)
       final bool isSaved =
           await _dbHelper.upsertMasterPayload(masterPayloadMap);
+
+      if (isSaved) {
+        ShopIdentityUpdates.instance.publish();
+      }
 
       // ✅ 2. Drift ShopProfiles table mein bhi sync karo
       // Dashboard ShopCard yahan se padhta hai
@@ -245,13 +250,11 @@ class ShopSetupRepository {
         bankIfsc: Value(bankIfsc),
         upiId: Value(upiId),
         bankHolderName: Value(bankHolder),
-        showMobile: const Value(true),
-        showEmail: const Value(true),
-        showGst: const Value(true),
       );
 
-      // Existing check karo
-      final existing = await (_driftDb.select(_driftDb.shopProfiles)..limit(1))
+      final existing = await (_driftDb.select(_driftDb.shopProfiles)
+            ..orderBy([(table) => OrderingTerm.asc(table.id)])
+            ..limit(1))
           .getSingleOrNull();
 
       if (existing != null) {

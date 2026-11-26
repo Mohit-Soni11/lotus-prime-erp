@@ -3,7 +3,7 @@
 // MODULE      : Dashboard / Quick Actions
 // LAYER       : Theme (Barrel Export)
 // DESCRIPTION : Centralized export for all theme files.
-//               Pattern: Similar to bill_card_theme.dart, shop_card_theme.dart.
+//               Pattern: Similar to the Dashboard card theme modules.
 // =============================================================================
 
 export 'quick_actions_colors.dart';

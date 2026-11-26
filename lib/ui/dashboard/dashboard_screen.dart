@@ -19,12 +19,14 @@ import '../../ui/dashboard/top_bar.dart';
 import '../../logic/dashboard/dashboard_repository.dart';
 import '../../models/dashboard/user_profile.dart';
 import '../../constants/app_routes.dart';
+import '../../core/events/shop_identity_updates.dart';
+import '../../features/dashboard/shop_identity/data/shop_identity_repository.dart';
 
 import 'date_time_card.dart';
 import '../dashboard/bill_card.dart';
 import '../dashboard/customer_card.dart';
 import '../dashboard/pending_order_card.dart';
-import '../dashboard/shop_card.dart';
+import '../../features/dashboard/shop_identity/presentation/shop_identity_card.dart';
 import '../dashboard/live_rates_card.dart';
 import '../dashboard/quick_actions_card.dart';
 import '../dashboard/payment_status_card.dart';
@@ -49,13 +51,18 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final DashboardRepository _repository = DashboardRepository();
+  final ShopIdentityRepository _shopIdentityRepository =
+      ShopIdentityRepository();
+  late final DashboardRepository _repository = DashboardRepository(
+    shopIdentityReader: _shopIdentityRepository,
+  );
   UserProfile? _currentUser;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    ShopIdentityUpdates.instance.revision.addListener(_refreshCurrentUser);
     _connectToDatabase();
   }
 
@@ -73,8 +80,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _refreshCurrentUser() async {
+    final user = await _repository.fetchUserProfile();
+    if (!mounted) return;
+    setState(() => _currentUser = user);
+  }
+
   @override
   void dispose() {
+    ShopIdentityUpdates.instance.revision.removeListener(_refreshCurrentUser);
     _repository.dispose();
     super.dispose();
   }
@@ -182,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       children: [
         // 1. Shop Identity Card
-        ShopIdentityCard(repository: _repository),
+        ShopIdentityCard(reader: _shopIdentityRepository),
 
         const SizedBox(height: 20),
 

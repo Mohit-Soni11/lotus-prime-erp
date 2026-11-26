@@ -1,25 +1,23 @@
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
-import '../../models/dashboard/shop_profile_model.dart';
 import '../../models/dashboard/search_result.dart';
 import '../../features/notifications/domain/notification_item.dart';
 import '../../features/notifications/application/notification_center_controller.dart';
 import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
-import '../../database/local_database/shop_database_helper.dart';
-import '../../repositories/setting/shop_setup/shop_session_manager.dart';
+import '../../features/dashboard/shop_identity/data/shop_identity_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DashboardRepository {
   DashboardRepository({
     AppDatabase? db,
-    Future<Map<String, dynamic>?> Function()? shopSetupLoader,
+    ShopIdentityReader? shopIdentityReader,
   })  : _db = db ?? AppDatabase(),
-        _shopSetupLoader = shopSetupLoader ?? _loadShopSetup;
+        _shopIdentityReader = shopIdentityReader ?? ShopIdentityRepository();
 
   final AppDatabase _db;
-  final Future<Map<String, dynamic>?> Function() _shopSetupLoader;
+  final ShopIdentityReader _shopIdentityReader;
 
   late final _notificationCenter = NotificationCenterController(_db);
   Stream<List<NotificationItem>> get notificationsStream =>
@@ -30,80 +28,23 @@ class DashboardRepository {
   // ==========================================
   Future<UserProfile> fetchUserProfile() async {
     try {
-      // Keep nullable legacy columns from crashing profile mapping.
-      final rows = await _db.customSelect(
-        'SELECT id, shop_name, owner_name FROM shop_profiles LIMIT 1',
-        readsFrom: {_db.shopProfiles},
-      ).get();
-
-      if (rows.isNotEmpty) {
-        final row = rows.first;
-        final ownerName = row.read<String?>('owner_name') ?? 'Admin';
+      final identity = await _shopIdentityReader.load();
+      if (identity.isConfigured) {
+        final ownerName = identity.ownerName;
         return UserProfile(
-          name: ownerName.isEmpty ? 'Admin' : ownerName,
+          name: ownerName.isEmpty ? identity.displayName : ownerName,
           role: UserRole.owner.name,
           isOnline: true,
         );
-      } else {
-        return const UserProfile(
-          name: 'Setup Pending',
-          role: 'staff',
-          isOnline: false,
-        );
       }
+      return const UserProfile(
+        name: 'Setup Pending',
+        role: 'staff',
+        isOnline: false,
+      );
     } catch (e) {
       AppLogger.error("Error fetching profile: $e");
       return const UserProfile(name: "Guest", role: "N/A", isOnline: false);
-    }
-  }
-
-  // ==========================================
-  // FETCH FULL SHOP DETAILS
-  // ==========================================
-  Future<ShopProfileModel> fetchFullShopDetails() async {
-    try {
-      // Use a targeted projection to avoid reading nullable legacy columns.
-      final rows = await _db.customSelect(
-        '''SELECT id, shop_name, legal_name, owner_name, contact_number,
-                  email, website, city, state, gstin, bis_license, huid_no,
-                  logo_path, logo_shape, show_mobile, show_email, show_gst
-           FROM shop_profiles LIMIT 1''',
-        readsFrom: {_db.shopProfiles},
-      ).get();
-
-      if (rows.isNotEmpty) {
-        final row = rows.first;
-        final driftLogoPath = row.read<String?>('logo_path')?.trim() ?? '';
-        final driftLogoShape = row.read<String?>('logo_shape')?.trim() ?? '';
-        final savedIdentity = driftLogoPath.isEmpty
-            ? await _fetchSavedIdentity()
-            : (
-                logoPath: driftLogoPath,
-                logoShape: _normalizeLogoShape(driftLogoShape),
-              );
-
-        return ShopProfileModel(
-          displayName: row.read<String?>('shop_name') ?? 'My Shop',
-          ownerName: row.read<String?>('owner_name') ?? '--',
-          city: row.read<String?>('city') ?? '',
-          state: row.read<String?>('state') ?? '',
-          mobile: row.read<String?>('contact_number') ?? '',
-          email: row.read<String?>('email') ?? '',
-          website: row.read<String?>('website') ?? '',
-          gstin: row.read<String?>('gstin') ?? '',
-          bisLicense: row.read<String?>('bis_license') ?? '',
-          huidNo: row.read<String?>('huid_no') ?? '',
-          logoPath: savedIdentity.logoPath,
-          logoShape: savedIdentity.logoShape,
-          showMobile: (row.read<int?>('show_mobile') ?? 1) == 1,
-          showEmail: (row.read<int?>('show_email') ?? 1) == 1,
-          showGst: (row.read<int?>('show_gst') ?? 1) == 1,
-        );
-      }
-      return ShopProfileModel.empty();
-    } catch (e) {
-      AppLogger.error("Error fetching shop details: $e");
-      throw Exception("Database Error");
     }
   }
 
@@ -221,35 +162,5 @@ class DashboardRepository {
 
   void dispose() {
     _notificationCenter.dispose();
-  }
-
-  Future<({String? logoPath, String logoShape})> _fetchSavedIdentity() async {
-    try {
-      final payload = await _shopSetupLoader();
-      final rawBasicInfo = payload?['basic_info'];
-      final basicInfo = rawBasicInfo is Map
-          ? rawBasicInfo.map(
-              (key, value) => MapEntry(key.toString(), value),
-            )
-          : const <String, dynamic>{};
-      final logoPath = basicInfo['logo_path']?.toString().trim() ?? '';
-      return (
-        logoPath: logoPath.isEmpty ? null : logoPath,
-        logoShape: _normalizeLogoShape(
-          basicInfo['logo_shape']?.toString() ?? '',
-        ),
-      );
-    } catch (_) {
-      return (logoPath: null, logoShape: 'circle');
-    }
-  }
-
-  static Future<Map<String, dynamic>?> _loadShopSetup() async {
-    final tenantId = await ShopSessionManager.getPermanentTenantId();
-    return ShopDatabaseHelper().getMasterPayload(tenantId);
-  }
-
-  static String _normalizeLogoShape(String value) {
-    return value.trim().toLowerCase() == 'square' ? 'square' : 'circle';
   }
 }
