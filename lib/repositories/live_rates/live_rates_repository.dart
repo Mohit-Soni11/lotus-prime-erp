@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:intl/intl.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 import 'package:lotus_erp/models/live_rates/live_rates_model.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
@@ -14,10 +17,17 @@ class LiveRatesRepository {
 
   Stream<LiveRatesModel> watchRates() async* {
     yield LiveRatesModel.loading();
-    try {
-      yield* _repository.watchProfiles().map(_toDashboardModel);
-    } catch (_) {
-      yield LiveRatesModel.error();
+    while (true) {
+      try {
+        await for (final profiles in _repository.watchProfiles()) {
+          yield _toDashboardModel(profiles);
+        }
+      } catch (error, stackTrace) {
+        AppLogger.error('Dashboard live rates failed',
+            error: error, stackTrace: stackTrace);
+        yield LiveRatesModel.error();
+      }
+      await Future<void>.delayed(const Duration(seconds: 3));
     }
   }
 

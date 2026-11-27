@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/payment_status_model.dart';
@@ -20,6 +21,8 @@ class PaymentStatusLogic extends ChangeNotifier {
   final DateTime Function() _clock;
   StreamSubscription<PaymentStatusModel>? _subscription;
   Timer? _dayTimer;
+  Timer? _retryTimer;
+  bool _disposed = false;
 
   PaymentStatusModel _data = PaymentStatusModel.loading;
   bool _hasError = false;
@@ -32,6 +35,9 @@ class PaymentStatusLogic extends ChangeNotifier {
   bool get hasMore => _data.filteredBills.length > _visibleCount;
 
   void _watchToday() {
+    if (_disposed) return;
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _subscription?.cancel();
     _dayTimer?.cancel();
     final now = _clock();
@@ -53,8 +59,11 @@ class PaymentStatusLogic extends ChangeNotifier {
         notifyListeners();
       },
       onError: (Object error, StackTrace stackTrace) {
+        AppLogger.error('Dashboard payment status failed',
+            error: error, stackTrace: stackTrace);
         _hasError = true;
         notifyListeners();
+        _retryTimer ??= Timer(const Duration(seconds: 3), _watchToday);
       },
     );
   }
@@ -86,6 +95,8 @@ class PaymentStatusLogic extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _retryTimer?.cancel();
     _dayTimer?.cancel();
     _subscription?.cancel();
     super.dispose();

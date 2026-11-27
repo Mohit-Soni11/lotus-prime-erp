@@ -390,6 +390,14 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _ensureSalesInvoiceSeriesMigrationInternal() async {
     if (!await _tableExists('bills')) return;
     await ensureSalesGstPricingSchema();
+    // Issued invoices and their ledger references must stay immutable once a
+    // Day Book closing exists. New invoices already use the typed SI/TI series.
+    if (await _tableExists('finance_day_closures')) {
+      final closures = await customSelect(
+        'SELECT 1 FROM "finance_day_closures" LIMIT 1',
+      ).get();
+      if (closures.isNotEmpty) return;
+    }
 
     final billRows = await (select(bills)
           ..orderBy([
@@ -2202,7 +2210,6 @@ class AppDatabase extends _$AppDatabase {
           await _ensureStockInventorySchemaInternal();
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesGstPricingSchema();
-          await ensureSalesInvoiceSeriesMigration();
           await _removeRetiredWorkshopSchema();
 
           await customStatement('''

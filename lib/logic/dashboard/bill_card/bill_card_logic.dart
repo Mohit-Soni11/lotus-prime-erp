@@ -18,12 +18,17 @@ class BillCardLogic {
 
   Stream<BillStatsModel> get statsStream => _controller.stream;
   StreamSubscription? _dbSubscription;
+  Timer? _retryTimer;
+  bool _disposed = false;
 
   void init() {
     _startOptimizedMonitoring();
   }
 
   void _startOptimizedMonitoring() {
+    if (_disposed) return;
+    _retryTimer?.cancel();
+    _dbSubscription?.cancel();
     try {
       final now = DateTime.now();
       // Drift helpers for optimized date query
@@ -64,14 +69,34 @@ class BillCardLogic {
         }
       }, onError: (e) {
         AppLogger.error("DB ERROR (BillLogic): $e");
-        if (!_controller.isClosed) _controller.add(BillStatsModel.zero());
+        if (!_controller.isClosed) {
+          _controller.add(const BillStatsModel(
+            count: '—',
+            totalRevenue: 'Reconnecting...',
+          ));
+        }
+        _scheduleRetry();
       });
     } catch (e) {
       AppLogger.error("INIT ERROR (BillLogic): $e");
+      if (!_controller.isClosed) {
+        _controller.add(const BillStatsModel(
+          count: '—',
+          totalRevenue: 'Reconnecting...',
+        ));
+      }
+      _scheduleRetry();
     }
   }
 
+  void _scheduleRetry() {
+    if (_disposed || _retryTimer?.isActive == true) return;
+    _retryTimer = Timer(const Duration(seconds: 3), _startOptimizedMonitoring);
+  }
+
   void dispose() {
+    _disposed = true;
+    _retryTimer?.cancel();
     _dbSubscription?.cancel();
     _controller.close();
   }

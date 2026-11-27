@@ -14,12 +14,17 @@ class PendingOrderLogic {
   Stream<PendingStatsModel> get statsStream => _controller.stream;
 
   StreamSubscription? _dbSubscription;
+  Timer? _retryTimer;
+  bool _disposed = false;
 
   void init() {
     _startLiveMonitoring();
   }
 
   void _startLiveMonitoring() {
+    if (_disposed) return;
+    _retryTimer?.cancel();
+    _dbSubscription?.cancel();
     try {
       final now = DateTime.now();
 
@@ -47,14 +52,38 @@ class PendingOrderLogic {
         ));
       }, onError: (e) {
         AppLogger.error("PendingLogic Error: $e");
-        if (!_controller.isClosed) _controller.add(PendingStatsModel.empty());
+        if (!_controller.isClosed) {
+          _controller.add(const PendingStatsModel(
+            totalCount: '—',
+            goldCount: '—',
+            silverCount: '—',
+            syncTime: '',
+          ));
+        }
+        _scheduleRetry();
       });
     } catch (e) {
       AppLogger.error("PendingOrderLogic Init Error: $e");
+      if (!_controller.isClosed) {
+        _controller.add(const PendingStatsModel(
+          totalCount: '—',
+          goldCount: '—',
+          silverCount: '—',
+          syncTime: '',
+        ));
+      }
+      _scheduleRetry();
     }
   }
 
+  void _scheduleRetry() {
+    if (_disposed || _retryTimer?.isActive == true) return;
+    _retryTimer = Timer(const Duration(seconds: 3), _startLiveMonitoring);
+  }
+
   void dispose() {
+    _disposed = true;
+    _retryTimer?.cancel();
     _dbSubscription?.cancel();
     _controller.close();
   }

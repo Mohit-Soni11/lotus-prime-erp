@@ -88,7 +88,8 @@ class DailyCounterLogic {
         financeDue: finance,
       ));
     } catch (error, stack) {
-      AppLogger.debug('Daily counter refresh failed: $error');
+      AppLogger.error('Daily counter refresh failed',
+          error: error, stackTrace: stack);
       if (!_controller.isClosed && version == _refreshVersion) {
         _controller.addError(error, stack);
       }

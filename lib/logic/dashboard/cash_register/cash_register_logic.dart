@@ -16,6 +16,8 @@ class CashRegisterLogic {
   Stream<CashRegisterModel> get dataStream => _controller.stream;
   StreamSubscription<CashRegisterTotals>? _subscription;
   Timer? _rolloverTimer;
+  Timer? _retryTimer;
+  bool _disposed = false;
   bool _started = false;
 
   void init() {
@@ -25,6 +27,8 @@ class CashRegisterLogic {
   }
 
   void _watchCurrentDay() {
+    if (_disposed) return;
+    _retryTimer?.cancel();
     final day = DashboardDay(DateTime.now());
     _subscription?.cancel();
     _subscription = _repository.watchDay(day).listen(
@@ -42,8 +46,13 @@ class CashRegisterLogic {
         ));
       },
       onError: (Object error, StackTrace stack) {
-        AppLogger.debug('Cash register failed: $error');
+        AppLogger.error('Cash register failed',
+            error: error, stackTrace: stack);
         if (!_controller.isClosed) _controller.addError(error, stack);
+        _retryTimer ??= Timer(const Duration(seconds: 3), () {
+          _retryTimer = null;
+          _watchCurrentDay();
+        });
       },
     );
     _rolloverTimer?.cancel();
@@ -60,6 +69,8 @@ class CashRegisterLogic {
   CashRegisterModel get initialData => CashRegisterModel.loading();
 
   void dispose() {
+    _disposed = true;
+    _retryTimer?.cancel();
     _rolloverTimer?.cancel();
     _subscription?.cancel();
     _controller.close();
