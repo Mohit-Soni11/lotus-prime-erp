@@ -37,6 +37,7 @@ import '../../features/settings/metal_cost_analyser/presentation/metal_valuation
 import '../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
+import '../../features/invoice_center/presentation/invoice_center_screen.dart';
 import '../../ui/booking_advance/booking_advance_screen.dart';
 import '../../features/sales/return_reversal/presentation/screens/return_reversal_desk_screen.dart';
 

@@ -15,9 +15,14 @@ class BackupResource {
 }
 
 class BackupLocations {
-  const BackupLocations({required this.resources, required this.root});
+  const BackupLocations({
+    required this.resources,
+    required this.root,
+    this.legacyIssuedInvoicesPath,
+  });
   final List<BackupResource> resources;
   final Directory root;
+  final String? legacyIssuedInvoicesPath;
   Directory get local => Directory(p.join(root.path, 'Local'));
   Directory get work => Directory(p.join(root.path, 'Work'));
   Directory get recovery => Directory(p.join(root.path, 'Recovery'));
@@ -26,12 +31,17 @@ class BackupLocations {
     final documents = await AppStoragePaths.documentsDirectory();
     final support = await AppStoragePaths.supportDirectory();
     final shop = await AppStoragePaths.shopDatabaseDirectory();
+    final legacySupport =
+        kReleaseMode ? await getApplicationSupportDirectory() : null;
     final localAppData =
         Platform.isWindows ? Platform.environment['LOCALAPPDATA'] : null;
     final base = localAppData ?? (await getApplicationSupportDirectory()).path;
     return BackupLocations(
       root: Directory(p.join(base, AppStoragePaths.productionFolder,
           kReleaseMode ? 'Backups' : 'DevelopmentBackups')),
+      legacyIssuedInvoicesPath: legacySupport == null
+          ? null
+          : p.join(legacySupport.path, 'lotus_erp', 'issued_invoices'),
       resources: [
         BackupResource('business', p.join(documents.path, DbConfig.dbName),
             schemaVersion: DbConfig.schemaVersion),
@@ -66,6 +76,11 @@ class BackupLocations {
       throw StateError('Choose an absolute backup folder.');
     }
     final target = p.normalize(p.absolute(folder));
+    final legacy = legacyIssuedInvoicesPath;
+    if (legacy != null &&
+        (p.equals(legacy, target) || p.isWithin(legacy, target))) {
+      throw StateError('Choose a backup folder outside your business files.');
+    }
     for (final resource
         in resources.where((resource) => !resource.isDatabase)) {
       if (p.equals(resource.path, target) ||

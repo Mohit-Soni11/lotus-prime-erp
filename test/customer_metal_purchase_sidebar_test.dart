@@ -57,5 +57,16 @@ void main() {
     for (final route in routes) {
       expect(RouteMapper.toPath(route), isNot(RoutePaths.dashboard));
     }
+
+    final salesItems = SidebarMenu.menuItems
+        .singleWhere((group) => group.title == 'Sales')
+        .subItems;
+    expect(salesItems[0].routeId, AppRoutes.newSaleRoute);
+    expect(salesItems[1].routeId, AppRoutes.invoiceCenterRoute);
+    expect(
+      RouteMapper.toPath(salesItems[1].routeId),
+      RoutePaths.salesInvoiceCenter,
+    );
+    expect(salesItems[2].routeId, AppRoutes.bookingAdvanceRoute);
   });
 }

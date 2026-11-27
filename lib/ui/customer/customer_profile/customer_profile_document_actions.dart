@@ -2,19 +2,35 @@ part of 'customer_profile_screen.dart';
 
 extension _ProfileDocumentActions on _CustomerProfileScreenState {
   Future<void> _previewBillPdf(int billId, String billNo) async {
-    await showIssuedPdfPreview(
-      context: context,
-      title: 'Sales Bill $billNo',
-      pdfBytesFuture: _loadIssuedSalesInvoice(
+    final bytes = await _loadOrRestoreIssuedPdf(
+      kind: IssuedInvoiceKind.sales,
+      id: billId,
+      number: billNo,
+      read: () => _loadIssuedSalesInvoice(
         billId,
         billNo,
         notifyUnavailable: false,
       ),
     );
+    if (!mounted || bytes == null) return;
+    await showIssuedPdfPreview(
+      context: context,
+      title: 'Sales Bill $billNo',
+      pdfBytes: bytes,
+    );
   }
 
   Future<void> _printBillPdf(int billId, String billNo) async {
-    final bytes = await _loadIssuedSalesInvoice(billId, billNo);
+    final bytes = await _loadOrRestoreIssuedPdf(
+      kind: IssuedInvoiceKind.sales,
+      id: billId,
+      number: billNo,
+      read: () => _loadIssuedSalesInvoice(
+        billId,
+        billNo,
+        notifyUnavailable: false,
+      ),
+    );
     if (!mounted || bytes == null) return;
     await Printing.layoutPdf(
       name: 'sales_invoice_$billNo.pdf',
@@ -25,7 +41,15 @@ extension _ProfileDocumentActions on _CustomerProfileScreenState {
   Future<void> _previewLinkedDocumentPdf(
     CustomerLinkedDocumentModel document,
   ) async {
-    final bytes = await _loadIssuedReturnVoucher(document);
+    final bytes = await _loadOrRestoreIssuedPdf(
+      kind: IssuedInvoiceKind.returnVoucher,
+      id: document.id,
+      number: document.documentNo,
+      read: () => _loadIssuedReturnVoucher(
+        document,
+        notifyUnavailable: false,
+      ),
+    );
     if (!mounted || bytes == null) return;
     await _showCleanPdfPreview(bytes);
   }
@@ -33,7 +57,15 @@ extension _ProfileDocumentActions on _CustomerProfileScreenState {
   Future<void> _printLinkedDocumentPdf(
     CustomerLinkedDocumentModel document,
   ) async {
-    final bytes = await _loadIssuedReturnVoucher(document);
+    final bytes = await _loadOrRestoreIssuedPdf(
+      kind: IssuedInvoiceKind.returnVoucher,
+      id: document.id,
+      number: document.documentNo,
+      read: () => _loadIssuedReturnVoucher(
+        document,
+        notifyUnavailable: false,
+      ),
+    );
     if (!mounted || bytes == null) return;
     await Printing.layoutPdf(
       name: 'return_voucher_${document.documentNo}.pdf',
@@ -75,6 +107,24 @@ extension _ProfileDocumentActions on _CustomerProfileScreenState {
     return showIssuedPdfPreview(
       context: context,
       pdfBytes: bytes,
+    );
+  }
+
+  Future<Uint8List?> _loadOrRestoreIssuedPdf({
+    required IssuedInvoiceKind kind,
+    required int id,
+    required String number,
+    required Future<Uint8List?> Function() read,
+  }) async {
+    final bytes = await read();
+    if (bytes != null || !mounted) return bytes;
+    return requestMissingIssuedPdf(
+      context: context,
+      documentNumber: number,
+      attachOriginal: (selected) async {
+        await _issuedInvoiceArchive.saveIfAbsent(kind, id, number, selected);
+        return _issuedInvoiceArchive.read(kind, id, number);
+      },
     );
   }
 }

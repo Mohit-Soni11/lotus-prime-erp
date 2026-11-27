@@ -2,6 +2,13 @@ part of '../app_router.dart';
 
 List<RouteBase> standaloneSalesRoutes() => [
       workspaceRoute(
+        path: RoutePaths.salesInvoiceCenter,
+        rootNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => InvoiceCenterScreen(
+          onBack: () => _goBackOr(context, RoutePaths.dashboard),
+        ),
+      ),
+      workspaceRoute(
         path: RoutePaths.salesPos,
         rootNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {

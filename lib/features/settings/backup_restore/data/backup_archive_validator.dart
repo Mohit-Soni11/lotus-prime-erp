@@ -88,6 +88,13 @@ class BackupArchiveValidator {
               !missingMedia.every((value) => value is String))) {
         throw const FormatException('The backup media inventory is invalid.');
       }
+      final missingIssuedDocuments = manifest['missingIssuedDocuments'];
+      if (missingIssuedDocuments != null &&
+          (missingIssuedDocuments is! List ||
+              !missingIssuedDocuments.every((value) => value is String))) {
+        throw const FormatException(
+            'The backup issued document inventory is invalid.');
+      }
       final declared = (manifest['files'] as List)
           .cast<Map>()
           .map((row) => Map<String, dynamic>.from(row))

@@ -7,18 +7,9 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
     bool notifyUnavailable = true,
   }) {
     return _readArchivedDocument(
-      read: () async {
-        await SalesInvoicePaymentRevisionService(
-          archive: _issuedInvoiceArchive,
-        ).synchronize(billId, billNo);
-        return _issuedInvoiceArchive.read(
-          IssuedInvoiceKind.sales,
-          billId,
-          billNo,
-        );
-      },
-      unavailableMessage:
-          'The issued sales PDF is unavailable or could not be updated.',
+      read: () => IssuedSalesPdfLoader(archive: _issuedInvoiceArchive)
+          .load(billId, billNo),
+      unavailableMessage: 'The original issued sales PDF is not archived.',
       notifyUnavailable: notifyUnavailable,
     );
   }
@@ -54,8 +45,8 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   }
 
   Future<Uint8List?> _loadIssuedReturnVoucher(
-    CustomerLinkedDocumentModel document,
-  ) {
+      CustomerLinkedDocumentModel document,
+      {bool notifyUnavailable = true}) {
     return _readArchivedDocument(
       read: () => _issuedInvoiceArchive.read(
         IssuedInvoiceKind.returnVoucher,
@@ -63,6 +54,7 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
         document.documentNo,
       ),
       unavailableMessage: 'This return voucher PDF is not available.',
+      notifyUnavailable: notifyUnavailable,
     );
   }
 

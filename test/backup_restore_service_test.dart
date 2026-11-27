@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_archive_service.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/backup_locations.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_file_safety.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_restore_service.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dart';
@@ -74,6 +75,48 @@ void main() {
       prior.dispose();
     }
     expect(await restore.applyPending(), isFalse);
+  });
+
+  test('issued invoice PDF is restored byte for byte with both databases',
+      () async {
+    final sourcePdf = BackupResource(
+      'issued_invoices',
+      p.join(original.directory.path, 'Support', 'issued_invoices'),
+    );
+    final destinationPdf = BackupResource(
+      'issued_invoices',
+      p.join(destination.directory.path, 'Support', 'issued_invoices'),
+    );
+    final sourceLocations = BackupLocations(
+      root: original.locations.root,
+      resources: [...original.locations.resources, sourcePdf],
+    );
+    final destinationLocations = BackupLocations(
+      root: destination.locations.root,
+      resources: [...destination.locations.resources, destinationPdf],
+    );
+    final pdfBytes = '%PDF-original-issued-invoice'.codeUnits;
+    final issued = File(p.join(sourcePdf.path, 'sales', '9_ABC.pdf'));
+    await issued.parent.create(recursive: true);
+    await issued.writeAsBytes(pdfBytes);
+    final backup = await BackupArchiveService(sourceLocations).create(
+      sourceLocations.local.path,
+      await original.preferences.read(),
+    );
+    final restored = BackupRestoreService(
+      destinationLocations,
+      destination.preferences,
+      clearSession: () async {},
+    );
+
+    await restored.prepare(File(backup.localPath!));
+    expect(await restored.applyPending(), isTrue);
+    expect(destination.amount(), 125);
+    expect(
+      await File(p.join(destinationPdf.path, 'sales', '9_ABC.pdf'))
+          .readAsBytes(),
+      pdfBytes,
+    );
   });
 
   test('a cloud-sync cleanup denial does not block a committed restore',

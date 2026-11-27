@@ -59,6 +59,79 @@ void main() {
     );
     expect(await archive.read(IssuedInvoiceKind.sales, 17, 'OTHER'), isNull);
   });
+
+  test('a damaged latest revision falls back to the original issue', () async {
+    final original = await _pdf('Original issue');
+    await archive.saveIfAbsent(IssuedInvoiceKind.sales, 17, 'INV-17', original);
+    await archive.saveRevision(
+        IssuedInvoiceKind.sales, 17, 'INV-17', await _pdf('Revision'));
+    final issued = Directory('${root.path}/lotus_erp/issued_invoices/sales');
+    final revision = await issued
+        .list(recursive: true)
+        .where((entry) => entry is File && entry.path.contains('revisions'))
+        .cast<File>()
+        .first;
+    await revision.writeAsBytes([1, 2, 3]);
+
+    expect(await archive.read(IssuedInvoiceKind.sales, 17, 'INV-17'), original);
+  });
+
+  test('a damaged current original falls back to a valid legacy copy',
+      () async {
+    final legacyRoot =
+        await Directory.systemTemp.createTemp('issued_invoice_legacy_');
+    addTearDown(() => legacyRoot.delete(recursive: true));
+    final oldArchive =
+        IssuedInvoiceArchive(directoryProvider: () async => legacyRoot);
+    final current = IssuedInvoiceArchive(
+      directoryProvider: () async => root,
+      legacyDirectoryProvider: () async => legacyRoot,
+    );
+    final original = await _pdf('Valid legacy original');
+    await oldArchive.saveIfAbsent(
+        IssuedInvoiceKind.sales, 17, 'INV-17', original);
+    await archive.saveIfAbsent(
+        IssuedInvoiceKind.sales, 17, 'INV-17', await _pdf('Current'));
+    final currentFile =
+        await Directory('${root.path}/lotus_erp/issued_invoices/sales')
+            .list()
+            .where((entry) => entry is File)
+            .cast<File>()
+            .first;
+    await currentFile.writeAsBytes([1, 2, 3]);
+
+    expect(await current.read(IssuedInvoiceKind.sales, 17, 'INV-17'), original);
+  });
+
+  test('reads an existing PDF from the previous support directory', () async {
+    final legacyRoot =
+        await Directory.systemTemp.createTemp('issued_invoice_legacy_');
+    addTearDown(() => legacyRoot.delete(recursive: true));
+    final legacy = IssuedInvoiceArchive(
+      directoryProvider: () async => legacyRoot,
+    );
+    final current = IssuedInvoiceArchive(
+      directoryProvider: () async => root,
+      legacyDirectoryProvider: () async => legacyRoot,
+    );
+    final original = await _pdf('Issued before storage move');
+    await legacy.saveIfAbsent(IssuedInvoiceKind.sales, 21, 'AJ-21', original);
+    await legacy.saveMetadata(
+      IssuedInvoiceKind.sales,
+      21,
+      'AJ-21',
+      {'templateId': 'classic'},
+    );
+
+    expect(
+      await current.read(IssuedInvoiceKind.sales, 21, 'AJ-21'),
+      orderedEquals(original),
+    );
+    expect(
+      await current.readMetadata(IssuedInvoiceKind.sales, 21, 'AJ-21'),
+      {'templateId': 'classic'},
+    );
+  });
 }
 
 Future<Uint8List> _pdf(String text) async {

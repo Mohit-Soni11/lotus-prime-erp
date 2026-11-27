@@ -38,6 +38,7 @@ class SidebarMenu {
       icon: Icons.shopping_cart_outlined,
       subItems: [
         MenuItemData(AppRoutes.newSaleRoute),
+        MenuItemData(AppRoutes.invoiceCenterRoute),
         MenuItemData(AppRoutes.bookingAdvanceRoute),
         MenuItemData(AppRoutes.salesReturnExchangeRoute,
             label: 'Returns & Reversals'),

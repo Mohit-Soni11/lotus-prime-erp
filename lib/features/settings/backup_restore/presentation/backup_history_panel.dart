@@ -427,7 +427,7 @@ class _MissingMediaNotice extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 8),
         child: Text(
-            '${record.missingMediaCount} linked media files were unavailable',
+            '${record.missingMediaCount} invoice PDFs or linked files were unavailable',
             style: const TextStyle(
                 fontSize: 13, color: BackupWorkspaceTheme.amber)),
       );

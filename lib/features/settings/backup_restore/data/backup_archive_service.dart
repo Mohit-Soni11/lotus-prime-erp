@@ -10,6 +10,7 @@ import 'backup_store.dart';
 import 'backup_media_inventory.dart';
 import 'backup_archive_validator.dart';
 import 'backup_database_snapshot.dart';
+import 'backup_issued_document_inventory.dart';
 export 'backup_archive_validator.dart' show VerifiedBackup;
 
 class BackupArchiveService {
@@ -36,6 +37,8 @@ class BackupArchiveService {
         await copyBackupTree(
             resource.path, p.join(workspace.path, 'payload', resource.id));
       }
+      final missingIssuedDocuments = await const BackupIssuedDocumentInventory()
+          .capture(locations, workspace);
       await writeBackupJson(
           File(p.join(workspace.path, 'preferences.json')), preferences);
       final media = BackupMediaInventory();
@@ -68,6 +71,7 @@ class BackupArchiveService {
         'appVersion': AppConfig.semanticVersion,
         'externalMedia': media.external,
         'missingMedia': media.missing.toList(),
+        'missingIssuedDocuments': missingIssuedDocuments,
         'roots': {
           for (final resource in locations.resources) resource.id: resource.path
         },
@@ -101,7 +105,8 @@ class BackupArchiveService {
           createdAt: at,
           size: await output.length(),
           sha256: await backupFileHash(output),
-          missingMediaCount: media.missing.length,
+          missingMediaCount:
+              media.missing.length + missingIssuedDocuments.length,
           localPath: output.path);
     } finally {
       await deleteBackupEntity(workspace.path);

@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../storage/app_storage_paths.dart';
 
@@ -9,22 +10,40 @@ enum IssuedInvoiceKind { sales, booking, returnVoucher }
 
 /// Keeps the PDF issued at finalization, separate from mutable bill data.
 class IssuedInvoiceArchive {
-  const IssuedInvoiceArchive({this.directoryProvider});
+  const IssuedInvoiceArchive({
+    this.directoryProvider,
+    this.legacyDirectoryProvider,
+  });
 
   final Future<Directory> Function()? directoryProvider;
+  final Future<Directory> Function()? legacyDirectoryProvider;
 
   Future<Uint8List?> read(
     IssuedInvoiceKind kind,
     int recordId,
     String documentNumber,
   ) async {
-    final file = await _file(kind, recordId, documentNumber);
-    final revisions = await _revisionFiles(file);
-    final issuedFile = revisions.isNotEmpty ? revisions.last : file;
-    if (!await issuedFile.exists()) return null;
-    final bytes = await issuedFile.readAsBytes();
-    validatePdf(bytes);
-    return bytes;
+    for (final file in await _readCandidates(kind, recordId, documentNumber)) {
+      List<File> revisions;
+      try {
+        revisions = await _revisionFiles(file);
+      } on FileSystemException {
+        revisions = const [];
+      }
+      for (final candidate in [...revisions.reversed, file]) {
+        try {
+          if (!await candidate.exists()) continue;
+          final bytes = await candidate.readAsBytes();
+          validatePdf(bytes);
+          return bytes;
+        } on FormatException {
+          // Keep an older valid issue available if a newer copy is damaged.
+        } on FileSystemException {
+          // An unreadable copy should not hide another archived issue.
+        }
+      }
+    }
+    return null;
   }
 
   Future<void> saveRevision(
@@ -58,13 +77,17 @@ class IssuedInvoiceArchive {
     int recordId,
     String documentNumber,
   ) async {
-    final file = await _metadataFile(kind, recordId, documentNumber);
-    if (!await file.exists()) return null;
-    final decoded = jsonDecode(await file.readAsString());
-    if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Invalid issued invoice metadata.');
+    for (final original
+        in await _readCandidates(kind, recordId, documentNumber)) {
+      final file = File(p.setExtension(original.path, '.json'));
+      if (!await file.exists()) continue;
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid issued invoice metadata.');
+      }
+      return decoded;
     }
-    return decoded;
+    return null;
   }
 
   Future<void> saveMetadata(
@@ -124,17 +147,47 @@ class IssuedInvoiceArchive {
     if (normalizedNumber.isEmpty) {
       throw ArgumentError.value(documentNumber, 'documentNumber', 'Required.');
     }
-    final encodedNumber =
-        base64UrlEncode(utf8.encode(normalizedNumber)).replaceAll('=', '');
     final support =
         await (directoryProvider?.call() ?? AppStoragePaths.supportDirectory());
-    return File(p.join(
-      support.path,
-      'lotus_erp',
-      'issued_invoices',
-      kind.name,
-      '${recordId}_$encodedNumber.pdf',
-    ));
+    return _fileInDirectory(support, kind, recordId, normalizedNumber);
+  }
+
+  Future<List<File>> _readCandidates(
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+  ) async {
+    final primary = await _file(kind, recordId, documentNumber);
+    final legacyProvider = legacyDirectoryProvider ??
+        (directoryProvider == null && kReleaseMode
+            ? getApplicationSupportDirectory
+            : null);
+    if (legacyProvider == null) return [primary];
+    final legacyRoot = await legacyProvider();
+    final legacy = _fileInDirectory(
+      legacyRoot,
+      kind,
+      recordId,
+      documentNumber.trim(),
+    );
+    return legacy.path == primary.path ? [primary] : [primary, legacy];
+  }
+
+  File _fileInDirectory(
+    Directory support,
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+  ) {
+    return File(p.join(support.path, 'lotus_erp', 'issued_invoices',
+        relativePdfPath(kind, recordId, documentNumber)));
+  }
+
+  static String relativePdfPath(
+      IssuedInvoiceKind kind, int recordId, String documentNumber) {
+    final encoded =
+        base64UrlEncode(utf8.encode(documentNumber.trim())).replaceAll('=', '');
+    return p.join(kind.name, '${recordId}_$encoded.pdf');
   }
 
   Directory _revisionDirectory(File original) => Directory(p.join(

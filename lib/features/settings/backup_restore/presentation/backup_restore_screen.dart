@@ -134,6 +134,40 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                 style: const TextStyle(
                                     color: BackupWorkspaceTheme.amber)),
                           ],
+                          if ((preview.manifest['missingIssuedDocuments']
+                                      as List? ??
+                                  [])
+                              .isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                                '${(preview.manifest['missingIssuedDocuments'] as List).length} original invoice PDFs were missing or unreadable when this backup was created. They cannot be restored from it.',
+                                style: const TextStyle(
+                                    color: BackupWorkspaceTheme.amber)),
+                            const SizedBox(height: 4),
+                            Text(
+                                (preview.manifest['missingIssuedDocuments']
+                                        as List)
+                                    .take(5)
+                                    .join('\n'),
+                                style: const TextStyle(
+                                    color: BackupWorkspaceTheme.amber)),
+                            if ((preview.manifest['missingIssuedDocuments']
+                                        as List)
+                                    .length >
+                                5)
+                              Text(
+                                  '...and ${(preview.manifest['missingIssuedDocuments'] as List).length - 5} more',
+                                  style: const TextStyle(
+                                      color: BackupWorkspaceTheme.amber)),
+                          ],
+                          if (!preview.manifest
+                              .containsKey('missingIssuedDocuments')) ...[
+                            const SizedBox(height: 10),
+                            const Text(
+                                'This older backup was created before invoice PDF completeness checks. Confirm its original PDFs before restoring.',
+                                style: TextStyle(
+                                    color: BackupWorkspaceTheme.amber)),
+                          ],
                           const SizedBox(height: 16),
                           const Text(
                               'This replaces the current business records, shop settings, photos and documents with this backup.'),
@@ -264,7 +298,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                     const SizedBox(height: 16),
                                     BackupWorkspaceNotice(
                                         message:
-                                            'The latest backup is saved, but ${controller.records.first.missingMediaCount} linked photo or document files were already missing and could not be included.',
+                                            'The latest backup is saved, but ${controller.records.first.missingMediaCount} original invoice PDFs or linked files were missing and cannot be restored from it.',
                                         error: true),
                                   ],
                                   if (controller.restorePending) ...[

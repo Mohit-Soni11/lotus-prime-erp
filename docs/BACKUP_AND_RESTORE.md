@@ -21,7 +21,16 @@ The package includes both business and owner/shop databases, business
 preferences, customer and pledged-item photos, shop identity documents,
 supplier attachments and issued invoice documents. Legacy attachments outside
 managed directories are copied when their stored references can be resolved.
-Files already missing are counted in the backup history and restore preview.
+Issued PDFs from the previous release support directory are copied into the
+current archive inside the package, including their revisions. Sales invoices,
+paid booking records, and posted return vouchers are compared with the copied
+PDF archive. Missing originals or unreadable PDF signatures are listed in the
+backup manifest and counted in backup history; the restore preview identifies
+affected documents. This warning does not discard the business database.
+Files already missing cannot be recreated by a restore. Backups made before
+this check remain restorable, but their PDF completeness is unknown.
+Linked external files already missing are also counted in backup history and
+restore preview.
 Database audit JSON is preserved; direct file references and preferences are
 rebased to the destination installation during restore.
 

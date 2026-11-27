@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -120,6 +121,24 @@ void main() {
     await expectLater(BackupArchiveService(fixture.locations).verify(file),
         throwsFormatException);
     expect(fixture.amount(), 125);
+  });
+
+  test('backups made before PDF reconciliation remain restorable', () async {
+    final file = await altered((archive) {
+      final entry = archive.findFile('manifest.json')!;
+      final manifest = jsonDecode(utf8.decode(entry.content as List<int>))
+          as Map<String, dynamic>;
+      manifest.remove('missingIssuedDocuments');
+      final bytes = utf8.encode(jsonEncode(manifest));
+      archive.removeFile(entry);
+      archive.add(ArchiveFile('manifest.json', bytes.length, bytes));
+    });
+    final verified = await BackupArchiveService(fixture.locations).verify(file);
+    try {
+      expect(verified.manifest.containsKey('missingIssuedDocuments'), isFalse);
+    } finally {
+      await deleteBackupEntity(verified.directory.path);
+    }
   });
 
   test('path traversal cannot write outside the verification workspace',

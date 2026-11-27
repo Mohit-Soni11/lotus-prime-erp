@@ -11,16 +11,19 @@ import '../domain/backup_record.dart';
 class BackupJobLocations {
   BackupJobLocations(BackupLocations locations)
       : rootPath = locations.root.path,
+        legacyIssuedInvoicesPath = locations.legacyIssuedInvoicesPath,
         resources = [
           for (final resource in locations.resources)
             (resource.id, resource.path, resource.schemaVersion),
         ];
 
   final String rootPath;
+  final String? legacyIssuedInvoicesPath;
   final List<(String, String, int?)> resources;
 
   BackupLocations materialize() => BackupLocations(
         root: Directory(rootPath),
+        legacyIssuedInvoicesPath: legacyIssuedInvoicesPath,
         resources: [
           for (final (id, path, schemaVersion) in resources)
             BackupResource(id, path, schemaVersion: schemaVersion),

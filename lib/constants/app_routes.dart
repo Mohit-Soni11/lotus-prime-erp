@@ -33,6 +33,7 @@ class AppRoutes {
 
   // Sales
   static const String newSaleRoute = '/sales/pos';
+  static const String invoiceCenterRoute = '/sales/invoice-center';
   static const String salesReturnExchangeRoute = '/sales/returns-exchanges';
   static const String bookingAdvanceRoute = '/sales/booking';
 
@@ -84,6 +85,7 @@ class AppRoutes {
     supplierListRoute: 'Supplier List',
     addSupplierRoute: 'Add New Supplier',
     newSaleRoute: 'New Sale (POS)',
+    invoiceCenterRoute: 'Invoice Center',
     salesReturnExchangeRoute: 'Return & Reversal Desk',
     bookingAdvanceRoute: 'Booking & Advance',
     purchaseEntryRoute: 'Customer Metal Purchase',
@@ -148,6 +150,7 @@ class RoutePaths {
 
   // Sales
   static const String salesPos = '/app/sales/pos';
+  static const String salesInvoiceCenter = '/app/sales/invoice-center';
   static const String salesReturnExchange = '/app/sales/returns-exchanges';
   static const String salesBooking = '/app/sales/booking';
   static const String metalRateMaster = '/app/settings/metal-rates';
@@ -230,6 +233,7 @@ class RouteMapper {
     AppRoutes.supplierListRoute: RoutePaths.supplierList,
     AppRoutes.addSupplierRoute: RoutePaths.supplierAdd,
     AppRoutes.newSaleRoute: RoutePaths.salesPos,
+    AppRoutes.invoiceCenterRoute: RoutePaths.salesInvoiceCenter,
     AppRoutes.salesReturnExchangeRoute: RoutePaths.salesReturnExchange,
     AppRoutes.bookingAdvanceRoute: RoutePaths.salesBooking,
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
