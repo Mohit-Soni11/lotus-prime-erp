@@ -79,3 +79,4 @@ h2 { font-size: clamp(25px, 3vw, 34px); margin: 0 0 14px; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+.recovery-content { max-width: 680px; padding: 90px 24px; }

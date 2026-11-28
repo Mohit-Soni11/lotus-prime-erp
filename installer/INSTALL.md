@@ -21,6 +21,14 @@ database files. A Windows user who has never run a production Lotus ERP build
 starts with a fresh account and empty business records. Development records
 are stored separately and are not imported into the installed application.
 
+The release build includes `config/email-recovery.json` and the developer's
+`config/google-drive.local.json`. After signing in, the owner can connect a
+Google account in **Backup & Restore** and confirm the local password once.
+That verified Google email is then used for Drive backups and password
+recovery. An existing Drive connection can be adopted with **Use for password
+recovery** in the same panel. Email recovery requires internet access; the
+offline recovery code remains available.
+
 The old development shop database lived under `.dart_tool`, where
 `flutter clean` could remove it. Development builds now keep that database
 in their application-support directory. The installer build script cleans

@@ -12,6 +12,7 @@ import '../data/google_drive_auth.dart';
 import '../data/google_drive_backup_service.dart';
 import 'backup_application_lease.dart';
 import 'backup_coordinator.dart';
+import 'google_recovery_linker.dart';
 
 class BackupRuntime {
   BackupRuntime._();
@@ -62,7 +63,8 @@ class BackupRuntime {
             throw StateError(
                 'Sign in with the shop owner account to manage backups.');
           }
-        });
+        },
+        recoveryLinker: LocalGoogleRecoveryLinker(AuthService()));
     try {
       await coordinator.initialize();
       return coordinator;

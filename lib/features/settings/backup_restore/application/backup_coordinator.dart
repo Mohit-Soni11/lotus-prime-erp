@@ -10,6 +10,7 @@ import '../data/backup_store.dart';
 import '../data/google_drive_backup_service.dart';
 import '../domain/backup_record.dart';
 import 'backup_isolate_jobs.dart';
+import 'google_recovery_linker.dart';
 
 class BackupCoordinator extends ChangeNotifier {
   BackupCoordinator(
@@ -18,13 +19,16 @@ class BackupCoordinator extends ChangeNotifier {
       required this.preferences,
       required this.drive,
       required this.restore,
-      required this.requireOwner});
+      required this.requireOwner,
+      this.recoveryLinker});
   final BackupLocations locations;
   final BackupStore store;
   final BusinessPreferences preferences;
   final GoogleDriveBackupService drive;
   final BackupRestoreService restore;
   final Future<void> Function() requireOwner;
+  final GoogleRecoveryLinker? recoveryLinker;
+  bool recoveryLinked = false;
   BackupSettings? settings;
   List<BackupRecord> records = [];
   List<BackupRecord> cloudRecords = [];
@@ -50,6 +54,8 @@ class BackupCoordinator extends ChangeNotifier {
       error = store.warning;
       try {
         await drive.auth.load();
+        recoveryLinked =
+            await recoveryLinker?.isLinked(drive.auth.subject) ?? false;
       } catch (_) {
         error =
             'Google Drive connection could not be loaded. Local backup is still available; reconnect Google Drive when ready.';
@@ -72,17 +78,40 @@ class BackupCoordinator extends ChangeNotifier {
     });
   }
 
-  Future<void> connectGoogle() =>
+  Future<void> connectGoogle({String? recoveryPassword}) =>
       _operation('Waiting for Google sign-in', () async {
         await requireOwner();
+        if (recoveryLinker != null) {
+          if (recoveryPassword == null || recoveryPassword.isEmpty) {
+            throw StateError('Enter your current Lotus ERP password.');
+          }
+          await recoveryLinker!.verifyPassword(recoveryPassword);
+        }
         signingIn = true;
         _emit();
         try {
           await drive.auth.signIn();
+          if (recoveryLinker != null) {
+            final identity = await drive.auth.verifiedIdentity();
+            await recoveryLinker!.link(identity, recoveryPassword!);
+            recoveryLinked = true;
+          }
           cloudRecords = await drive.list();
         } finally {
           signingIn = false;
         }
+      });
+
+  Future<void> linkConnectedGoogleForRecovery(String password) =>
+      _operation('Linking account recovery', () async {
+        await requireOwner();
+        if (recoveryLinker == null || !drive.auth.connected) {
+          throw StateError('Connect your Google account first.');
+        }
+        await recoveryLinker!.verifyPassword(password);
+        final identity = await drive.auth.verifiedIdentity();
+        await recoveryLinker!.link(identity, password);
+        recoveryLinked = true;
       });
 
   Future<void> disconnectGoogle() =>

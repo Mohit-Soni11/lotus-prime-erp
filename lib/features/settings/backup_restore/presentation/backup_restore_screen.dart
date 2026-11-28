@@ -15,6 +15,7 @@ import 'backup_schedule_panel.dart';
 import 'backup_workspace_app_bar.dart';
 import 'backup_workspace_theme.dart';
 import 'backup_workspace_status.dart';
+import 'google_recovery_password_dialog.dart';
 
 class BackupRestoreScreen extends StatefulWidget {
   const BackupRestoreScreen({super.key, required this.onBack, this.controller});
@@ -28,6 +29,26 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
   late Future<BackupCoordinator> _loading = _load();
   String? _notice;
   bool _noticeError = false;
+
+  Future<void> _connectGoogleForBackupAndRecovery(BackupCoordinator controller,
+      {required bool connectDrive}) async {
+    if (controller.recoveryLinker == null) {
+      await _action(controller.connectGoogle,
+          success: 'Google Drive backup connected.');
+      return;
+    }
+    if (connectDrive && !controller.drive.auth.configured) {
+      _showNotice('Google Drive is unavailable in this build.', error: true);
+      return;
+    }
+    final password = await showGoogleRecoveryPasswordDialog(context);
+    if (password == null || !mounted) return;
+    await _action(
+        () => connectDrive
+            ? controller.connectGoogle(recoveryPassword: password)
+            : controller.linkConnectedGoogleForRecovery(password),
+        success: 'Google account connected for backup and password recovery.');
+  }
 
   void _showNotice(String? message, {bool error = false}) {
     if (!mounted) return;
@@ -338,18 +359,23 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                                                   'Could not open the backup folder.');
                                             }
                                           }),
-                                      onConnectGoogle: () => _action(
-                                          controller.connectGoogle,
-                                          success:
-                                              'Google Drive backup connected.'),
+                                      recoveryLinked: controller.recoveryLinked,
+                                      recoveryAvailable:
+                                          controller.recoveryLinker != null,
+                                      onConnectGoogle: () =>
+                                          _connectGoogleForBackupAndRecovery(controller,
+                                              connectDrive: true),
+                                      onLinkRecovery: () =>
+                                          _connectGoogleForBackupAndRecovery(
+                                              controller,
+                                              connectDrive: false),
                                       onDisconnectGoogle: () =>
                                           _action(controller.disconnectGoogle),
                                       onLocalEnabled: (value) => _action(() =>
                                           controller.saveSettings(controller.settings!
                                               .copyWith(localEnabled: value))),
-                                      onDriveEnabled: (value) => _action(() =>
-                                          controller.saveSettings(controller.settings!
-                                              .copyWith(googleDriveEnabled: value)))),
+                                      onDriveEnabled: (value) =>
+                                          _action(() => controller.saveSettings(controller.settings!.copyWith(googleDriveEnabled: value)))),
                                   const SizedBox(height: 20),
                                   BackupSchedulePanel(
                                       schedule: controller.settings!.schedule,

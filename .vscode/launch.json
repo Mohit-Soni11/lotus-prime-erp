@@ -2,13 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Lotus ERP - Windows",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "windows",
+      "toolArgs": [
+        "--dart-define-from-file=config/google-drive.local.json",
+        "--dart-define-from-file=config/email-recovery.json"
+      ]
+    },
+    {
       "name": "Lotus ERP - Windows with Google Drive",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "deviceId": "windows",
       "toolArgs": [
-        "--dart-define-from-file=config/google-drive.local.json"
+        "--dart-define-from-file=config/google-drive.local.json",
+        "--dart-define-from-file=config/email-recovery.json"
       ]
     }
   ]

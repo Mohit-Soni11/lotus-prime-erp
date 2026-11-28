@@ -19,6 +19,18 @@ $appBuild = $versionMatch.Groups[2].Value
 . (Join-Path $PSScriptRoot 'google_drive_build_config.ps1')
 $flutterBuildArguments = @('build', 'windows', '--release', '--no-pub')
 $flutterBuildArguments += @(Get-GoogleDriveBuildArguments -ProjectRoot $projectRoot -ConfigurationPath $GoogleDriveConfig -AllowLocalBackupOnly:$AllowLocalBackupOnly)
+$emailRecoveryConfigPath = Join-Path $projectRoot 'config\email-recovery.json'
+if (-not (Test-Path -LiteralPath $emailRecoveryConfigPath)) {
+    throw 'Email recovery build configuration is missing.'
+}
+$emailRecoveryConfig = Get-Content -LiteralPath $emailRecoveryConfigPath -Raw | ConvertFrom-Json
+if ($emailRecoveryConfig.LOTUS_RECOVERY_API_KEY -isnot [string] -or
+    [string]::IsNullOrWhiteSpace($emailRecoveryConfig.LOTUS_RECOVERY_API_KEY) -or
+    $emailRecoveryConfig.LOTUS_RECOVERY_CONTINUE_URL -isnot [string] -or
+    -not $emailRecoveryConfig.LOTUS_RECOVERY_CONTINUE_URL.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Email recovery build configuration requires a Firebase API key and HTTPS continuation URL.'
+}
+$flutterBuildArguments += "--dart-define-from-file=$emailRecoveryConfigPath"
 
 $compilerCandidates = @(
     (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe'),

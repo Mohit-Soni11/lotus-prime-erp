@@ -10,6 +10,9 @@ class BackupDestinationPanels extends StatelessWidget {
     required this.onChooseFolder,
     required this.onOpenFolder,
     required this.onConnectGoogle,
+    required this.onLinkRecovery,
+    required this.recoveryLinked,
+    required this.recoveryAvailable,
     required this.onDisconnectGoogle,
     required this.onLocalEnabled,
     required this.onDriveEnabled,
@@ -19,6 +22,9 @@ class BackupDestinationPanels extends StatelessWidget {
   final VoidCallback onChooseFolder;
   final VoidCallback onOpenFolder;
   final VoidCallback onConnectGoogle;
+  final VoidCallback onLinkRecovery;
+  final bool recoveryLinked;
+  final bool recoveryAvailable;
   final VoidCallback onDisconnectGoogle;
   final ValueChanged<bool> onLocalEnabled;
   final ValueChanged<bool> onDriveEnabled;
@@ -134,7 +140,21 @@ class BackupDestinationPanels extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFC62828),
                     side: const BorderSide(color: Color(0xFFE35555)))),
+          if (connected && recoveryAvailable && !recoveryLinked)
+            OutlinedButton.icon(
+                onPressed: disabled ? null : onLinkRecovery,
+                icon: const Icon(Icons.password_rounded, size: 18),
+                label: const Text('Use for password recovery')),
         ]),
+        if (connected && recoveryLinked) ...[
+          const SizedBox(height: 10),
+          const Text(
+              'This Google account is also your password recovery email.',
+              style: TextStyle(
+                  fontSize: 13,
+                  color: BackupWorkspaceTheme.green,
+                  fontWeight: FontWeight.w700)),
+        ],
         if (!controller.drive.auth.configured) ...[
           const SizedBox(height: 10),
           const Text('Google Drive is unavailable in this build.',

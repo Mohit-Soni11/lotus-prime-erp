@@ -296,7 +296,11 @@ void main() {
               });
             }
             return backupJsonResponse(uri.path == '/v1/userinfo'
-                ? {'email': 'owner@example.test', 'sub': 'test-owner'}
+                ? {
+                    'email': 'owner@example.test',
+                    'sub': 'test-owner',
+                    'email_verified': true
+                  }
                 : {'files': []});
           }),
           openBrowser: (uri) async {

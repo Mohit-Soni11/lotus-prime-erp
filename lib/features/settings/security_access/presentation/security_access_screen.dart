@@ -11,6 +11,7 @@ import 'widgets/security_access_app_bar.dart';
 import 'widgets/security_identity_panel.dart';
 import 'widgets/security_password_field.dart';
 import 'widgets/security_password_strength_meter.dart';
+import 'widgets/recovery_email_card.dart';
 
 class SecurityAccessScreen extends StatefulWidget {
   const SecurityAccessScreen({super.key});
@@ -143,23 +144,30 @@ class _SecurityAccessScreenState extends State<SecurityAccessScreen> {
                                   SecurityIdentityPanel(identity: identity),
                                   const SizedBox(height: 32),
                                   card,
+                                  const SizedBox(height: 24),
+                                  const RecoveryEmailCard(),
                                 ])
-                              : Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      flex: 4,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 36),
-                                        child: SecurityIdentityPanel(
-                                            identity: identity),
+                              : Column(children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        flex: 4,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 36),
+                                          child: SecurityIdentityPanel(
+                                              identity: identity),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 42),
-                                    Expanded(flex: 5, child: card),
-                                  ],
-                                ),
+                                      const SizedBox(width: 42),
+                                      Expanded(flex: 5, child: card),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 28),
+                                  const RecoveryEmailCard(),
+                                ]),
                         ),
                       ),
                     );

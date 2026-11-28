@@ -18,11 +18,15 @@
   <main class="shell" id="main">
     <article class="document">
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: 22 November 2026</p>
-      <div class="summary"><p>This policy explains how Lotus ERP handles information for its Windows desktop application, Google account connection and backup/restore features. Google Drive backup is optional and uses the Google account you choose.</p></div>
+      <p class="updated">Last updated: 28 November 2026</p>
+      <div class="summary"><p>This policy explains how Lotus ERP handles information for its Windows desktop application, optional email password recovery, Google account connection and backup/restore features.</p></div>
 
       <h2>Information used by the application</h2>
       <p>Lotus ERP stores the business records entered by the shop's users on their computer. A backup may include business and local owner-account databases, invoices, customer and supplier records, inventory, payment and pledge records, shop settings, photos and documents. The shop owner controls the information entered and the backup destinations selected.</p>
+
+      <h2>Optional email password recovery</h2>
+      <p>When the owner connects Google Drive Backup, the verified Google account email and stable Google account identifier can also be linked for password recovery after confirming the local password. The owner may alternatively verify an email in Security &amp; Access. During a forgotten-password reset, Lotus ERP asks Firebase Authentication to email a one-time link and verify control of the mailbox. The linked email, Google account identifier and Firebase user identifier are stored in the local owner-account database and may be included in backups. The local sign-in password and recovery-code hash are not sent to Firebase.</p>
+      <p>Email recovery requires an internet connection. The owner may continue using the local recovery code without enrolling an email. Firebase processes the email address and authentication request under Google's <a href="https://policies.google.com/privacy">Privacy Policy</a>.</p>
 
       <h2>Google account connection</h2>
       <p>If you connect Google Drive, Google handles your sign-in and consent. Lotus ERP receives your basic account identity, including your email address and Google account identifier, and authorization tokens needed to access its private backup area. Your Google password is entered on Google's sign-in page, not in Lotus ERP.</p>

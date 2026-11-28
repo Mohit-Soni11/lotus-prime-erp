@@ -29,6 +29,13 @@ class SecureBackupSecretStore implements BackupSecretStore {
   Future<void> delete(String key) => _storage.delete(key: _key(key));
 }
 
+class VerifiedGoogleIdentity {
+  const VerifiedGoogleIdentity({required this.email, required this.subject});
+
+  final String email;
+  final String subject;
+}
+
 class GoogleDriveAuth {
   GoogleDriveAuth(
       {required this.http,
@@ -51,6 +58,7 @@ class GoogleDriveAuth {
   bool get configured => _client != null;
   bool get connected => configured && _tokens?['refresh_token'] is String;
   String? get email => _tokens?['email'] as String?;
+  String? get subject => _tokens?['subject'] as String?;
 
   Future<void> load() async {
     _client = null;
@@ -182,21 +190,13 @@ class GoogleDriveAuth {
         throw StateError(
             'Google Drive backup access was not granted. Connect again and approve the backup permission.');
       }
-      final user = await http.send(
-          Uri.https('openidconnect.googleapis.com', '/v1/userinfo'),
-          headers: {'Authorization': 'Bearer ${tokens['access_token']}'});
-      if (user.status != 200) {
-        throw StateError('Could not verify the connected Google account.');
-      }
-      final identity = await user.json();
-      if (identity['email'] is! String || identity['sub'] is! String) {
-        throw StateError('Google did not return the account identity.');
-      }
+      final identity =
+          await _fetchVerifiedIdentity(tokens['access_token'] as String);
       _tokens = {
         ...tokens,
         'client_id': _client!.clientId,
-        'email': identity['email'],
-        'subject': identity['sub'],
+        'email': identity.email,
+        'subject': identity.subject,
         'expiresAt': DateTime.now()
             .add(Duration(seconds: (tokens['expires_in'] as num).toInt()))
             .toIso8601String()
@@ -207,6 +207,38 @@ class GoogleDriveAuth {
       await subscription.cancel();
       await server.close(force: true);
     }
+  }
+
+  Future<VerifiedGoogleIdentity> verifiedIdentity() async {
+    final identity = await _fetchVerifiedIdentity(await accessToken());
+    _tokens = {
+      ..._tokens!,
+      'email': identity.email,
+      'subject': identity.subject,
+    };
+    await secrets.write('google-tokens', jsonEncode(_tokens));
+    return identity;
+  }
+
+  Future<VerifiedGoogleIdentity> _fetchVerifiedIdentity(
+      String accessToken) async {
+    final user = await http.send(
+        Uri.https('openidconnect.googleapis.com', '/v1/userinfo'),
+        headers: {'Authorization': 'Bearer $accessToken'});
+    if (user.status != 200) {
+      throw StateError('Could not verify the connected Google account.');
+    }
+    final identity = await user.json();
+    final email = identity['email'];
+    final subject = identity['sub'];
+    if (email is! String ||
+        email.isEmpty ||
+        subject is! String ||
+        subject.isEmpty ||
+        identity['email_verified'] != true) {
+      throw StateError('Google account email is not verified.');
+    }
+    return VerifiedGoogleIdentity(email: email, subject: subject);
   }
 
   void cancelSignIn() {

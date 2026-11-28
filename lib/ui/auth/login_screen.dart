@@ -4,11 +4,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/feedback/app_feedback.dart';
+import '../../database/local_database/shop_database_helper.dart';
 import '../../theme/dashboard/app/uv.dart';
 import 'services/auth_service.dart';
 import 'services/auth_session_controller.dart';
 import 'widgets/auth_brand_panel.dart';
 import 'widgets/auth_forms.dart';
+import 'widgets/company_creation_preview.dart';
 import 'widgets/password_reset_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,9 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _mobile = TextEditingController();
 
   bool _isLogin = true;
+  bool _showCompanyPreview = false;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _canCreateOwner = false;
+  bool _registrationChecked = false;
+  bool _hasCompanyProfile = false;
+  bool _registrationCheckFailed = false;
 
   @override
   void initState() {
@@ -42,14 +48,24 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loadRegistrationAvailability() async {
     try {
       final canCreateOwner = !await _authService.hasOwnerAccount();
+      final hasCompanyProfile = !canCreateOwner &&
+          await ShopDatabaseHelper().firstPersistedTenantId() != null;
       if (mounted) {
         setState(() {
           _canCreateOwner = canCreateOwner;
           _isLogin = !canCreateOwner;
+          _hasCompanyProfile = hasCompanyProfile;
+          _registrationChecked = true;
+          _registrationCheckFailed = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _canCreateOwner = false);
+      if (mounted) {
+        setState(() {
+          _canCreateOwner = false;
+          _registrationCheckFailed = true;
+        });
+      }
     }
   }
 
@@ -154,44 +170,60 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Spacer(),
               Text(
-                _isLogin ? 'Welcome Back' : 'Create Your Account',
+                _showCompanyPreview
+                    ? 'Create Company'
+                    : _isLogin
+                        ? 'Welcome Back'
+                        : 'Create Your Account',
                 style: UV.styles.h1,
               ),
               SizedBox(height: UV.layout.pXs),
               Text(
-                _isLogin
-                    ? 'Sign in to manage billing, inventory, and daily operations.'
-                    : 'Create the owner account for this shop installation.',
+                _showCompanyPreview
+                    ? 'Review the original showroom registration flow.'
+                    : _isLogin
+                        ? 'Sign in to manage billing, inventory, and daily operations.'
+                        : 'Create the owner account for this shop installation.',
                 style: UV.styles.label,
               ),
               SizedBox(height: UV.layout.pLg),
               Expanded(
                 child: SingleChildScrollView(
-                  child: _isLogin
-                      ? SignInForm(
-                          usernameController: _username,
-                          passwordController: _password,
-                          isLoading: _isLoading,
-                          passwordVisible: _isPasswordVisible,
-                          onTogglePassword: _togglePassword,
-                          onForgotPassword: _resetPassword,
-                          onSubmit: _handleLogin,
-                        )
-                      : OwnerRegistrationForm(
-                          nameController: _name,
-                          mobileController: _mobile,
-                          usernameController: _username,
-                          passwordController: _password,
-                          confirmPasswordController: _confirmPassword,
-                          isLoading: _isLoading,
-                          passwordVisible: _isPasswordVisible,
-                          onTogglePassword: _togglePassword,
-                          onSubmit: _handleRegister,
-                        ),
+                  child: _showCompanyPreview
+                      ? const CompanyCreationPreview()
+                      : _isLogin
+                          ? SignInForm(
+                              usernameController: _username,
+                              passwordController: _password,
+                              isLoading: _isLoading,
+                              passwordVisible: _isPasswordVisible,
+                              onTogglePassword: _togglePassword,
+                              onForgotPassword: _resetPassword,
+                              onSubmit: _handleLogin,
+                            )
+                          : OwnerRegistrationForm(
+                              nameController: _name,
+                              mobileController: _mobile,
+                              usernameController: _username,
+                              passwordController: _password,
+                              confirmPasswordController: _confirmPassword,
+                              isLoading: _isLoading,
+                              passwordVisible: _isPasswordVisible,
+                              onTogglePassword: _togglePassword,
+                              onSubmit: _handleRegister,
+                            ),
                 ),
               ),
               SizedBox(height: UV.layout.pMd),
-              if (_canCreateOwner || !_isLogin)
+              if (_showCompanyPreview)
+                Center(
+                  child: TextButton(
+                    onPressed: () =>
+                        setState(() => _showCompanyPreview = false),
+                    child: Text('Back to Sign In', style: UV.styles.action),
+                  ),
+                ),
+              if (!_showCompanyPreview && (_canCreateOwner || !_isLogin))
                 Align(
                   alignment: Alignment.center,
                   child: Wrap(
@@ -209,6 +241,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              if (!_showCompanyPreview &&
+                  _registrationChecked &&
+                  !_canCreateOwner &&
+                  _isLogin)
+                Padding(
+                  padding: EdgeInsets.only(top: UV.layout.pSm),
+                  child: Text(
+                    _hasCompanyProfile
+                        ? 'Current company account is ready. Sign in to continue.'
+                        : 'Owner account created. Sign in to finish company setup.',
+                    textAlign: TextAlign.center,
+                    style: UV.styles.body.copyWith(
+                      color: UV.colors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              if (!_showCompanyPreview && _registrationCheckFailed)
+                Padding(
+                  padding: EdgeInsets.only(top: UV.layout.pSm),
+                  child: TextButton(
+                    onPressed: _loadRegistrationAvailability,
+                    child: const Text('Could not check company setup. Retry'),
+                  ),
+                ),
+              if (!_showCompanyPreview && _isLogin)
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () => setState(() => _showCompanyPreview = true),
+                    icon: const Icon(Icons.storefront_outlined, size: 18),
+                    label: const Text('Create Company'),
                   ),
                 ),
             ],
@@ -287,6 +354,8 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLogin = true;
         _canCreateOwner = false;
+        _hasCompanyProfile = false;
+        _registrationChecked = true;
       });
       await _showRecoveryCode(result.recoveryCode!);
       return;

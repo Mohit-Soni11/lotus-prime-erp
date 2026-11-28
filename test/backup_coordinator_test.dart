@@ -3,27 +3,58 @@ import 'dart:isolate';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/settings/backup_restore/application/backup_coordinator.dart';
+import 'package:lotus_erp/features/settings/backup_restore/application/google_recovery_linker.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_http_transport.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_restore_service.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/backup_store.dart';
 import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_backup_service.dart';
+import 'package:lotus_erp/features/settings/backup_restore/data/google_drive_auth.dart';
 import 'package:lotus_erp/features/settings/backup_restore/domain/backup_record.dart';
 import 'package:lotus_erp/features/settings/backup_restore/domain/backup_schedule.dart';
 import 'backup_restore_test_support.dart';
 import 'google_drive_backup_test_support.dart';
+
+class _FakeGoogleRecoveryLinker implements GoogleRecoveryLinker {
+  bool linked = false;
+  VerifiedGoogleIdentity? identity;
+
+  @override
+  Future<bool> isLinked(String? googleSubject) async => linked;
+
+  @override
+  Future<void> verifyPassword(String password) async {
+    if (password != 'owner-password') throw StateError('Wrong password.');
+  }
+
+  @override
+  Future<void> link(VerifiedGoogleIdentity value, String password) async {
+    await verifyPassword(password);
+    identity = value;
+    linked = true;
+  }
+}
 
 void main() {
   late BackupFixture fixture;
   late BackupCoordinator controller;
   late ReceivePort ownerPort;
   late bool uploadSucceeds;
+  late _FakeGoogleRecoveryLinker recoveryLinker;
   setUp(() async {
     uploadSucceeds = false;
+    recoveryLinker = _FakeGoogleRecoveryLinker();
     ownerPort = ReceivePort();
     fixture = BackupFixture(
         await Directory.systemTemp.createTemp('lotus-coordinator-'));
     await fixture.seed();
     final http = FakeBackupHttp((uri, method, headers, body) async {
+      if (uri.path == '/v1/userinfo') {
+        return backupJsonResponse({
+          'email': 'owner@example.test',
+          'sub': 'google-owner',
+          'email_verified': true,
+        });
+      }
       if (!uploadSucceeds) {
         return const BackupHttpResponse(503, {}, Stream.empty());
       }
@@ -52,7 +83,8 @@ void main() {
             auth: await connectedTestGoogle(http), http: http),
         restore: BackupRestoreService(fixture.locations, fixture.preferences,
             clearSession: () async {}),
-        requireOwner: () async => ownerPort.sendPort.send(null));
+        requireOwner: () async => ownerPort.sendPort.send(null),
+        recoveryLinker: recoveryLinker);
     await controller.initialize();
   });
   tearDown(() async {
@@ -70,6 +102,17 @@ void main() {
     expect(await File(controller.records.single.localPath!).exists(), isTrue);
     expect(fixture.amount(), 125);
     expect(controller.busy, isFalse);
+  });
+
+  test('connected Drive identity can be linked once for recovery', () async {
+    expect(controller.recoveryLinked, isFalse);
+    await expectLater(
+        controller.linkConnectedGoogleForRecovery('wrong'), throwsStateError);
+    expect(recoveryLinker.identity, isNull);
+    await controller.linkConnectedGoogleForRecovery('owner-password');
+    expect(controller.recoveryLinked, isTrue);
+    expect(recoveryLinker.identity?.email, 'owner@example.test');
+    expect(recoveryLinker.identity?.subject, 'google-owner');
   });
 
   test('Drive outage keeps a verified local backup and records a retry',

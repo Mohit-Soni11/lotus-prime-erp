@@ -4,27 +4,64 @@ import 'package:uuid/uuid.dart';
 
 import 'auth_result.dart';
 import 'auth_session_gateway.dart';
+import 'email_recovery_gateway.dart';
+import 'firebase_email_recovery_gateway.dart';
 import 'local_account_repository.dart';
 import 'local_password_hasher.dart';
 import 'password_policy.dart';
 import 'local_session_store.dart';
 
 class AuthService implements AuthSessionGateway {
-  AuthService._(this._accounts, this._hasher, this._sessions);
+  AuthService._(this._accounts, this._hasher, this._sessions, this._email);
 
-  static final AuthService _instance = AuthService._(LocalAccountRepository(),
-      LocalPasswordHasher(), const SecureLocalSessionStore());
+  static final AuthService _instance = AuthService._(
+      LocalAccountRepository(),
+      LocalPasswordHasher(),
+      const SecureLocalSessionStore(),
+      FirebaseEmailRecoveryGateway(
+        apiKey: const String.fromEnvironment('LOTUS_RECOVERY_API_KEY'),
+        continueUrl: Uri.parse(
+            const String.fromEnvironment('LOTUS_RECOVERY_CONTINUE_URL')),
+      ));
   factory AuthService() => _instance;
 
   AuthService.forTesting(LocalAccountRepository accounts,
-      {required LocalSessionStore sessionStore})
-      : this._(accounts, LocalPasswordHasher(), sessionStore);
+      {required LocalSessionStore sessionStore,
+      EmailRecoveryGateway? emailGateway})
+      : this._(accounts, LocalPasswordHasher(), sessionStore, emailGateway);
 
   final LocalAccountRepository _accounts;
   final LocalPasswordHasher _hasher;
   final LocalSessionStore _sessions;
+  final EmailRecoveryGateway? _email;
   final _changes = StreamController<String?>.broadcast();
   String? _signedInUid;
+  DateTime? _lastEmailSentAt;
+
+  bool get isEmailRecoveryAvailable => _email?.isConfigured ?? false;
+
+  Future<String?> getRecoveryEmail() async {
+    final record = await _accounts.read();
+    if (record?['uid'] != _signedInUid) return null;
+    return record?['recovery_email'] as String?;
+  }
+
+  Future<bool> isRecoveryLinkedToGoogle({String? subject}) async {
+    final record = await _accounts.read();
+    return record?['uid'] == _signedInUid &&
+        record?['recovery_google_subject'] is String &&
+        (subject == null || record?['recovery_google_subject'] == subject);
+  }
+
+  Future<AuthResult> verifyRecoverySetupPassword(String currentPassword) async {
+    final record = await _accounts.read();
+    if (record == null || record['uid'] != _signedInUid) {
+      return const AuthResult(AuthResultCode.failure, 'Sign in again.');
+    }
+    final result = await _checkCurrentPassword(record, currentPassword);
+    return result ??
+        const AuthResult(AuthResultCode.success, 'Password verified.');
+  }
 
   @override
   String? get currentUserId => _signedInUid;
@@ -223,10 +260,160 @@ class AuthService implements AuthSessionGateway {
       return const AuthResult(
           AuthResultCode.failure, 'Recovery code is incorrect.');
     }
+    return _replacePassword(newPassword);
+  }
+
+  Future<AuthResult> sendRecoveryEmailEnrollment({
+    required String currentPassword,
+    required String email,
+  }) async {
+    final record = await _accounts.read();
+    if (record == null || record['uid'] != _signedInUid) {
+      return const AuthResult(AuthResultCode.failure, 'Sign in again.');
+    }
+    final passwordCheck = await _checkCurrentPassword(record, currentPassword);
+    if (passwordCheck != null) return passwordCheck;
+    final normalized = _normalizeEmail(email);
+    if (normalized == null) {
+      return const AuthResult(
+          AuthResultCode.failure, 'Enter a valid email address.');
+    }
+    return _sendEmail(normalized);
+  }
+
+  Future<AuthResult> linkRecoveryToGoogleAccount({
+    required String currentPassword,
+    required String email,
+    required String googleSubject,
+  }) async {
+    final record = await _accounts.read();
+    if (record == null || record['uid'] != _signedInUid) {
+      return const AuthResult(AuthResultCode.failure, 'Sign in again.');
+    }
+    final passwordCheck = await _checkCurrentPassword(record, currentPassword);
+    if (passwordCheck != null) return passwordCheck;
+    final normalized = _normalizeEmail(email);
+    if (normalized == null || googleSubject.trim().isEmpty) {
+      return const AuthResult(AuthResultCode.failure,
+          'Google did not return a verified account identity.');
+    }
+    await _accounts.update({
+      'recovery_email': normalized,
+      'recovery_google_subject': googleSubject,
+      'recovery_email_uid': record['recovery_email'] == normalized
+          ? record['recovery_email_uid']
+          : null,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    return const AuthResult(AuthResultCode.success,
+        'Google account is linked for password recovery.');
+  }
+
+  Future<AuthResult> confirmRecoveryEmailEnrollment({
+    required String currentPassword,
+    required String email,
+    required String link,
+  }) async {
+    final record = await _accounts.read();
+    if (record == null || record['uid'] != _signedInUid) {
+      return const AuthResult(AuthResultCode.failure, 'Sign in again.');
+    }
+    final passwordCheck = await _checkCurrentPassword(record, currentPassword);
+    if (passwordCheck != null) return passwordCheck;
+    final normalized = _normalizeEmail(email);
+    if (normalized == null) {
+      return const AuthResult(
+          AuthResultCode.failure, 'Enter a valid email address.');
+    }
+    if (!isEmailRecoveryAvailable) {
+      return const AuthResult(AuthResultCode.failure,
+          'Email recovery is not configured on this installation.');
+    }
+    try {
+      final verified = await _email!.verifySignInLink(normalized, link);
+      if (verified.email != normalized) {
+        return const AuthResult(AuthResultCode.failure,
+            'The link belongs to a different email address.');
+      }
+      await _accounts.update({
+        'recovery_email': normalized,
+        'recovery_email_uid': verified.uid,
+        'recovery_google_subject': record['recovery_email'] == normalized
+            ? record['recovery_google_subject']
+            : null,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      return const AuthResult(
+          AuthResultCode.success, 'Recovery email verified.');
+    } on EmailRecoveryException catch (error) {
+      return AuthResult(AuthResultCode.failure, error.message);
+    }
+  }
+
+  Future<AuthResult> sendPasswordResetEmail(String email) async {
+    final normalized = _normalizeEmail(email);
+    if (normalized == null) {
+      return const AuthResult(
+          AuthResultCode.failure, 'Enter a valid email address.');
+    }
+    final record = await _accounts.read();
+    if (record?['recovery_email'] != normalized ||
+        (record?['recovery_email_uid'] == null &&
+            record?['recovery_google_subject'] == null)) {
+      return const AuthResult(AuthResultCode.success,
+          'If this email is registered, a recovery link will arrive shortly.');
+    }
+    final sent = await _sendEmail(normalized);
+    return sent.isSuccess
+        ? const AuthResult(AuthResultCode.success,
+            'If this email is registered, a recovery link will arrive shortly.')
+        : sent;
+  }
+
+  Future<AuthResult> resetPasswordWithEmail({
+    required String email,
+    required String link,
+    required String newPassword,
+  }) async {
+    if (!isEmailRecoveryAvailable) {
+      return const AuthResult(AuthResultCode.failure,
+          'Email recovery is not configured on this installation.');
+    }
+    final passwordError = PasswordPolicy.validate(newPassword);
+    if (passwordError != null) {
+      return AuthResult(AuthResultCode.failure, passwordError);
+    }
+    final normalized = _normalizeEmail(email);
+    final record = await _accounts.read();
+    if (normalized == null ||
+        record?['recovery_email'] != normalized ||
+        (record?['recovery_email_uid'] == null &&
+            record?['recovery_google_subject'] == null)) {
+      return const AuthResult(
+          AuthResultCode.failure, 'This email is not registered for recovery.');
+    }
+    try {
+      final verified = await _email!.verifySignInLink(normalized, link);
+      if (verified.email != normalized ||
+          (record!['recovery_email_uid'] != null &&
+              verified.uid != record['recovery_email_uid'])) {
+        return const AuthResult(AuthResultCode.failure,
+            'This link does not match the registered recovery email.');
+      }
+      if (record['recovery_email_uid'] == null) {
+        await _accounts.update({'recovery_email_uid': verified.uid});
+      }
+      return _replacePassword(newPassword);
+    } on EmailRecoveryException catch (error) {
+      return AuthResult(AuthResultCode.failure, error.message);
+    }
+  }
+
+  Future<AuthResult> _replacePassword(String newPassword) async {
     final passwordSalt = _hasher.newSalt();
     final recoverySalt = _hasher.newSalt();
     final nextRecoveryCode = _hasher.newRecoveryCode();
-    final passwordChangedAt = DateTime.now().toUtc().toIso8601String();
+    final changedAt = DateTime.now().toUtc().toIso8601String();
     await _accounts.update({
       'password_salt': passwordSalt,
       'password_hash': await _hasher.hash(newPassword, passwordSalt),
@@ -234,11 +421,55 @@ class AuthService implements AuthSessionGateway {
       'recovery_hash': await _hasher.hash(nextRecoveryCode, recoverySalt),
       'failed_attempts': 0,
       'locked_until': null,
-      'updated_at': passwordChangedAt,
-      'last_password_changed_at': passwordChangedAt,
+      'updated_at': changedAt,
+      'last_password_changed_at': changedAt,
     });
     await signOut();
     return AuthResult(AuthResultCode.success, 'Password reset.',
         recoveryCode: nextRecoveryCode);
+  }
+
+  Future<AuthResult> _sendEmail(String email) async {
+    if (!isEmailRecoveryAvailable) {
+      return const AuthResult(AuthResultCode.failure,
+          'Email recovery is not configured on this installation.');
+    }
+    final now = DateTime.now().toUtc();
+    if (_lastEmailSentAt != null &&
+        now.difference(_lastEmailSentAt!) < const Duration(minutes: 1)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Wait one minute before requesting another link.');
+    }
+    try {
+      await _email!.sendSignInLink(email);
+      _lastEmailSentAt = now;
+      return const AuthResult(AuthResultCode.success, 'Email link sent.');
+    } on EmailRecoveryException catch (error) {
+      return AuthResult(AuthResultCode.failure, error.message);
+    }
+  }
+
+  Future<AuthResult?> _checkCurrentPassword(
+      Map<String, Object?> record, String password) async {
+    final now = DateTime.now().toUtc();
+    final lockedUntil =
+        DateTime.tryParse(record['locked_until'] as String? ?? '');
+    if (lockedUntil != null && lockedUntil.isAfter(now)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Too many attempts. Try again in a few minutes.');
+    }
+    if (!await _hasher.verify(password, record['password_salt'] as List<int>,
+        record['password_hash'] as List<int>)) {
+      await _recordFailedAttempt(record, now);
+      return const AuthResult(
+          AuthResultCode.failure, 'Current password is incorrect.');
+    }
+    await _accounts.update({'failed_attempts': 0, 'locked_until': null});
+    return null;
+  }
+
+  static String? _normalizeEmail(String email) {
+    final value = email.trim().toLowerCase();
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value) ? value : null;
   }
 }

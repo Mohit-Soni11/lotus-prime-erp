@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 11;
+  static const int currentVersion = 13;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -179,6 +179,19 @@ class ShopDatabaseSchema {
       await _createBankAccountIndexes(db);
       await _createFinanceAccountLinks(db);
     }
+    if (oldVersion < 12) {
+      if (!await _tableExists(db, 'local_owner_account')) {
+        await _createLocalOwnerAccount(db);
+      }
+      await _addColumnIfMissing(
+          db, 'local_owner_account', 'recovery_email', 'TEXT');
+      await _addColumnIfMissing(
+          db, 'local_owner_account', 'recovery_email_uid', 'TEXT');
+    }
+    if (oldVersion < 13) {
+      await _addColumnIfMissing(
+          db, 'local_owner_account', 'recovery_google_subject', 'TEXT');
+    }
   }
 
   static Future<void> _createBankAccountIndexes(Database db) async {
@@ -213,6 +226,9 @@ class ShopDatabaseSchema {
       password_hash BLOB NOT NULL,
       recovery_salt BLOB NOT NULL,
       recovery_hash BLOB NOT NULL,
+      recovery_email TEXT,
+      recovery_email_uid TEXT,
+      recovery_google_subject TEXT,
       failed_attempts INTEGER NOT NULL DEFAULT 0,
       locked_until TEXT,
       created_at TEXT NOT NULL,

@@ -28,8 +28,11 @@ void main() {
           'scope': '${GoogleDriveAuth.driveScope} openid email'
         });
       }
-      return backupJsonResponse(
-          {'email': 'owner@example.test', 'sub': 'account-1'});
+      return backupJsonResponse({
+        'email': 'owner@example.test',
+        'sub': 'account-1',
+        'email_verified': true
+      });
     });
     final auth = GoogleDriveAuth(
         http: http,
@@ -71,6 +74,9 @@ void main() {
     await auth.signIn();
     expect(auth.connected, isTrue);
     expect(auth.email, 'owner@example.test');
+    final identity = await auth.verifiedIdentity();
+    expect(identity.email, 'owner@example.test');
+    expect(identity.subject, 'account-1');
     expect(await auth.accessToken(), 'access');
     expect(tokenCalls, 1);
     expect(secrets.values['google-tokens'], contains('refresh'));
@@ -130,6 +136,30 @@ void main() {
         throwsA(isA<StateError>().having((error) => error.message, 'message',
             contains('not available in this build'))));
     expect(openedBrowser, isFalse);
+  });
+
+  test('unverified Google email cannot be used for account recovery', () async {
+    final secrets = MemoryBackupSecrets();
+    secrets.values['google-client'] =
+        jsonEncode({'client_id': 'test.apps.googleusercontent.com'});
+    secrets.values['google-tokens'] = jsonEncode({
+      'client_id': 'test.apps.googleusercontent.com',
+      'refresh_token': 'refresh',
+      'access_token': 'access',
+      'expiresAt':
+          DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
+    });
+    final auth = GoogleDriveAuth(
+      http: FakeBackupHttp(
+          (uri, method, headers, body) async => backupJsonResponse({
+                'email': 'owner@example.test',
+                'sub': 'account-1',
+                'email_verified': false,
+              })),
+      secrets: secrets,
+    );
+    await auth.load();
+    await expectLater(auth.verifiedIdentity(), throwsStateError);
   });
 
   test('application identity preserves matching tokens across updates',
