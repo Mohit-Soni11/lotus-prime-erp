@@ -128,7 +128,11 @@ class BackupDestinationPanels extends StatelessWidget {
               onPressed: disabled ? null : onConnectGoogle,
               icon: const Icon(Icons.settings_outlined, size: 18),
               label:
-                  Text(connected ? 'Change Account' : 'Connect Google Account'),
+                  Text(connected && !controller.drive.auth.canSendRecoveryEmail
+                      ? 'Reconnect for Email OTP'
+                      : connected
+                          ? 'Change Account'
+                          : 'Connect Google Account'),
               style: OutlinedButton.styleFrom(
                   foregroundColor: BackupWorkspaceTheme.amber,
                   side: const BorderSide(color: BackupWorkspaceTheme.gold))),
@@ -146,14 +150,24 @@ class BackupDestinationPanels extends StatelessWidget {
                 icon: const Icon(Icons.password_rounded, size: 18),
                 label: const Text('Use for password recovery')),
         ]),
-        if (connected && recoveryLinked) ...[
+        if (connected &&
+            recoveryLinked &&
+            controller.drive.auth.canSendRecoveryEmail) ...[
           const SizedBox(height: 10),
-          const Text(
-              'This Google account is also your password recovery email.',
+          const Text('Email OTP is ready for this Google account.',
               style: TextStyle(
                   fontSize: 13,
                   color: BackupWorkspaceTheme.green,
                   fontWeight: FontWeight.w700)),
+        ],
+        if (connected && !controller.drive.auth.canSendRecoveryEmail) ...[
+          const SizedBox(height: 10),
+          const Text(
+              'Email OTP needs Gmail send permission. Reconnect this Google account once; Drive backups remain available.',
+              style: TextStyle(
+                  fontSize: 13,
+                  color: BackupWorkspaceTheme.muted,
+                  fontWeight: FontWeight.w600)),
         ],
         if (!controller.drive.auth.configured) ...[
           const SizedBox(height: 10),

@@ -6,7 +6,7 @@ import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_c
 import 'google_drive_backup_test_support.dart';
 
 void main() {
-  test('Desktop OAuth uses loopback, state, PKCE and the app-only Drive scope',
+  test('Desktop OAuth uses loopback, PKCE and backup plus OTP scopes',
       () async {
     final secrets = MemoryBackupSecrets();
     String? expectedChallenge;
@@ -25,7 +25,8 @@ void main() {
           'access_token': 'access',
           'refresh_token': 'refresh',
           'expires_in': 3600,
-          'scope': '${GoogleDriveAuth.driveScope} openid email'
+          'scope':
+              '${GoogleDriveAuth.driveScope} ${GoogleDriveAuth.gmailSendScope} openid email'
         });
       }
       return backupJsonResponse({
@@ -44,6 +45,7 @@ void main() {
           expect(uri.host, 'accounts.google.com');
           final query = uri.queryParameters;
           expect(query['scope'], contains(GoogleDriveAuth.driveScope));
+          expect(query['scope'], contains(GoogleDriveAuth.gmailSendScope));
           expect(query['code_challenge_method'], 'S256');
           expect(query['access_type'], 'offline');
           expectedChallenge = query['code_challenge'];
@@ -73,6 +75,7 @@ void main() {
     await auth.load();
     await auth.signIn();
     expect(auth.connected, isTrue);
+    expect(auth.canSendRecoveryEmail, isTrue);
     expect(auth.email, 'owner@example.test');
     final identity = await auth.verifiedIdentity();
     expect(identity.email, 'owner@example.test');

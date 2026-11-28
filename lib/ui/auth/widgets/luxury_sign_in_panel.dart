@@ -16,7 +16,6 @@ class LuxurySignInPanel extends StatelessWidget {
     required this.onSignIn,
     required this.onCreateCompany,
     required this.companyStatus,
-    this.onCreateOwner,
     this.onRetryStatus,
   });
 
@@ -29,7 +28,6 @@ class LuxurySignInPanel extends StatelessWidget {
   final VoidCallback onForgotPassword;
   final VoidCallback onSignIn;
   final VoidCallback onCreateCompany;
-  final VoidCallback? onCreateOwner;
   final String? companyStatus;
   final VoidCallback? onRetryStatus;
 
@@ -86,9 +84,9 @@ class LuxurySignInPanel extends StatelessWidget {
                       const SizedBox(height: 32),
                       _input(
                         controller: usernameController,
-                        hint: 'Username',
+                        hint: 'Email or existing username',
                         icon: Icons.person_outline_rounded,
-                        validator: AuthFieldValidator.username,
+                        validator: AuthFieldValidator.loginIdentifier,
                         autofillHints: const [AutofillHints.username],
                         textInputAction: TextInputAction.next,
                       ),
@@ -221,11 +219,6 @@ class LuxurySignInPanel extends StatelessWidget {
                           ],
                         ),
                       ],
-                      if (onCreateOwner != null)
-                        TextButton(
-                          onPressed: isLoading ? null : onCreateOwner,
-                          child: const Text('Create Owner Account'),
-                        ),
                       if (onRetryStatus != null)
                         TextButton(
                           onPressed: onRetryStatus,

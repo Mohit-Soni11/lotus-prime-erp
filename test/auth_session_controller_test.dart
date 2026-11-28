@@ -43,6 +43,7 @@ class _FakeGateway implements AuthSessionGateway {
     required String password,
     required String ownerName,
     required String mobile,
+    String? companyName,
   }) async {
     emit('new-owner');
     if (pendingRegistration case final pending?) {

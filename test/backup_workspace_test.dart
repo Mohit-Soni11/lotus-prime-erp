@@ -292,7 +292,8 @@ void main() {
                 'access_token': 'test-access',
                 'refresh_token': 'test-refresh',
                 'expires_in': 3600,
-                'scope': '${GoogleDriveAuth.driveScope} openid email'
+                'scope':
+                    '${GoogleDriveAuth.driveScope} ${GoogleDriveAuth.gmailSendScope} openid email'
               });
             }
             return backupJsonResponse(uri.path == '/v1/userinfo'

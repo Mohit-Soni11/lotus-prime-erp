@@ -5,6 +5,7 @@ import 'package:lotus_erp/ui/auth/services/auth_service.dart';
 import 'package:lotus_erp/ui/auth/services/email_recovery_gateway.dart';
 import 'package:lotus_erp/ui/auth/services/local_account_repository.dart';
 import 'package:lotus_erp/ui/auth/services/local_session_store.dart';
+import 'package:lotus_erp/ui/auth/services/otp_email_gateway.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _MemorySessionStore implements LocalSessionStore {
@@ -40,12 +41,71 @@ class _FakeEmailGateway implements EmailRecoveryGateway {
   }
 }
 
+class _FakeOtpEmailGateway implements OtpEmailGateway {
+  String? lastCode;
+  String? lastEmail;
+  String? lastSubject;
+
+  @override
+  Future<void> send(
+      {required String email,
+      required String googleSubject,
+      required String code}) async {
+    lastEmail = email;
+    lastSubject = googleSubject;
+    lastCode = code;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  });
+
+  test('company registration uses email login and persists setup details',
+      () async {
+    final db = await openDatabase(
+      inMemoryDatabasePath,
+      version: ShopDatabaseSchema.currentVersion,
+      onCreate: ShopDatabaseSchema.create,
+    );
+    addTearDown(db.close);
+    final accounts =
+        LocalAccountRepository(helper: ShopDatabaseHelper.forTesting(db));
+    final auth =
+        AuthService.forTesting(accounts, sessionStore: _MemorySessionStore());
+
+    final created = await auth.registerOwner(
+      username: 'Owner@Example.com',
+      password: 'SecurePass123',
+      ownerName: 'Shop Owner',
+      mobile: '9876543210',
+      companyName: 'Lotus Jewellers',
+    );
+    expect(created.isSuccess, isTrue);
+    expect((await accounts.read())?['username'], 'owner@example.com');
+    expect((await accounts.read())?['registration_company_name'],
+        'Lotus Jewellers');
+    expect((await db.query('shop_profile')), isEmpty);
+    expect(
+        (await auth.loginUser(
+                username: 'OWNER@example.com', password: 'SecurePass123'))
+            .isSuccess,
+        isTrue);
+    expect((await auth.getUserDetails())?['registrationCompanyName'],
+        'Lotus Jewellers');
+    expect(
+        (await auth.registerOwner(
+                username: 'second@example.com',
+                password: 'SecurePass123',
+                ownerName: 'Another Owner',
+                mobile: '9876543210',
+                companyName: 'Second Shop'))
+            .isSuccess,
+        isFalse);
   });
 
   test('owner can create, sign in, recover and change a local password',
@@ -302,8 +362,120 @@ void main() {
         isFalse);
   });
 
-  test('version 11 owner account gains nullable recovery email columns',
+  test('email OTP is bound to the linked owner, limited and single use',
       () async {
+    final db = await openDatabase(inMemoryDatabasePath,
+        version: ShopDatabaseSchema.currentVersion,
+        onCreate: ShopDatabaseSchema.create);
+    addTearDown(db.close);
+    final accounts =
+        LocalAccountRepository(helper: ShopDatabaseHelper.forTesting(db));
+    final sender = _FakeOtpEmailGateway();
+    final auth = AuthService.forTesting(accounts,
+        sessionStore: _MemorySessionStore(), otpEmailGateway: sender);
+    await auth.registerOwner(
+        username: 'owner',
+        password: 'InitialPassword123',
+        ownerName: 'Owner',
+        mobile: '9999999999');
+    expect((await auth.sendPasswordResetOtp('owner@example.com')).isSuccess,
+        isFalse);
+    expect(sender.lastCode, isNull);
+    await auth.loginUser(username: 'owner', password: 'InitialPassword123');
+    expect(
+        (await auth.linkRecoveryToGoogleAccount(
+                currentPassword: 'InitialPassword123',
+                email: 'Owner@Example.com',
+                googleSubject: 'google-owner'))
+            .isSuccess,
+        isTrue);
+    await auth.signOut();
+
+    expect((await auth.sendPasswordResetOtp('unknown@example.com')).isSuccess,
+        isFalse);
+    expect(sender.lastCode, isNull);
+    var clock = DateTime.utc(2026, 11, 28);
+    final otherSession = AuthService.forTesting(accounts,
+        sessionStore: _MemorySessionStore(),
+        otpEmailGateway: sender,
+        clock: () => clock);
+    expect(
+        (await otherSession.sendPasswordResetOtp('owner@example.com'))
+            .isSuccess,
+        isTrue);
+    expect(sender.lastEmail, 'owner@example.com');
+    expect(sender.lastSubject, 'google-owner');
+    expect(sender.lastCode, matches(RegExp(r'^\d{6}$')));
+    expect(
+        (await otherSession.sendPasswordResetOtp('owner@example.com'))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await otherSession.verifyPasswordResetOtp(
+                email: 'other@example.com', code: sender.lastCode!))
+            .isSuccess,
+        isFalse);
+    for (var attempt = 0; attempt < 5; attempt++) {
+      expect(
+          (await otherSession.verifyPasswordResetOtp(
+                  email: 'owner@example.com',
+                  code: sender.lastCode == '000000' ? '000001' : '000000'))
+              .isSuccess,
+          isFalse);
+    }
+    expect(
+        (await otherSession.resetPasswordWithOtp(
+                email: 'owner@example.com', newPassword: 'Replacement123'))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await otherSession.verifyPasswordResetOtp(
+                email: 'owner@example.com', code: sender.lastCode!))
+            .isSuccess,
+        isFalse);
+    clock = clock.add(const Duration(seconds: 61));
+    expect(
+        (await otherSession.sendPasswordResetOtp('owner@example.com'))
+            .isSuccess,
+        isTrue);
+    final expiringCode = sender.lastCode!;
+    clock = clock.add(const Duration(minutes: 10));
+    expect(
+        (await otherSession.verifyPasswordResetOtp(
+                email: 'owner@example.com', code: expiringCode))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await otherSession.sendPasswordResetOtp('owner@example.com'))
+            .isSuccess,
+        isTrue);
+    expect(
+        (await otherSession.verifyPasswordResetOtp(
+                email: 'owner@example.com', code: sender.lastCode!))
+            .isSuccess,
+        isTrue);
+    final reset = await otherSession.resetPasswordWithOtp(
+        email: 'owner@example.com', newPassword: 'Replacement123');
+    expect(reset.isSuccess, isTrue);
+    expect(reset.recoveryCode, isNotNull);
+    expect(
+        (await otherSession.resetPasswordWithOtp(
+                email: 'owner@example.com', newPassword: 'AnotherPassword123'))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await otherSession.loginUser(
+                username: 'owner', password: 'InitialPassword123'))
+            .isSuccess,
+        isFalse);
+    expect(
+        (await otherSession.loginUser(
+                username: 'owner', password: 'Replacement123'))
+            .isSuccess,
+        isTrue);
+  });
+
+  test('version 11 owner account gains recovery and company columns', () async {
     final db = await openDatabase(inMemoryDatabasePath,
         version: 11, onCreate: ShopDatabaseSchema.create);
     addTearDown(db.close);
@@ -313,7 +485,9 @@ void main() {
         'ALTER TABLE local_owner_account DROP COLUMN recovery_email_uid');
     await db.execute(
         'ALTER TABLE local_owner_account DROP COLUMN recovery_google_subject');
-    await ShopDatabaseSchema.upgrade(db, 11, 13);
+    await db.execute(
+        'ALTER TABLE local_owner_account DROP COLUMN registration_company_name');
+    await ShopDatabaseSchema.upgrade(db, 11, ShopDatabaseSchema.currentVersion);
     final columns = await db.rawQuery('PRAGMA table_info(local_owner_account)');
     final names = columns.map((row) => row['name']).toSet();
     expect(
@@ -321,7 +495,8 @@ void main() {
         containsAll([
           'recovery_email',
           'recovery_email_uid',
-          'recovery_google_subject'
+          'recovery_google_subject',
+          'registration_company_name'
         ]));
   });
 }

@@ -4,16 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../../core/feedback/app_feedback.dart';
 import '../../database/local_database/shop_database_helper.dart';
-import '../../theme/dashboard/app/uv.dart';
 import 'services/auth_service.dart';
 import 'services/auth_session_controller.dart';
 import 'widgets/auth_brand_panel.dart';
-import 'widgets/auth_forms.dart';
-import 'widgets/company_creation_preview.dart';
+import 'widgets/company_creation_panel.dart';
+import 'widgets/company_registration_input.dart';
 import 'widgets/luxury_auth_background.dart';
 import 'widgets/luxury_auth_palette.dart';
 import 'widgets/luxury_sign_in_panel.dart';
-import 'widgets/password_reset_dialog.dart';
+import 'widgets/password_recovery_panel.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,12 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _username = TextEditingController();
   final _password = TextEditingController();
-  final _confirmPassword = TextEditingController();
-  final _name = TextEditingController();
-  final _mobile = TextEditingController();
 
-  bool _isLogin = true;
-  bool _showCompanyPreview = false;
+  bool _showCompanyCreation = false;
+  bool _showPasswordRecovery = false;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _canCreateOwner = false;
@@ -55,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() {
           _canCreateOwner = canCreateOwner;
-          _isLogin = !canCreateOwner;
           _hasCompanyProfile = hasCompanyProfile;
           _registrationChecked = true;
           _registrationCheckFailed = false;
@@ -75,9 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _username.dispose();
     _password.dispose();
-    _confirmPassword.dispose();
-    _name.dispose();
-    _mobile.dispose();
     super.dispose();
   }
 
@@ -127,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       height: 225,
                                       child: AuthBrandPanel(),
                                     ),
-                                    Expanded(child: _rightPanel()),
+                                    Expanded(child: _animatedRightPanel()),
                                   ],
                                 )
                               : Row(
@@ -136,7 +128,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       flex: 41,
                                       child: AuthBrandPanel(),
                                     ),
-                                    Expanded(flex: 59, child: _rightPanel()),
+                                    Expanded(
+                                        flex: 59, child: _animatedRightPanel()),
                                   ],
                                 ),
                         ),
@@ -150,128 +143,66 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  Widget _rightPanel() {
-    if (_isLogin && !_showCompanyPreview) {
-      return LuxurySignInPanel(
-        formKey: _formKey,
-        usernameController: _username,
-        passwordController: _password,
-        isLoading: _isLoading,
-        passwordVisible: _isPasswordVisible,
-        onTogglePassword: _togglePassword,
-        onForgotPassword: _resetPassword,
-        onSignIn: _handleLogin,
-        onCreateCompany: () => setState(() => _showCompanyPreview = true),
-        onCreateOwner: _canCreateOwner ? _switchForm : null,
-        companyStatus: _registrationChecked && !_canCreateOwner
-            ? (_hasCompanyProfile
-                ? 'Current company account is ready. Sign in to continue.'
-                : 'Owner account created. Sign in to finish company setup.')
-            : null,
-        onRetryStatus:
-            _registrationCheckFailed ? _loadRegistrationAvailability : null,
-      );
-    }
-    return _secondaryPanel();
-  }
-
-  Widget _secondaryPanel() => Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: UV.layout.pXl,
-          vertical: UV.layout.pLg,
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              Text(
-                _showCompanyPreview ? 'Create Company' : 'Create Your Account',
-                style: UV.styles.h1,
-              ),
-              SizedBox(height: UV.layout.pXs),
-              Text(
-                _showCompanyPreview
-                    ? 'Review the original showroom registration flow.'
-                    : 'Create the owner account for this shop installation.',
-                style: UV.styles.label,
-              ),
-              SizedBox(height: UV.layout.pLg),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: _showCompanyPreview
-                      ? const CompanyCreationPreview()
-                      : OwnerRegistrationForm(
-                          nameController: _name,
-                          mobileController: _mobile,
-                          usernameController: _username,
-                          passwordController: _password,
-                          confirmPasswordController: _confirmPassword,
-                          isLoading: _isLoading,
-                          passwordVisible: _isPasswordVisible,
-                          onTogglePassword: _togglePassword,
-                          onSubmit: _handleRegister,
-                        ),
-                ),
-              ),
-              SizedBox(height: UV.layout.pMd),
-              if (_showCompanyPreview)
-                Center(
-                  child: TextButton(
-                    onPressed: () =>
-                        setState(() => _showCompanyPreview = false),
-                    child: Text('Back to Sign In', style: UV.styles.action),
-                  ),
-                ),
-              if (!_showCompanyPreview)
-                Align(
-                  alignment: Alignment.center,
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account?',
-                        style: UV.styles.body,
-                      ),
-                      TextButton(
-                        onPressed: _isLoading ? null : _switchForm,
-                        child: Text(
-                          'Back to Sign In',
-                          style: UV.styles.action,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+  Widget _animatedRightPanel() => AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(.04, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
           ),
         ),
+        child: KeyedSubtree(
+          key: ValueKey(_showPasswordRecovery
+              ? 'recovery'
+              : _showCompanyCreation
+                  ? 'company'
+                  : 'login'),
+          child: _rightPanel(),
+        ),
       );
+
+  Widget _rightPanel() {
+    if (_showPasswordRecovery) {
+      return PasswordRecoveryPanel(
+        authService: _authService,
+        onBackToSignIn: () => setState(() => _showPasswordRecovery = false),
+      );
+    }
+    if (_showCompanyCreation) {
+      return CompanyCreationPanel(
+        isLoading: _isLoading,
+        onSubmit: _handleRegister,
+        onBackToSignIn: () => setState(() => _showCompanyCreation = false),
+      );
+    }
+    return LuxurySignInPanel(
+      formKey: _formKey,
+      usernameController: _username,
+      passwordController: _password,
+      isLoading: _isLoading,
+      passwordVisible: _isPasswordVisible,
+      onTogglePassword: _togglePassword,
+      onForgotPassword: () => setState(() => _showPasswordRecovery = true),
+      onSignIn: _handleLogin,
+      onCreateCompany: () => setState(() => _showCompanyCreation = true),
+      companyStatus: _registrationChecked && !_canCreateOwner
+          ? (_hasCompanyProfile
+              ? 'Current company account is ready. Sign in to continue.'
+              : 'Owner account created. Sign in to finish company setup.')
+          : null,
+      onRetryStatus:
+          _registrationCheckFailed ? _loadRegistrationAvailability : null,
+    );
+  }
 
   void _togglePassword() =>
       setState(() => _isPasswordVisible = !_isPasswordVisible);
-
-  void _switchForm() {
-    if (_isLogin && !_canCreateOwner) return;
-    _formKey.currentState?.reset();
-    _password.clear();
-    _confirmPassword.clear();
-    setState(() {
-      _isLogin = !_isLogin;
-      _isPasswordVisible = false;
-    });
-  }
-
-  Future<void> _resetPassword() async {
-    final result = await showPasswordResetDialog(context, _authService);
-    if (!mounted || result == null) return;
-    AppFeedback.show(
-      context,
-      type: result.isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
-      message: result.message,
-    );
-  }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -290,22 +221,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _handleRegister(CompanyRegistrationInput input) async {
     setState(() => _isLoading = true);
     final result = await _session.registerOwner(
-      username: _username.text,
-      password: _password.text,
-      ownerName: _name.text,
-      mobile: _mobile.text,
+      username: input.email,
+      password: input.password,
+      ownerName: input.ownerName,
+      mobile: input.mobile,
+      companyName: input.companyName,
     );
     if (!mounted) return;
     setState(() => _isLoading = false);
     if (result.accountCreated) {
+      _username.text = input.email;
       _password.clear();
-      _confirmPassword.clear();
       setState(() {
-        _isLogin = true;
+        _showCompanyCreation = false;
         _canCreateOwner = false;
         _hasCompanyProfile = false;
         _registrationChecked = true;

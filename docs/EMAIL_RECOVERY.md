@@ -1,26 +1,22 @@
-# Email password recovery
+# Password recovery
 
-Lotus ERP keeps its local username, Argon2id password, and offline recovery code. Firebase Authentication is used only to send a one-time email link and verify mailbox ownership. The local password is changed only when Firebase returns the same email and user ID that were verified for this installation.
+Lotus ERP keeps the owner username and password locally. The **Forgot Password** button opens a four-screen flow inside the sign-in card: registered email, six-digit OTP, new password, and success. The left branding panel and background stay in place. The offline recovery code remains available from the first screen.
 
-## Owner setup
+## Google account setup
 
 1. Sign in and open **Backup & Restore → Google Drive Backup → Connect Google Account**.
-2. Confirm the current Lotus ERP password, then select the Google account. Its verified email becomes the backup account and recovery email in one connection.
-3. If Google Drive was already connected before this feature was installed, select **Use for password recovery** in the same panel and confirm the Lotus password. The existing Google connection is reused.
-4. When needed, use **Forgot password → Email link** on the login screen. Copy the complete link address from the email into Lotus ERP, set a new password, and save the newly issued offline recovery code.
+2. Confirm the current Lotus ERP password and choose the Google account. Its verified email and Google subject become the backup account and password recovery identity.
+3. The connection requests Drive app-data and `gmail.send` permissions together. An account connected before the OTP update must be reconnected once to grant `gmail.send`. Keep the offline recovery code until that is done.
+4. Enable the Gmail API in the Google Cloud project used by the desktop OAuth client. The OAuth consent configuration must allow the intended users and the sensitive `gmail.send` scope. Google may require OAuth verification before general distribution.
 
-**Security & Access → Recovery Email** remains an alternative when Google Drive is not configured. It requires a separate email verification link. A business email typed during company setup is not automatically trusted for password recovery because ownership has not been verified.
+The OTP is sent **from the connected Google account to that same verified email**. Lotus ERP checks both the email and Google subject before sending. Codes are generated with a secure random source, expire after 10 minutes, allow five attempts, and are held only in app memory. Resending takes at least one minute and invalidates the previous code. Closing the app requires requesting a new code. A successful reset rotates the offline recovery code, which the owner must save from the success screen.
 
-Email recovery works only after this one-time link. Existing owner accounts remain valid and can still use their recovery code. Email recovery needs internet access. A restored backup retains the verified email, Google account ID, and Firebase user ID (once a recovery link has been used); it must be restored into a build configured for the same Firebase project.
+The login UI does not ask for or accept an email link. The older Firebase email-link implementation remains for previously enrolled accounts and the Security & Access enrollment flow; it is not used by this OTP screen. A Firebase-only recovery email without a linked Google account cannot receive this OTP. Use the saved offline recovery code or link the Google account while signed in.
 
-## Build configuration
+## Build and delivery
 
-The Firebase web app's public API key and HTTPS continuation URL are in `config/email-recovery.json`. Build with:
+The Google OAuth desktop client configuration is in `config/google-drive.local.json` outside Git. Build with the existing Google Drive define file. There is no separate paid OTP provider or embedded mail API key. Gmail access and email delivery depend on Google account authorization, the Gmail API, account sending limits, network availability, and Google's OAuth verification requirements. Test actual delivery from a connected account before relying on email recovery.
 
-```powershell
-flutter build windows --release --dart-define-from-file=config/google-drive.local.json --dart-define-from-file=config/email-recovery.json
-```
+For a VS Code terminal debug run, use `flutter run -d windows --dart-define-from-file=config/google-drive.local.json --dart-define-from-file=config/email-recovery.json`, or select the **Lotus ERP - Windows** launch configuration. Plain `flutter run -d windows` omits the Google OAuth client configuration. Debug and release installations also keep separate account databases and secure Google tokens. Connect the Google account for the environment being tested; the app now reports an unlinked recovery email instead of claiming that an OTP was sent.
 
-VS Code's **Lotus ERP - Windows** launch configuration supplies both files. The Google Drive configuration is kept outside Git. Builds without Firebase defines keep local login and recovery-code reset, but email recovery is unavailable. Builds without the Google Drive configuration can still use the alternative verification in Security & Access.
-
-The Firebase project is on the free Spark plan. Email-link sign-in currently has a limit of five emails per day on Spark, so the offline recovery code remains important. The project must have Email/Password and Email Link sign-in enabled and the continuation domain listed under authorized domains.
+The local password reset never proceeds merely because a send request succeeded. The code must be verified against the active challenge, and the verified challenge is consumed on reset. Password reset is still available offline with the owner's recovery code.

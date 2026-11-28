@@ -50,6 +50,7 @@ class GoogleDriveAuth {
   final GoogleDriveClient applicationClient;
   final Future<bool> Function(Uri) openBrowser;
   static const driveScope = 'https://www.googleapis.com/auth/drive.appdata';
+  static const gmailSendScope = 'https://www.googleapis.com/auth/gmail.send';
   static final _tokenUri = Uri.https('oauth2.googleapis.com', '/token');
   GoogleDriveClient? _client;
   Map<String, dynamic>? _tokens;
@@ -57,6 +58,9 @@ class GoogleDriveAuth {
   Completer<void>? _cancel;
   bool get configured => _client != null;
   bool get connected => configured && _tokens?['refresh_token'] is String;
+  bool get canSendRecoveryEmail =>
+      connected &&
+      (_tokens?['scope'] as String? ?? '').split(' ').contains(gmailSendScope);
   String? get email => _tokens?['email'] as String?;
   String? get subject => _tokens?['subject'] as String?;
 
@@ -154,7 +158,7 @@ class GoogleDriveAuth {
         'client_id': _client!.clientId,
         'redirect_uri': redirect,
         'response_type': 'code',
-        'scope': '$driveScope openid email',
+        'scope': '$driveScope $gmailSendScope openid email',
         'state': state,
         'code_challenge': challenge(verifier),
         'code_challenge_method': 'S256',

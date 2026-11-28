@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 
 import 'auth_result.dart';
@@ -10,9 +13,15 @@ import 'local_account_repository.dart';
 import 'local_password_hasher.dart';
 import 'password_policy.dart';
 import 'local_session_store.dart';
+import 'google_otp_email_gateway.dart';
+import 'otp_email_gateway.dart';
+import 'password_recovery_actions.dart';
 
-class AuthService implements AuthSessionGateway {
-  AuthService._(this._accounts, this._hasher, this._sessions, this._email);
+class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
+  AuthService._(
+      this._accounts, this._hasher, this._sessions, this._email, this._otpEmail,
+      [DateTime Function()? clock])
+      : _clock = clock ?? DateTime.now;
 
   static final AuthService _instance = AuthService._(
       LocalAccountRepository(),
@@ -22,21 +31,30 @@ class AuthService implements AuthSessionGateway {
         apiKey: const String.fromEnvironment('LOTUS_RECOVERY_API_KEY'),
         continueUrl: Uri.parse(
             const String.fromEnvironment('LOTUS_RECOVERY_CONTINUE_URL')),
-      ));
+      ),
+      GoogleOtpEmailGateway());
   factory AuthService() => _instance;
 
   AuthService.forTesting(LocalAccountRepository accounts,
       {required LocalSessionStore sessionStore,
-      EmailRecoveryGateway? emailGateway})
-      : this._(accounts, LocalPasswordHasher(), sessionStore, emailGateway);
+      EmailRecoveryGateway? emailGateway,
+      OtpEmailGateway? otpEmailGateway,
+      DateTime Function()? clock})
+      : this._(accounts, LocalPasswordHasher(), sessionStore, emailGateway,
+            otpEmailGateway, clock);
 
   final LocalAccountRepository _accounts;
   final LocalPasswordHasher _hasher;
   final LocalSessionStore _sessions;
   final EmailRecoveryGateway? _email;
+  final OtpEmailGateway? _otpEmail;
+  final DateTime Function() _clock;
   final _changes = StreamController<String?>.broadcast();
   String? _signedInUid;
   DateTime? _lastEmailSentAt;
+  DateTime? _lastOtpSentAt;
+  _OtpChallenge? _otpChallenge;
+  bool _otpSending = false;
 
   bool get isEmailRecoveryAvailable => _email?.isConfigured ?? false;
 
@@ -141,16 +159,26 @@ class AuthService implements AuthSessionGateway {
     required String password,
     required String ownerName,
     required String mobile,
+    String? companyName,
   }) async {
     if (await hasOwnerAccount()) {
       return const AuthResult(AuthResultCode.failure,
           'This installation already has an owner account.');
     }
-    if (!RegExp(r'^[A-Za-z0-9._-]{3,32}$').hasMatch(username.trim()) ||
+    final identifier = username.trim();
+    final validUsername =
+        RegExp(r'^[A-Za-z0-9._-]{3,32}$').hasMatch(identifier);
+    final validEmail =
+        RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(identifier);
+    if ((!validUsername && !validEmail) ||
         PasswordPolicy.validate(password) != null ||
-        ownerName.trim().isEmpty) {
+        ownerName.trim().isEmpty ||
+        (companyName != null &&
+            (!validEmail ||
+                companyName.trim().isEmpty ||
+                !RegExp(r'^\d{10}$').hasMatch(mobile.trim())))) {
       return const AuthResult(AuthResultCode.failure,
-          'Enter an owner name, a valid username, and a password with at least 8 characters including a letter and number.');
+          'Enter an owner name, valid login email, 10-digit mobile number, company name, and a password with at least 8 characters including a letter and number.');
     }
     try {
       final passwordSalt = _hasher.newSalt();
@@ -159,9 +187,10 @@ class AuthService implements AuthSessionGateway {
       final now = DateTime.now().toUtc().toIso8601String();
       await _accounts.create({
         'uid': const Uuid().v4(),
-        'username': username.trim(),
+        'username': validEmail ? identifier.toLowerCase() : identifier,
         'name': ownerName.trim(),
         'mobile': mobile.trim(),
+        'registration_company_name': companyName?.trim(),
         'password_salt': passwordSalt,
         'password_hash': await _hasher.hash(password, passwordSalt),
         'recovery_salt': recoverySalt,
@@ -192,6 +221,7 @@ class AuthService implements AuthSessionGateway {
       'username': record['username'],
       'name': record['name'],
       'mobile': record['mobile'],
+      'registrationCompanyName': record['registration_company_name'],
       'role': 'OWNER',
       'isActive': true,
       'createdAt': record['created_at'],
@@ -242,9 +272,11 @@ class AuthService implements AuthSessionGateway {
       'updated_at': passwordChangedAt,
       'last_password_changed_at': passwordChangedAt,
     });
+    _otpChallenge = null;
     return const AuthResult(AuthResultCode.success, 'Password updated.');
   }
 
+  @override
   Future<AuthResult> resetPassword(
       {required String recoveryCode, required String newPassword}) async {
     final passwordError = PasswordPolicy.validate(newPassword);
@@ -409,6 +441,119 @@ class AuthService implements AuthSessionGateway {
     }
   }
 
+  @override
+  Future<AuthResult> sendPasswordResetOtp(String email) async {
+    final normalized = _normalizeEmail(email);
+    if (normalized == null) {
+      return const AuthResult(
+          AuthResultCode.failure, 'Enter a valid email address.');
+    }
+    final now = _clock().toUtc();
+    if (_otpSending) {
+      return const AuthResult(
+          AuthResultCode.failure, 'A verification code is already being sent.');
+    }
+    if (_lastOtpSentAt != null &&
+        now.difference(_lastOtpSentAt!) < const Duration(minutes: 1)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Wait one minute before requesting another code.');
+    }
+    _otpSending = true;
+    try {
+      _otpChallenge = null;
+      final record = await _accounts.read();
+      final subject = record?['recovery_google_subject'] as String?;
+      if (record?['recovery_email'] != normalized ||
+          subject == null ||
+          subject.isEmpty) {
+        return const AuthResult(AuthResultCode.failure,
+            'Email OTP is not set up for this account. Connect your Google account in Backup & Restore, or use your saved recovery code.');
+      }
+      if (_otpEmail == null) {
+        return const AuthResult(AuthResultCode.failure,
+            'Email OTP delivery is unavailable on this installation.');
+      }
+      final random = Random.secure();
+      final code = random.nextInt(1000000).toString().padLeft(6, '0');
+      final nonce = List<int>.generate(32, (_) => random.nextInt(256));
+      try {
+        await _otpEmail.send(
+            email: normalized, googleSubject: subject, code: code);
+      } on OtpEmailException catch (error) {
+        return AuthResult(AuthResultCode.failure, error.message);
+      } catch (_) {
+        return const AuthResult(AuthResultCode.failure,
+            'Could not send the code. Check your connection and try again.');
+      }
+      _lastOtpSentAt = _clock().toUtc();
+      _otpChallenge = _OtpChallenge(
+        email: normalized,
+        accountId: record!['uid'] as String,
+        googleSubject: subject,
+        nonce: nonce,
+        digest: sha256.convert([...nonce, ...utf8.encode(code)]).bytes,
+        expiresAt: _lastOtpSentAt!.add(const Duration(minutes: 10)),
+      );
+      return const AuthResult(AuthResultCode.success,
+          'If this email is registered, a verification code will arrive shortly.');
+    } finally {
+      _otpSending = false;
+    }
+  }
+
+  @override
+  Future<AuthResult> verifyPasswordResetOtp({
+    required String email,
+    required String code,
+  }) async {
+    final challenge = _otpChallenge;
+    final now = _clock().toUtc();
+    if (challenge == null ||
+        challenge.email != _normalizeEmail(email) ||
+        !RegExp(r'^\d{6}$').hasMatch(code) ||
+        !challenge.expiresAt.isAfter(now) ||
+        challenge.attempts >= 5) {
+      return const AuthResult(AuthResultCode.failure,
+          'The code is invalid or expired. Request a new code.');
+    }
+    challenge.attempts++;
+    final received =
+        sha256.convert([...challenge.nonce, ...utf8.encode(code)]).bytes;
+    var difference = 0;
+    for (var i = 0; i < received.length; i++) {
+      difference |= received[i] ^ challenge.digest[i];
+    }
+    if (difference != 0) {
+      if (challenge.attempts >= 5) _otpChallenge = null;
+      return const AuthResult(AuthResultCode.failure,
+          'The code is invalid or expired. Request a new code.');
+    }
+    challenge.verified = true;
+    return const AuthResult(AuthResultCode.success, 'Email verified.');
+  }
+
+  @override
+  Future<AuthResult> resetPasswordWithOtp({
+    required String email,
+    required String newPassword,
+  }) async {
+    final error = PasswordPolicy.validate(newPassword);
+    if (error != null) return AuthResult(AuthResultCode.failure, error);
+    final challenge = _otpChallenge;
+    final record = await _accounts.read();
+    if (challenge == null ||
+        !challenge.verified ||
+        !challenge.expiresAt.isAfter(_clock().toUtc()) ||
+        challenge.email != _normalizeEmail(email) ||
+        challenge.accountId != record?['uid'] ||
+        challenge.email != record?['recovery_email'] ||
+        challenge.googleSubject != record?['recovery_google_subject']) {
+      return const AuthResult(
+          AuthResultCode.failure, 'Verification expired. Request a new code.');
+    }
+    return _replacePassword(newPassword);
+  }
+
   Future<AuthResult> _replacePassword(String newPassword) async {
     final passwordSalt = _hasher.newSalt();
     final recoverySalt = _hasher.newSalt();
@@ -424,6 +569,7 @@ class AuthService implements AuthSessionGateway {
       'updated_at': changedAt,
       'last_password_changed_at': changedAt,
     });
+    _otpChallenge = null;
     await signOut();
     return AuthResult(AuthResultCode.success, 'Password reset.',
         recoveryCode: nextRecoveryCode);
@@ -472,4 +618,24 @@ class AuthService implements AuthSessionGateway {
     final value = email.trim().toLowerCase();
     return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value) ? value : null;
   }
+}
+
+class _OtpChallenge {
+  _OtpChallenge({
+    required this.email,
+    required this.accountId,
+    required this.googleSubject,
+    required this.nonce,
+    required this.digest,
+    required this.expiresAt,
+  });
+
+  final String email;
+  final String accountId;
+  final String googleSubject;
+  final List<int> nonce;
+  final List<int> digest;
+  final DateTime expiresAt;
+  int attempts = 0;
+  bool verified = false;
 }

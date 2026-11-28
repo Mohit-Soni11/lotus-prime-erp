@@ -12,6 +12,22 @@ class AuthFieldValidator {
     return null;
   }
 
+  static String? loginIdentifier(String? value) {
+    final text = value?.trim() ?? '';
+    if (RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(text) ||
+        RegExp(r'^[A-Za-z0-9._-]{3,32}$').hasMatch(text)) {
+      return null;
+    }
+    return 'Enter your email address or existing username.';
+  }
+
+  static String? email(String? value) {
+    final text = value?.trim() ?? '';
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(text)
+        ? null
+        : 'Enter a valid email address.';
+  }
+
   static String? mobile(String? value) {
     final text = value?.trim() ?? '';
     if (!RegExp(r'^\d{10}$').hasMatch(text)) {

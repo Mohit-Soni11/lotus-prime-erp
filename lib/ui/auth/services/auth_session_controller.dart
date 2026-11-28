@@ -108,6 +108,7 @@ class AuthSessionController extends ChangeNotifier {
     required String password,
     required String ownerName,
     required String mobile,
+    String? companyName,
   }) async {
     _interactiveOperation = true;
     ++_generation;
@@ -117,6 +118,7 @@ class AuthSessionController extends ChangeNotifier {
         password: password,
         ownerName: ownerName,
         mobile: mobile,
+        companyName: companyName,
       );
     } catch (_) {
       return const AuthResult(

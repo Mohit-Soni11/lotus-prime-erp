@@ -17,6 +17,7 @@ abstract interface class AuthSessionGateway {
     required String password,
     required String ownerName,
     required String mobile,
+    String? companyName,
   });
 
   Future<void> signOut();
