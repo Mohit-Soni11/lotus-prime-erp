@@ -30,11 +30,13 @@ class _RecoveryEmailCardState extends State<RecoveryEmailCard> {
   Future<void> _load() async {
     final email = await _auth.getRecoveryEmail();
     final linkedToGoogle = await _auth.isRecoveryLinkedToGoogle();
+    final owner = await _auth.getUserDetails();
+    final signInId = owner?['username'] as String?;
     if (!mounted) return;
     setState(() {
       _verifiedEmail = email;
       _linkedToGoogle = linkedToGoogle;
-      _email.text = email ?? '';
+      _email.text = email ?? (signInId?.contains('@') == true ? signInId! : '');
     });
   }
 

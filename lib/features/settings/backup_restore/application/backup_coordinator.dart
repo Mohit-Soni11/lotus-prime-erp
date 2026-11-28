@@ -92,9 +92,15 @@ class BackupCoordinator extends ChangeNotifier {
         try {
           await drive.auth.signIn();
           if (recoveryLinker != null) {
-            final identity = await drive.auth.verifiedIdentity();
-            await recoveryLinker!.link(identity, recoveryPassword!);
-            recoveryLinked = true;
+            try {
+              final identity = await drive.auth.verifiedIdentity();
+              await recoveryLinker!.link(identity, recoveryPassword!);
+              recoveryLinked = true;
+            } catch (_) {
+              await drive.auth.disconnect();
+              recoveryLinked = false;
+              rethrow;
+            }
           }
           cloudRecords = await drive.list();
         } finally {
@@ -109,15 +115,23 @@ class BackupCoordinator extends ChangeNotifier {
           throw StateError('Connect your Google account first.');
         }
         await recoveryLinker!.verifyPassword(password);
-        final identity = await drive.auth.verifiedIdentity();
-        await recoveryLinker!.link(identity, password);
-        recoveryLinked = true;
+        try {
+          final identity = await drive.auth.verifiedIdentity();
+          await recoveryLinker!.link(identity, password);
+          recoveryLinked = true;
+        } catch (_) {
+          await drive.auth.disconnect();
+          recoveryLinked = false;
+          rethrow;
+        }
       });
 
   Future<void> disconnectGoogle() =>
       _operation('Disconnecting Google Drive', () async {
         await requireOwner();
+        await recoveryLinker?.unlink();
         await drive.auth.disconnect();
+        recoveryLinked = false;
         cloudRecords = [];
         settings = settings!.copyWith(googleDriveEnabled: false);
         await store.saveSettings(settings!);

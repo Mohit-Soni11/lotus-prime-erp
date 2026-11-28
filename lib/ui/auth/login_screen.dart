@@ -6,6 +6,7 @@ import '../../core/feedback/app_feedback.dart';
 import '../../database/local_database/shop_database_helper.dart';
 import 'services/auth_service.dart';
 import 'services/auth_session_controller.dart';
+import 'services/company_google_enrollment.dart';
 import 'widgets/auth_brand_panel.dart';
 import 'widgets/company_creation_panel.dart';
 import 'widgets/company_registration_input.dart';
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _registrationChecked = false;
   bool _hasCompanyProfile = false;
   bool _registrationCheckFailed = false;
+  String? _companyConnectionStatus;
 
   @override
   void initState() {
@@ -191,11 +193,12 @@ class _LoginScreenState extends State<LoginScreen> {
       onForgotPassword: () => setState(() => _showPasswordRecovery = true),
       onSignIn: _handleLogin,
       onCreateCompany: () => setState(() => _showCompanyCreation = true),
-      companyStatus: _registrationChecked && !_canCreateOwner
-          ? (_hasCompanyProfile
-              ? 'Current company account is ready. Sign in to continue.'
-              : 'Owner account created. Sign in to finish company setup.')
-          : null,
+      companyStatus: _companyConnectionStatus ??
+          (_registrationChecked && !_canCreateOwner
+              ? (_hasCompanyProfile
+                  ? 'Current company account is ready. Sign in to continue.'
+                  : 'Owner account created. Sign in to finish company setup.')
+              : null),
       onRetryStatus:
           _registrationCheckFailed ? _loadRegistrationAvailability : null,
     );
@@ -231,7 +234,6 @@ class _LoginScreenState extends State<LoginScreen> {
       companyName: input.companyName,
     );
     if (!mounted) return;
-    setState(() => _isLoading = false);
     if (result.accountCreated) {
       _username.text = input.email;
       _password.clear();
@@ -240,15 +242,39 @@ class _LoginScreenState extends State<LoginScreen> {
         _canCreateOwner = false;
         _hasCompanyProfile = false;
         _registrationChecked = true;
+        _companyConnectionStatus =
+            'Company created. Save the recovery code to continue Google setup.';
       });
       await _showRecoveryCode(result.recoveryCode!);
+      if (!mounted) return;
+      setState(() => _companyConnectionStatus =
+          'Connecting ${input.email} for backup and password recovery...');
+      try {
+        await CompanyGoogleEnrollment().connect(
+          email: input.email,
+          password: input.password,
+        );
+        if (!mounted) return;
+        setState(() => _companyConnectionStatus =
+            'Google account linked for backup and password recovery. Sign in to continue.');
+      } catch (error) {
+        if (!mounted) return;
+        setState(() => _companyConnectionStatus =
+            'Company created. Google connection is pending; sign in to finish it in Backup & Restore.');
+        AppFeedback.show(
+          context,
+          type: AppFeedbackType.warning,
+          message: error.toString().replaceFirst('Bad state: ', ''),
+        );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
       return;
     }
+    setState(() => _isLoading = false);
     AppFeedback.show(
       context,
-      type: result.accountCreated
-          ? AppFeedbackType.warning
-          : AppFeedbackType.error,
+      type: AppFeedbackType.error,
       message: result.message,
     );
   }

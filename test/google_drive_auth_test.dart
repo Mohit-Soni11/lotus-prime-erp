@@ -6,6 +6,26 @@ import 'package:lotus_erp/features/settings/backup_restore/domain/google_drive_c
 import 'google_drive_backup_test_support.dart';
 
 void main() {
+  test('debug run loads the local Google client without dart defines',
+      () async {
+    final directory = await Directory.systemTemp.createTemp('lotus-oauth-');
+    addTearDown(() => directory.delete(recursive: true));
+    final config = File('${directory.path}/google-drive.local.json');
+    await config.writeAsString(jsonEncode({
+      'LOTUS_GOOGLE_CLIENT_ID': 'test.apps.googleusercontent.com',
+      'LOTUS_GOOGLE_CLIENT_SECRET': 'local-test-secret',
+    }));
+    final auth = GoogleDriveAuth(
+      http: FakeBackupHttp((a, b, c, d) async => backupJsonResponse({})),
+      secrets: MemoryBackupSecrets(),
+      applicationClient: const GoogleDriveClient(clientId: ''),
+      localDevelopmentConfigPath: config.path,
+    );
+    await auth.load();
+    expect(auth.configured, isTrue);
+    expect(auth.connected, isFalse);
+  });
+
   test('Desktop OAuth uses loopback, PKCE and backup plus OTP scopes',
       () async {
     final secrets = MemoryBackupSecrets();

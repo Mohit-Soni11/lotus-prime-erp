@@ -10,7 +10,11 @@ class GoogleOtpEmailGateway implements OtpEmailGateway {
       {GoogleDriveAuth? auth, BackupHttpTransport? http}) {
     final transport = http ?? IoBackupHttpTransport();
     return GoogleOtpEmailGateway._(
-        auth ?? GoogleDriveAuth(http: transport), transport);
+        auth ??
+            GoogleDriveAuth(
+                http: transport,
+                localDevelopmentConfigPath: 'config/google-drive.local.json'),
+        transport);
   }
 
   GoogleOtpEmailGateway._(this._auth, this._http);

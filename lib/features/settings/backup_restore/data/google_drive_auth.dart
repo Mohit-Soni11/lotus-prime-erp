@@ -41,6 +41,7 @@ class GoogleDriveAuth {
       {required this.http,
       BackupSecretStore? secrets,
       this.applicationClient = const GoogleDriveClient.fromEnvironment(),
+      this.localDevelopmentConfigPath,
       Future<bool> Function(Uri)? openBrowser})
       : secrets = secrets ?? const SecureBackupSecretStore(),
         openBrowser = openBrowser ??
@@ -48,6 +49,7 @@ class GoogleDriveAuth {
   final BackupHttpTransport http;
   final BackupSecretStore secrets;
   final GoogleDriveClient applicationClient;
+  final String? localDevelopmentConfigPath;
   final Future<bool> Function(Uri) openBrowser;
   static const driveScope = 'https://www.googleapis.com/auth/drive.appdata';
   static const gmailSendScope = 'https://www.googleapis.com/auth/gmail.send';
@@ -68,14 +70,16 @@ class GoogleDriveAuth {
     _client = null;
     _tokens = null;
     final cachedClient = await secrets.read('google-client');
+    final developmentClient = await _localDevelopmentClient();
     _client = applicationClient.configured
         ? applicationClient
-        : _storedClient(cachedClient);
-    if (applicationClient.configured) {
+        : developmentClient ?? _storedClient(cachedClient);
+    if (_client != null &&
+        (applicationClient.configured || developmentClient != null)) {
       final encodedClient = jsonEncode({
-        'client_id': applicationClient.clientId,
-        if (applicationClient.clientSecret.isNotEmpty)
-          'client_secret': applicationClient.clientSecret,
+        'client_id': _client!.clientId,
+        if (_client!.clientSecret.isNotEmpty)
+          'client_secret': _client!.clientSecret,
       });
       if (cachedClient != encodedClient) {
         await secrets.write('google-client', encodedClient);
@@ -89,6 +93,24 @@ class GoogleDriveAuth {
     }
     // A missing or different build identity must not erase a saved connection.
     // Tokens are replaced after successful sign-in or removed by Disconnect.
+  }
+
+  Future<GoogleDriveClient?> _localDevelopmentClient() async {
+    if (!kDebugMode || localDevelopmentConfigPath == null) return null;
+    try {
+      final file = File(localDevelopmentConfigPath!);
+      if (!await file.exists()) return null;
+      final values = jsonDecode(await file.readAsString()) as Map;
+      final client = GoogleDriveClient(
+        clientId: values['LOTUS_GOOGLE_CLIENT_ID'] as String? ?? '',
+        clientSecret: values['LOTUS_GOOGLE_CLIENT_SECRET'] as String? ?? '',
+      );
+      return client.configured ? client : null;
+    } on FormatException {
+      return null;
+    } on FileSystemException {
+      return null;
+    }
   }
 
   GoogleDriveClient? _storedClient(String? stored) {

@@ -32,6 +32,12 @@ class _FakeGoogleRecoveryLinker implements GoogleRecoveryLinker {
     identity = value;
     linked = true;
   }
+
+  @override
+  Future<void> unlink() async {
+    linked = false;
+    identity = null;
+  }
 }
 
 void main() {
@@ -113,6 +119,14 @@ void main() {
     expect(controller.recoveryLinked, isTrue);
     expect(recoveryLinker.identity?.email, 'owner@example.test');
     expect(recoveryLinker.identity?.subject, 'google-owner');
+  });
+
+  test('disconnecting Drive also clears the OTP recovery connection', () async {
+    await controller.linkConnectedGoogleForRecovery('owner-password');
+    await controller.disconnectGoogle();
+    expect(recoveryLinker.linked, isFalse);
+    expect(controller.recoveryLinked, isFalse);
+    expect(controller.drive.auth.connected, isFalse);
   });
 
   test('Drive outage keeps a verified local backup and records a retry',

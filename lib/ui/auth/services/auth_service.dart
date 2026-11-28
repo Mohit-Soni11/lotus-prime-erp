@@ -310,6 +310,10 @@ class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
       return const AuthResult(
           AuthResultCode.failure, 'Enter a valid email address.');
     }
+    if (_companyEmailMismatch(record, normalized)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Use the company sign-in email for password recovery.');
+    }
     return _sendEmail(normalized);
   }
 
@@ -329,6 +333,10 @@ class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
       return const AuthResult(AuthResultCode.failure,
           'Google did not return a verified account identity.');
     }
+    if (_companyEmailMismatch(record, normalized)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Choose the company sign-in email in Google sign-in.');
+    }
     await _accounts.update({
       'recovery_email': normalized,
       'recovery_google_subject': googleSubject,
@@ -339,6 +347,49 @@ class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
     });
     return const AuthResult(AuthResultCode.success,
         'Google account is linked for password recovery.');
+  }
+
+  Future<AuthResult> linkNewCompanyToGoogle({
+    required String email,
+    required String password,
+    required String googleSubject,
+  }) async {
+    final normalized = _normalizeEmail(email);
+    final record = await _accounts.read();
+    if (normalized == null ||
+        record == null ||
+        record['username'] != normalized ||
+        (record['registration_company_name'] as String? ?? '').isEmpty ||
+        record['recovery_google_subject'] != null ||
+        googleSubject.trim().isEmpty) {
+      return const AuthResult(AuthResultCode.failure,
+          'The verified Google account does not match this company.');
+    }
+    final passwordCheck = await _checkCurrentPassword(record, password);
+    if (passwordCheck != null) return passwordCheck;
+    await _accounts.update({
+      'recovery_email': normalized,
+      'recovery_google_subject': googleSubject,
+      'recovery_email_uid': null,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    return const AuthResult(AuthResultCode.success,
+        'Google account linked for backup and password recovery.');
+  }
+
+  Future<void> unlinkGoogleRecovery() async {
+    final record = await _accounts.read();
+    if (record == null || record['uid'] != _signedInUid) {
+      throw StateError('Sign in again to change the recovery account.');
+    }
+    await _accounts.update({
+      'recovery_google_subject': null,
+      'recovery_email': record['recovery_email_uid'] == null
+          ? null
+          : record['recovery_email'],
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    _otpChallenge = null;
   }
 
   Future<AuthResult> confirmRecoveryEmailEnrollment({
@@ -356,6 +407,10 @@ class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
     if (normalized == null) {
       return const AuthResult(
           AuthResultCode.failure, 'Enter a valid email address.');
+    }
+    if (_companyEmailMismatch(record, normalized)) {
+      return const AuthResult(AuthResultCode.failure,
+          'Use the company sign-in email for password recovery.');
     }
     if (!isEmailRecoveryAvailable) {
       return const AuthResult(AuthResultCode.failure,
@@ -618,6 +673,11 @@ class AuthService implements AuthSessionGateway, PasswordRecoveryActions {
     final value = email.trim().toLowerCase();
     return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value) ? value : null;
   }
+
+  static bool _companyEmailMismatch(
+          Map<String, Object?> record, String email) =>
+      (record['registration_company_name'] as String? ?? '').isNotEmpty &&
+      record['username'] != email;
 }
 
 class _OtpChallenge {

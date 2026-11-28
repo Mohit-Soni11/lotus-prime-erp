@@ -34,6 +34,7 @@ import 'tabs/branding_tab.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../auth/services/auth_service.dart';
+import 'services/registration_shop_profile_prefill.dart';
 
 class ShopSetupWizard extends StatefulWidget {
   const ShopSetupWizard({super.key});
@@ -122,16 +123,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       } else {
         final owner = await AuthService().getUserDetails();
         if (owner != null) {
-          final companyName =
-              (owner['registrationCompanyName'] as String? ?? '').trim();
-          final identifier = (owner['username'] as String? ?? '').trim();
-          _masterData = _masterData.copyWith(
-            legalName: companyName,
-            displayName: companyName,
-            ownerName: (owner['name'] as String? ?? '').trim(),
-            ownerPhone: (owner['mobile'] as String? ?? '').trim(),
-            businessEmail: identifier.contains('@') ? identifier : '',
-          );
+          _masterData = RegistrationShopProfilePrefill.fromOwnerDetails(owner);
         }
       }
 

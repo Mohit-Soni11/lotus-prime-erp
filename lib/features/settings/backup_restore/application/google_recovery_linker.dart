@@ -5,6 +5,7 @@ import '../data/google_drive_auth.dart';
 abstract interface class GoogleRecoveryLinker {
   Future<void> verifyPassword(String password);
   Future<void> link(VerifiedGoogleIdentity identity, String password);
+  Future<void> unlink();
   Future<bool> isLinked(String? googleSubject);
 }
 
@@ -28,6 +29,9 @@ class LocalGoogleRecoveryLinker implements GoogleRecoveryLinker {
     );
     if (!result.isSuccess) throw StateError(result.message);
   }
+
+  @override
+  Future<void> unlink() => auth.unlinkGoogleRecovery();
 
   @override
   Future<bool> isLinked(String? googleSubject) => googleSubject == null

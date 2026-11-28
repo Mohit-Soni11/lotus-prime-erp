@@ -91,12 +91,48 @@ void main() {
         'Lotus Jewellers');
     expect((await db.query('shop_profile')), isEmpty);
     expect(
+        (await auth.linkNewCompanyToGoogle(
+                email: 'different@example.com',
+                password: 'SecurePass123',
+                googleSubject: 'google-owner'))
+            .isSuccess,
+        isFalse);
+    expect((await accounts.read())?['recovery_email'], isNull);
+    expect(
+        (await auth.linkNewCompanyToGoogle(
+                email: 'owner@example.com',
+                password: 'wrong',
+                googleSubject: 'google-owner'))
+            .isSuccess,
+        isFalse);
+    expect((await accounts.read())?['recovery_email'], isNull);
+    expect(
+        (await auth.linkNewCompanyToGoogle(
+                email: 'owner@example.com',
+                password: 'SecurePass123',
+                googleSubject: 'google-owner'))
+            .isSuccess,
+        isTrue);
+    expect((await accounts.read())?['recovery_email'], 'owner@example.com');
+    expect((await accounts.read())?['recovery_google_subject'], 'google-owner');
+    expect(
         (await auth.loginUser(
                 username: 'OWNER@example.com', password: 'SecurePass123'))
             .isSuccess,
         isTrue);
     expect((await auth.getUserDetails())?['registrationCompanyName'],
         'Lotus Jewellers');
+    expect(
+        (await auth.linkRecoveryToGoogleAccount(
+                currentPassword: 'SecurePass123',
+                email: 'other@example.com',
+                googleSubject: 'other-google'))
+            .isSuccess,
+        isFalse);
+    expect((await accounts.read())?['recovery_google_subject'], 'google-owner');
+    await auth.unlinkGoogleRecovery();
+    expect((await accounts.read())?['recovery_google_subject'], isNull);
+    expect((await accounts.read())?['recovery_email'], isNull);
     expect(
         (await auth.registerOwner(
                 username: 'second@example.com',

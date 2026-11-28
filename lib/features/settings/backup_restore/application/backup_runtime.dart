@@ -54,7 +54,10 @@ class BackupRuntime {
         store: BackupStore(paths),
         preferences: preferences,
         drive: GoogleDriveBackupService(
-            auth: GoogleDriveAuth(http: transport), http: transport),
+            auth: GoogleDriveAuth(
+                http: transport,
+                localDevelopmentConfigPath: 'config/google-drive.local.json'),
+            http: transport),
         restore: BackupRestoreService(paths, preferences,
             clearSession: const SecureLocalSessionStore().clear),
         requireOwner: () async {
