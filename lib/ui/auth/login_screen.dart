@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -11,6 +10,9 @@ import 'services/auth_session_controller.dart';
 import 'widgets/auth_brand_panel.dart';
 import 'widgets/auth_forms.dart';
 import 'widgets/company_creation_preview.dart';
+import 'widgets/luxury_auth_background.dart';
+import 'widgets/luxury_auth_palette.dart';
+import 'widgets/luxury_sign_in_panel.dart';
 import 'widgets/password_reset_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -81,29 +83,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: UV.colors.bgPrimary,
+        backgroundColor: LuxuryAuthPalette.navy,
         body: LayoutBuilder(
           builder: (context, viewport) {
             final width = math.min(
-              UV.layout.cardMaxWidth,
-              math.max(0.0, viewport.maxWidth - 32),
+              1260.0,
+              math.max(0.0, viewport.maxWidth - 48),
             );
-            final height = math.min(
-              UV.layout.cardMaxHeight,
-              math.max(560.0, viewport.maxHeight - 32),
-            );
+            final compact = width < 880;
+            final height = compact
+                ? 920.0
+                : math.min(706.0, math.max(660.0, viewport.maxHeight - 64));
             return Stack(
               children: [
-                Positioned(
-                  top: -100,
-                  left: -100,
-                  child: _glowOrb(UV.colors.glowPrimary),
-                ),
-                Positioned(
-                  bottom: -100,
-                  right: -100,
-                  child: _glowOrb(UV.colors.glowAccent),
-                ),
+                const Positioned.fill(child: LuxuryAuthBackground()),
                 SingleChildScrollView(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: viewport.maxHeight),
@@ -111,42 +104,41 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Container(
                         width: width,
                         height: height,
-                        margin: const EdgeInsets.symmetric(vertical: 16),
+                        margin: const EdgeInsets.symmetric(vertical: 24),
                         decoration: BoxDecoration(
-                          color: UV.colors.glassBase,
-                          borderRadius:
-                              BorderRadius.circular(UV.layout.radiusLg),
-                          border: Border.all(color: UV.colors.glassBorder),
-                          boxShadow: [UV.colors.softShadow],
+                          color: LuxuryAuthPalette.navy,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                              color: LuxuryAuthPalette.gold, width: 1.5),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0xCC000717),
+                              blurRadius: 48,
+                              offset: Offset(0, 24),
+                            ),
+                          ],
                         ),
                         child: ClipRRect(
-                          borderRadius:
-                              BorderRadius.circular(UV.layout.radiusLg),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: UV.layout.blurMd,
-                              sigmaY: UV.layout.blurMd,
-                            ),
-                            child: width < 880
-                                ? Column(
-                                    children: [
-                                      const SizedBox(
-                                        height: 175,
-                                        child: AuthBrandPanel(),
-                                      ),
-                                      Expanded(child: _rightPanel()),
-                                    ],
-                                  )
-                                : Row(
-                                    children: [
-                                      const Expanded(
-                                        flex: 4,
-                                        child: AuthBrandPanel(),
-                                      ),
-                                      Expanded(flex: 6, child: _rightPanel()),
-                                    ],
-                                  ),
-                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          child: compact
+                              ? Column(
+                                  children: [
+                                    const SizedBox(
+                                      height: 225,
+                                      child: AuthBrandPanel(),
+                                    ),
+                                    Expanded(child: _rightPanel()),
+                                  ],
+                                )
+                              : Row(
+                                  children: [
+                                    const Expanded(
+                                      flex: 41,
+                                      child: AuthBrandPanel(),
+                                    ),
+                                    Expanded(flex: 59, child: _rightPanel()),
+                                  ],
+                                ),
                         ),
                       ),
                     ),
@@ -158,7 +150,32 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  Widget _rightPanel() => Padding(
+  Widget _rightPanel() {
+    if (_isLogin && !_showCompanyPreview) {
+      return LuxurySignInPanel(
+        formKey: _formKey,
+        usernameController: _username,
+        passwordController: _password,
+        isLoading: _isLoading,
+        passwordVisible: _isPasswordVisible,
+        onTogglePassword: _togglePassword,
+        onForgotPassword: _resetPassword,
+        onSignIn: _handleLogin,
+        onCreateCompany: () => setState(() => _showCompanyPreview = true),
+        onCreateOwner: _canCreateOwner ? _switchForm : null,
+        companyStatus: _registrationChecked && !_canCreateOwner
+            ? (_hasCompanyProfile
+                ? 'Current company account is ready. Sign in to continue.'
+                : 'Owner account created. Sign in to finish company setup.')
+            : null,
+        onRetryStatus:
+            _registrationCheckFailed ? _loadRegistrationAvailability : null,
+      );
+    }
+    return _secondaryPanel();
+  }
+
+  Widget _secondaryPanel() => Padding(
         padding: EdgeInsets.symmetric(
           horizontal: UV.layout.pXl,
           vertical: UV.layout.pLg,
@@ -170,20 +187,14 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Spacer(),
               Text(
-                _showCompanyPreview
-                    ? 'Create Company'
-                    : _isLogin
-                        ? 'Welcome Back'
-                        : 'Create Your Account',
+                _showCompanyPreview ? 'Create Company' : 'Create Your Account',
                 style: UV.styles.h1,
               ),
               SizedBox(height: UV.layout.pXs),
               Text(
                 _showCompanyPreview
                     ? 'Review the original showroom registration flow.'
-                    : _isLogin
-                        ? 'Sign in to manage billing, inventory, and daily operations.'
-                        : 'Create the owner account for this shop installation.',
+                    : 'Create the owner account for this shop installation.',
                 style: UV.styles.label,
               ),
               SizedBox(height: UV.layout.pLg),
@@ -191,27 +202,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SingleChildScrollView(
                   child: _showCompanyPreview
                       ? const CompanyCreationPreview()
-                      : _isLogin
-                          ? SignInForm(
-                              usernameController: _username,
-                              passwordController: _password,
-                              isLoading: _isLoading,
-                              passwordVisible: _isPasswordVisible,
-                              onTogglePassword: _togglePassword,
-                              onForgotPassword: _resetPassword,
-                              onSubmit: _handleLogin,
-                            )
-                          : OwnerRegistrationForm(
-                              nameController: _name,
-                              mobileController: _mobile,
-                              usernameController: _username,
-                              passwordController: _password,
-                              confirmPasswordController: _confirmPassword,
-                              isLoading: _isLoading,
-                              passwordVisible: _isPasswordVisible,
-                              onTogglePassword: _togglePassword,
-                              onSubmit: _handleRegister,
-                            ),
+                      : OwnerRegistrationForm(
+                          nameController: _name,
+                          mobileController: _mobile,
+                          usernameController: _username,
+                          passwordController: _password,
+                          confirmPasswordController: _confirmPassword,
+                          isLoading: _isLoading,
+                          passwordVisible: _isPasswordVisible,
+                          onTogglePassword: _togglePassword,
+                          onSubmit: _handleRegister,
+                        ),
                 ),
               ),
               SizedBox(height: UV.layout.pMd),
@@ -223,76 +224,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text('Back to Sign In', style: UV.styles.action),
                   ),
                 ),
-              if (!_showCompanyPreview && (_canCreateOwner || !_isLogin))
+              if (!_showCompanyPreview)
                 Align(
                   alignment: Alignment.center,
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        _isLogin ? 'New here?' : 'Already have an account?',
+                        'Already have an account?',
                         style: UV.styles.body,
                       ),
                       TextButton(
                         onPressed: _isLoading ? null : _switchForm,
                         child: Text(
-                          _isLogin ? 'Create Account' : 'Back to Sign In',
+                          'Back to Sign In',
                           style: UV.styles.action,
                         ),
                       ),
                     ],
                   ),
                 ),
-              if (!_showCompanyPreview &&
-                  _registrationChecked &&
-                  !_canCreateOwner &&
-                  _isLogin)
-                Padding(
-                  padding: EdgeInsets.only(top: UV.layout.pSm),
-                  child: Text(
-                    _hasCompanyProfile
-                        ? 'Current company account is ready. Sign in to continue.'
-                        : 'Owner account created. Sign in to finish company setup.',
-                    textAlign: TextAlign.center,
-                    style: UV.styles.body.copyWith(
-                      color: UV.colors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              if (!_showCompanyPreview && _registrationCheckFailed)
-                Padding(
-                  padding: EdgeInsets.only(top: UV.layout.pSm),
-                  child: TextButton(
-                    onPressed: _loadRegistrationAvailability,
-                    child: const Text('Could not check company setup. Retry'),
-                  ),
-                ),
-              if (!_showCompanyPreview && _isLogin)
-                Center(
-                  child: TextButton.icon(
-                    onPressed: _isLoading
-                        ? null
-                        : () => setState(() => _showCompanyPreview = true),
-                    icon: const Icon(Icons.storefront_outlined, size: 18),
-                    label: const Text('Create Company'),
-                  ),
-                ),
             ],
           ),
-        ),
-      );
-
-  Widget _glowOrb(Color color) => Container(
-        width: UV.layout.glowOrbSize,
-        height: UV.layout.glowOrbSize,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: UV.layout.blurGlow,
-            sigmaY: UV.layout.blurGlow,
-          ),
-          child: Container(color: Colors.transparent),
         ),
       );
 
